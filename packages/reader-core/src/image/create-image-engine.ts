@@ -11,6 +11,7 @@ import type { ImageEngine, ImageEngineOptions } from './engine.js';
 import type { ImageEngineEvents } from './types.js';
 import { buildSpreads, clampSpreadIndex, spreadIndexForPage, type Spread } from './spreads.js';
 import { PageLoader } from './page-loader.js';
+import { PrefetchScheduler } from './prefetch.js';
 
 const CONTINUOUS = new Set(['continuous-vertical', 'continuous-horizontal']);
 
@@ -36,6 +37,8 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   let destroyed = false;
 
   let loader: PageLoader | null = null;
+  let prefetch: PrefetchScheduler | null = null;
+  let cappedNotified = false;
   let resizeObserver: ResizeObserver | null = null;
 
   const root = container.ownerDocument.createElement('div');
@@ -76,11 +79,14 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   const retainWindow = () => {
     if (!loader) return;
     const keep = new Set<number>();
-    for (let d = -settings.preloadBehind; d <= settings.preloadAhead; d++) {
+    const span = Math.max(settings.preloadBehind, 1);
+    const ahead = Math.max(settings.preloadAhead, 1);
+    for (let d = -span; d <= ahead; d++) {
       const sp = spreads[clampSpreadIndex(spreads, current + d)];
       sp?.pages.forEach((p) => keep.add(p));
     }
     loader.retain(keep);
+    prefetch?.update(spreads[current]?.leading ?? 0);
   };
 
   const applyFitStyle = (img: HTMLImageElement) => {
@@ -222,6 +228,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       settings.direction !== prev.direction ||
       settings.spreadOffset !== prev.spreadOffset;
     if (structural) rebuildSpreads();
+    prefetch?.setSettings(settings);
     render();
   }
 
@@ -235,11 +242,26 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       throw new Error(`createImageEngine: "${bookId}" is a ${m.type} book, not an image book`);
     }
     manifest = m;
+    if (settings.loadingMethod === 'bitmap') {
+      // bitmap decode path is M0.5; fall back so preload/all stay memory-safe.
+      console.warn('[pore] loadingMethod "bitmap" not implemented yet — using "blob"');
+    }
     loader = new PageLoader({
       source,
       bookId,
       loadingMethod: settings.loadingMethod === 'bitmap' ? 'blob' : settings.loadingMethod,
       onState: (index, state) => emitter.emit('reader:loadingstate', { index, state }),
+    });
+    prefetch = new PrefetchScheduler({
+      loader,
+      pages: m.pages,
+      ...(m.chapters ? { chapters: m.chapters } : {}),
+      settings,
+      onCapped: () => {
+        if (cappedNotified) return;
+        cappedNotified = true;
+        emitter.emit('reader:error', { error: 'preload-all-capped' });
+      },
     });
 
     rebuildSpreads(0);
@@ -269,14 +291,22 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     render();
   }
 
+  function on<E extends keyof ImageEngineEvents>(
+    event: E,
+    handler: (payload: ImageEngineEvents[E]) => void,
+  ): () => void {
+    return emitter.on(event, handler);
+  }
+
   function destroy(): void {
     destroyed = true;
     root.removeEventListener('keydown', onKeyDown);
     resizeObserver?.disconnect();
+    prefetch?.destroy();
     loader?.destroy();
     emitter.clear();
     root.remove();
   }
 
-  return { mount, goto, turn, setSettings, setKeymap, on: emitter.on.bind(emitter), destroy };
+  return { mount, goto, turn, setSettings, setKeymap, on, destroy };
 }

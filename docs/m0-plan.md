@@ -65,18 +65,18 @@ _(continuous layouts fall back to paged-single until T5)_
 
 ## T3 — Preload (window + all) + loading states · M
 
-- [ ] `preloadStrategy: 'window'`: ring buffer `[current - preloadBehind, current + preloadAhead]` (2 / 4)
-- [ ] `AbortController` per request; cancel on window move (rapid flip test)
-- [ ] LRU (~12) of raw blobs to skip refetch on back-nav
-- [ ] Object URL lifecycle: revoke on eviction, never revoke an in-view page
-- [ ] `preloadStrategy: 'all'`: enqueue whole chapter, order active→end→start, ~6 concurrent, decode stays lazy (spec §5.2)
-- [ ] Byte guard: up-front estimate from manifest `width×height` → skip `all` if over `preloadAllMaxMB`; running blob-byte total → stop + hand off to `window` on crossing; reset per chapter
-- [ ] `bitmap` + `all` → force `blob` + warn
-- [ ] Webtoon: no special-casing — byte guard is the only limit
-- [ ] Per-index state machine → `reader:loadingstate` (`idle`/`loading`/`loaded`/`error`); `reader:error { error: 'preload-all-capped' }`
-- [ ] Vitest: flipping 1→10 rapidly issues ≤ window-size live fetches (window); `all` enqueues every page in order and halts at the MB cap
+- [x] `PrefetchScheduler` window: ring buffer `[cur-behind, cur+ahead]`, clamped, skips already-loaded
+- [x] `PageLoader` `AbortController` per request; `retain()` aborts in-flight loads outside the set
+- [x] LRU (`keepExtra`, default 12) of loaded object URLs beyond the retain window → no refetch on back-nav
+- [x] Object URL lifecycle: revoked on drop/destroy, never while retained or in the LRU
+- [x] `all`: whole-chapter queue, active→end→start, concurrency 6, decode stays lazy (loader only fetches)
+- [x] Byte guard: up-front `width×height×0.5` estimate (or ~0.6 MB/page assumed) → refuse over cap; running byte total → halt + `onCapped('runtime')`; re-armed per chapter
+- [x] `bitmap` → `console.warn` + `blob` fallback (bitmap path is M0.5)
+- [x] Webtoon: no special-casing — byte guard only
+- [x] `reader:loadingstate` per index; `reader:error { error: 'preload-all-capped' }` once
+- [x] Vitest (5): window ring + clamp; `all` ordering; estimate refusal; runtime halt
 
-**Done when:** `window` flipping never queues 50 requests; `all` on a short chapter fetches everything ahead of the reader and respects the MB guard on a large one.
+**Done when:** `window` flipping never queues 50 requests; `all` fetches ahead and respects the MB guard. ✅ done 2026-08-28
 
 ---
 

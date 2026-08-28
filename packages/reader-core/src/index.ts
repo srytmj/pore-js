@@ -33,6 +33,9 @@ export type { ImageEngine, ImageEngineOptions, Unsubscribe } from './image/engin
 export { createImageEngine, physicalToLogical } from './image/create-image-engine.js';
 export { buildSpreads, spreadIndexForPage } from './image/spreads.js';
 export type { Spread } from './image/spreads.js';
+export { PageLoader } from './image/page-loader.js';
+export { PrefetchScheduler } from './image/prefetch.js';
+export type { PreloadSettings } from './image/prefetch.js';
 export { resolveSettings, resolveKeymap, mergeSettings, mergeKeymap } from './settings/merge.js';
 
 export { DemoSource } from './source/demo-source.js';
