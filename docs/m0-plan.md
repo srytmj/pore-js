@@ -61,17 +61,20 @@ The first thing on screen.
 
 ---
 
-## T3 — Preload ring buffer + loading states · M
+## T3 — Preload (window + all) + loading states · M
 
-- [ ] Ring buffer: fetch+decode `[current - preloadBehind, current + preloadAhead]` (2 / 4)
+- [ ] `preloadStrategy: 'window'`: ring buffer `[current - preloadBehind, current + preloadAhead]` (2 / 4)
 - [ ] `AbortController` per request; cancel on window move (rapid flip test)
 - [ ] LRU (~12) of raw blobs to skip refetch on back-nav
 - [ ] Object URL lifecycle: revoke on eviction, never revoke an in-view page
-- [ ] Per-index state machine → `reader:loadingstate` (`idle`/`loading`/`loaded`/`error`)
-- [ ] Error handling: failed page shows retry affordance (engine emits, shell renders later — for now a placeholder)
-- [ ] Vitest: flipping 1→10 rapidly issues ≤ window-size live fetches; the rest abort
+- [ ] `preloadStrategy: 'all'`: enqueue whole chapter, order active→end→start, ~6 concurrent, decode stays lazy (spec §5.2)
+- [ ] Byte guard: up-front estimate from manifest `width×height` → skip `all` if over `preloadAllMaxMB`; running blob-byte total → stop + hand off to `window` on crossing; reset per chapter
+- [ ] `bitmap` + `all` → force `blob` + warn
+- [ ] Webtoon: no special-casing — byte guard is the only limit
+- [ ] Per-index state machine → `reader:loadingstate` (`idle`/`loading`/`loaded`/`error`); `reader:error { error: 'preload-all-capped' }`
+- [ ] Vitest: flipping 1→10 rapidly issues ≤ window-size live fetches (window); `all` enqueues every page in order and halts at the MB cap
 
-**Done when:** flipping fast never queues 50 requests; adjacent pages appear instantly.
+**Done when:** `window` flipping never queues 50 requests; `all` on a short chapter fetches everything ahead of the reader and respects the MB guard on a large one.
 
 ---
 

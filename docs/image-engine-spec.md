@@ -148,10 +148,12 @@ interface ImageEngineSettings {
   autoScrollOffset: number; // px
 
   // --- Performance ---
-  preload: boolean;
+  preload: boolean; // master on/off
+  preloadStrategy: 'window' | 'all'; // ring buffer vs whole-chapter (default 'window')
+  preloadAhead: number; // strategy 'window': pages ahead, default 4
+  preloadBehind: number; // strategy 'window': pages behind, default 2
+  preloadAllMaxMB: number; // strategy 'all': byte guard, default 512
   loadingMethod: 'native' | 'blob' | 'bitmap'; // <img src=url> | <img src=blobURL> | createImageBitmap off-thread
-  preloadAhead: number; // default 4
-  preloadBehind: number; // default 2
 }
 ```
 
@@ -226,11 +228,43 @@ We keep the enum internally; the settings UI _may_ present the two-checkbox form
 
 ## 5. Preloading & Loading Method
 
-### 5.1 Ring buffer
+`preload: false` disables all speculative fetching — only the visible page(s) load.
+With `preload: true`, `preloadStrategy` picks between two policies.
+
+### 5.1 `preloadStrategy: 'window'` (default) — ring buffer
 
 - Maintain decoded pages for indices `[current - preloadBehind, current + preloadAhead]` (defaults 2 / 4).
 - On rapid navigation, **cancel** in-flight fetches/decodes that fall outside the new window (`AbortController` per request).
 - Evict decoded bitmaps outside the window; keep a small LRU (e.g. last 12) of raw blobs to avoid refetch on back-navigation.
+- Safe for long webtoon chapters and low-memory devices. This is the default.
+
+### 5.2 `preloadStrategy: 'all'` — whole chapter
+
+- Once the manifest is read, enqueue a fetch for **every page in the current
+  chapter** (or the whole book if it has no chapter grouping).
+- **Fetch order:** active page → forward to chapter end → then backward to
+  chapter start. Concurrency capped (~6 parallel requests) so the active-page
+  path is never starved.
+- **Decode stays lazy** — pages are held as `Blob`s (or object URLs); each is
+  decoded only when it enters/nears the viewport. Holding blobs is cheap; holding
+  hundreds of decoded bitmaps is not.
+- **Webtoon is fine here** — a tall-panel chapter is just more blobs, and the
+  byte guard below is the only limit. No webtoon-specific fallback.
+- **Byte guard (`preloadAllMaxMB`, default 512):**
+  - If manifest pages carry `width`/`height`, estimate total bytes up front; if
+    the estimate exceeds the cap, don't start `all` — fall back to `window` and
+    emit `reader:error { error: 'preload-all-capped' }` (Shell shows a notice).
+  - Regardless of estimate, track the **running total of fetched blob bytes**; on
+    crossing `preloadAllMaxMB`, stop enqueuing new fetches and let the `window`
+    ring buffer take over from the current position. Already-fetched blobs stay.
+  - Crossing a chapter boundary resets the running total and re-arms `all` for
+    the new chapter.
+- **`bitmap` + `all` is disallowed** (memory). If both are set, `all` runs with
+  `blob` loading and a console warning.
+- New-chapter transition (via `nextChapterAfterLastPage`) triggers a fresh `all`
+  pass for that chapter.
+
+### 5.3 Loading method (`loadingMethod`)
 
 ### 5.2 Loading method (`loadingMethod`)
 
@@ -240,7 +274,9 @@ We keep the enum internally; the settings UI _may_ present the two-checkbox form
 | **blob**   | fetch → `Blob` → `URL.createObjectURL` → `<img>`                                                            | Works with auth headers / signed URLs; explicit lifecycle; revoke on evict |
 | **bitmap** | fetch → `createImageBitmap` (off main thread) → draw to `<canvas>` or `<img>` via `transferFromImageBitmap` | Smoothest large-page decode; higher memory; canvas path needed             |
 
-Default: `blob` (matches platform's signed media URLs). `bitmap` recommended for `original`/`smart` at high zoom.
+Default: `blob` (matches platform's signed media URLs, and is the only method
+compatible with `preloadStrategy: 'all'`). `bitmap` recommended for
+`original`/`smart` at high zoom.
 
 Rendering baseline: native `<img>` with `decoding="async"`. Switch the _current_ page to `<canvas>` only when zoomed > 1× (perf) or when `loadingMethod = bitmap`.
 

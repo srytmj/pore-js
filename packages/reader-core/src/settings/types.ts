@@ -62,9 +62,11 @@ export interface ImageEngineSettings {
 
   // performance
   preload: boolean;
-  loadingMethod: 'native' | 'blob' | 'bitmap';
+  preloadStrategy: 'window' | 'all';
   preloadAhead: number;
   preloadBehind: number;
+  preloadAllMaxMB: number;
+  loadingMethod: 'native' | 'blob' | 'bitmap';
 }
 
 export const DEFAULT_IMAGE_SETTINGS: ImageEngineSettings = {
@@ -107,7 +109,9 @@ export const DEFAULT_IMAGE_SETTINGS: ImageEngineSettings = {
   autoScrollOffset: 0,
 
   preload: true,
-  loadingMethod: 'blob',
+  preloadStrategy: 'window',
   preloadAhead: 4,
   preloadBehind: 2,
+  preloadAllMaxMB: 512,
+  loadingMethod: 'blob',
 };
