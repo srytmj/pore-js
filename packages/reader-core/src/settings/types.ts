@@ -7,10 +7,9 @@
  *   global only          → behavior, keymap, filters
  */
 
-export type LayoutMode =
-  'paged-single' | 'paged-double' | 'continuous-vertical' | 'continuous-horizontal';
+import type { Direction, FitMode, LayoutMode } from '../types.js';
 
-export type FitMode = 'width' | 'height' | 'contain' | 'original' | 'smart';
+export type { FitMode, LayoutMode };
 
 export interface ProgressBarSettings {
   style: 'hidden' | 'lightbar' | 'normal';
@@ -22,7 +21,7 @@ export interface ProgressBarSettings {
 export interface ImageEngineSettings {
   // layout
   layout: LayoutMode;
-  direction: 'ltr' | 'rtl' | 'vertical';
+  direction: Direction;
   spreadOffset: 0 | 1;
   pageGap: number;
 

@@ -1,7 +1,7 @@
 import type { Position } from '../position/types.js';
+import type { Direction, LayoutMode, Variant } from '../types.js';
 
-export type Direction = 'ltr' | 'rtl' | 'vertical';
-export type Variant = 'orig' | 'w800' | 'w1600' | 'webp';
+export type { Direction, Variant };
 
 export interface ImagePage {
   index: number;
@@ -20,8 +20,7 @@ export interface ImageManifest {
   pageCount: number;
   pages: ImagePage[];
   chapters?: { id: string; label: string; startIndex: number }[];
-  preferredLayout?:
-    'paged-single' | 'paged-double' | 'continuous-vertical' | 'continuous-horizontal';
+  preferredLayout?: LayoutMode;
 }
 
 export interface TextManifest {

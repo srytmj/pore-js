@@ -19,11 +19,12 @@ Close the gaps flagged after the scaffold so downstream tasks build on stable ty
 
 - [x] `ImageManifest` uses `type: 'image'` (not `kind`); `pageCount` present
 - [x] `ImagePage` carries metadata only; bytes come from `source.getPage`
-- [ ] Move `LayoutMode`, `FitMode`, `Direction` to a single `types.ts` re-exported everywhere
-- [ ] `reader-core` exports reviewed against spec §10 (`mount`, `goto`, `turn`, `setSettings`, `setKeymap`, `destroy`, `on`)
-- [ ] ADR note in `docs/adr/0001-core-surface.md`
+- [x] `LayoutMode`, `FitMode`, `Direction`, `Variant`, `TurnDirection` in `src/types.ts`, re-exported everywhere
+- [x] `ImageEngine` interface frozen (`mount`/`goto`/`turn`/`setSettings`/`setKeymap`/`on`/`destroy`); typed `createEmitter`
+- [x] `reader-core` barrel reviewed against spec §10
+- [x] ADR `docs/adr/0001-core-surface.md`
 
-**Done when:** `pnpm typecheck` green; the public API of `reader-core` matches spec §10 on paper (implementations still stubbed).
+**Done when:** `pnpm typecheck` green; the public API of `reader-core` matches spec §10 on paper (implementations still stubbed). ✅ done 2026-08-28
 
 ---
 
