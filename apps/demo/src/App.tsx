@@ -21,7 +21,10 @@ export function App() {
       container: host,
       source,
       bookId,
-      settings: bookId === 'demo-manga' ? { layout: 'paged-double', direction: 'rtl' } : {},
+      settings:
+        bookId === 'demo-manga'
+          ? { layout: 'paged-double', direction: 'rtl' }
+          : { layout: 'continuous-vertical' },
     });
     engineRef.current = engine;
     engine.on('reader:locationchange', (p) => setLoc({ page: p.page, label: p.label }));

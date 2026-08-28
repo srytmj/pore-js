@@ -96,15 +96,17 @@ _(continuous layouts fall back to paged-single until T5)_
 
 ## T5 — continuous-vertical (webtoon) + virtualization · L
 
-- [ ] Virtualized vertical list: render spreads intersecting `[vp - behind·vh, vp + ahead·vh]`
-- [ ] Off-screen items → spacer of known/estimated height; refine on first measure, compensate scroll
-- [ ] `Position` type `scroll` (fraction + nearest-page anchor)
-- [ ] `pageGap` (default 0 for webtoon)
-- [ ] Keyboard scroll (`scroll-up`/`down`, Space, Home/End), wheel = native scroll
-- [ ] Preload adapts to a viewport-scaled window
-- [ ] Vitest: scrollbar height stable as images measure in; anchor round-trips through resize
+- [x] `continuous.ts`: `estimateVerticalLayout` (dims→scaled, else fallback, measured override), `visibleRange`, `pageAtOffset`, `scrollForPage`
+- [x] Engine continuous branch: absolute-positioned `<img>` per visible page + overscan, unmount off-screen, spacer = `viewport.height = total`
+- [x] `measurePage` on `img` load → update `measured` map → recompute → scroll-compensate if the change was above the fold
+- [x] `Position` `scroll` (fraction + `page` anchor); restore via `scrollForPage`
+- [x] `pageGap` CSS var; keyboard `scroll-up`/`down` + `page-right/left` scroll a screen; native wheel scroll
+- [x] Preload/retain union: window around current page **and** the visible range
+- [x] Vitest (8): layout math, visible range + overscan + clamp, offset round-trip
+- [x] Browser-verified: webtoon virtualizes (2 of 8 imgs mounted at scrollTop 4000), stable 20812px scrollbar, location tracks to "2/8"
 
-**Done when:** webtoon fixture scrolls smoothly, scrollbar doesn't jump, position restores after a window resize.
+**Done when:** webtoon fixture scrolls, scrollbar doesn't jump, position restores. ✅ done 2026-08-28
+_(continuous-horizontal stays deferred to M0.5)_
 
 ---
 

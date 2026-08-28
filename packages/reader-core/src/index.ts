@@ -33,6 +33,13 @@ export type { ImageEngine, ImageEngineOptions, Unsubscribe } from './image/engin
 export { createImageEngine, physicalToLogical } from './image/create-image-engine.js';
 export { buildSpreads, spreadIndexForPage, isNaturallyWide } from './image/spreads.js';
 export type { Spread } from './image/spreads.js';
+export {
+  estimateVerticalLayout,
+  visibleRange,
+  pageAtOffset,
+  scrollForPage,
+} from './image/continuous.js';
+export type { VerticalLayout } from './image/continuous.js';
 export { PageLoader } from './image/page-loader.js';
 export { PrefetchScheduler } from './image/prefetch.js';
 export type { PreloadSettings } from './image/prefetch.js';
