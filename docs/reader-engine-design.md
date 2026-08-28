@@ -20,8 +20,8 @@
 A **source-agnostic web reader** for manga (image-based) and text (EPUB, PDF,
 CBZ). Built from scratch rather than wrapping an existing library, because:
 
-- No JS reader library cleanly covers *both* image manga (RTL, webtoon,
-  double-page spread) *and* reflowable text with the UX and theming control we
+- No JS reader library cleanly covers _both_ image manga (RTL, webtoon,
+  double-page spread) _and_ reflowable text with the UX and theming control we
   want, in one coherent shell.
 - The rendering + pagination engine is the point — it is the frontend
   engineering showcase.
@@ -34,12 +34,12 @@ CBZ). Built from scratch rather than wrapping an existing library, because:
 
 ### What "build our own" actually means
 
-| Format | Approach | Effort |
-|---|---|---|
-| Manga / images | 100% custom | Low–medium. Genuinely worth it. |
-| CBZ | Unzip client-side → feed the manga renderer | Trivial |
-| EPUB | **Custom pagination engine** (sandboxed iframe + CSS columns) | High. This is the real work. |
-| PDF | Wrap **pdf.js**, own navigation/theming shell | Low–medium |
+| Format         | Approach                                                      | Effort                          |
+| -------------- | ------------------------------------------------------------- | ------------------------------- |
+| Manga / images | 100% custom                                                   | Low–medium. Genuinely worth it. |
+| CBZ            | Unzip client-side → feed the manga renderer                   | Trivial                         |
+| EPUB           | **Custom pagination engine** (sandboxed iframe + CSS columns) | High. This is the real work.    |
+| PDF            | Wrap **pdf.js**, own navigation/theming shell                 | Low–medium                      |
 
 ---
 
@@ -103,34 +103,46 @@ pore.js/
 interface ReaderSource {
   getManifest(bookId: string): Promise<Manifest>;
   // image books
-  getPage(bookId: string, index: number, opts?: { variant?: Variant; signal?: AbortSignal }):
-    Promise<Blob | string>;                 // Blob or ready-to-use URL
+  getPage(
+    bookId: string,
+    index: number,
+    opts?: { variant?: Variant; signal?: AbortSignal },
+  ): Promise<Blob | string>; // Blob or ready-to-use URL
   // text books
-  getFile(bookId: string, opts?: { signal?: AbortSignal }): Promise<Blob>;  // whole epub/pdf/cbz
+  getFile(bookId: string, opts?: { signal?: AbortSignal }): Promise<Blob>; // whole epub/pdf/cbz
   // progress
   loadProgress(bookId: string): Promise<Position | null>;
   saveProgress(bookId: string, p: Position): Promise<void>;
 }
 
 type Manifest =
-  | { type: "image"; pageCount: number; direction: Direction;
+  | {
+      type: 'image';
+      pageCount: number;
+      direction: Direction;
       chapters?: { id: string; label: string; startIndex: number }[];
-      pages: { index: number; width?: number; height?: number;
-               isWide?: boolean; chapterId?: string }[] }
-  | { type: "epub" | "pdf" | "cbz"; bytes?: number; etag?: string };
+      pages: {
+        index: number;
+        width?: number;
+        height?: number;
+        isWide?: boolean;
+        chapterId?: string;
+      }[];
+    }
+  | { type: 'epub' | 'pdf' | 'cbz'; bytes?: number; etag?: string };
 
-type Direction = "ltr" | "rtl" | "vertical";
-type Variant = "orig" | "w800" | "w1600" | "webp";
+type Direction = 'ltr' | 'rtl' | 'vertical';
+type Variant = 'orig' | 'w800' | 'w1600' | 'webp';
 ```
 
 Built-in implementations shipped in `reader-core`:
 
-| Source | Use |
-|---|---|
-| `WhiteArchiveSource(baseUrl, auth)` | Talks to Platform §10 API. The real one. |
-| `LocalFileSource(File)` | User drops an `.epub` / `.cbz` / `.pdf` / folder of images. |
-| `DemoSource()` | Serves the bundled `fixtures/`. Powers the public demo + tests. |
-| `OpdsSource(url)` (later) | Read-only, for any OPDS server directly. |
+| Source                              | Use                                                             |
+| ----------------------------------- | --------------------------------------------------------------- |
+| `WhiteArchiveSource(baseUrl, auth)` | Talks to Platform §10 API. The real one.                        |
+| `LocalFileSource(File)`             | User drops an `.epub` / `.cbz` / `.pdf` / folder of images.     |
+| `DemoSource()`                      | Serves the bundled `fixtures/`. Powers the public demo + tests. |
+| `OpdsSource(url)` (later)           | Read-only, for any OPDS server directly.                        |
 
 Everything above the source is source-blind.
 
@@ -142,9 +154,9 @@ Everything above the source is source-blind.
 
 ```ts
 type Position =
-  | { type: "page";   value: number; total: number }              // image, pdf
-  | { type: "anchor"; spine: number; block: number; offset: number; percent: number }  // epub
-  | { type: "scroll"; value: number; total: number }              // webtoon
+  | { type: 'page'; value: number; total: number } // image, pdf
+  | { type: 'anchor'; spine: number; block: number; offset: number; percent: number } // epub
+  | { type: 'scroll'; value: number; total: number }; // webtoon
 ```
 
 ### EPUB: why `anchor`, not raw CFI
@@ -173,7 +185,7 @@ nearest page; re-derived after layout so it survives image-height changes.
 ### Last-read checkpoint (resume)
 
 The reader **never restarts from page 1** for a book the user has opened before.
-On mount the engine calls `source.loadProgress` *before first paint* and restores
+On mount the engine calls `source.loadProgress` _before first paint_ and restores
 to the returned `Position` (skeleton until resolved, no flash of page 1). Restore
 resolution + cross-device / offline behaviour is specified in
 [`image-engine-spec.md` §2.2.1](image-engine-spec.md); the text engine follows the
@@ -189,12 +201,12 @@ same contract via `anchor` resolution (§7).
 
 ### Layout modes
 
-| Mode | Notes |
-|---|---|
-| **Paged — single** | One page fills the viewport per fit mode. |
-| **Paged — double spread** | Two pages side by side, paired per direction. Wide pages (aspect > 1, or explicit `isWide`) render solo, centered. `spreadOffset` (0/1) shifts pairing to fix misaligned spreads mid-book without editing page data. |
-| **Continuous vertical (webtoon)** | Virtualized list; images stream in; `pageGap` configurable (0 for true webtoon). |
-| **Continuous horizontal** | Same, horizontal; flow respects RTL. |
+| Mode                              | Notes                                                                                                                                                                                                                |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Paged — single**                | One page fills the viewport per fit mode.                                                                                                                                                                            |
+| **Paged — double spread**         | Two pages side by side, paired per direction. Wide pages (aspect > 1, or explicit `isWide`) render solo, centered. `spreadOffset` (0/1) shifts pairing to fix misaligned spreads mid-book without editing page data. |
+| **Continuous vertical (webtoon)** | Virtualized list; images stream in; `pageGap` configurable (0 for true webtoon).                                                                                                                                     |
+| **Continuous horizontal**         | Same, horizontal; flow respects RTL.                                                                                                                                                                                 |
 
 Reference names: MangaDex "Single / Double / Long Strip / Wide Strip".
 
@@ -209,7 +221,7 @@ persisted across page turns except in `smart` mode.
 ### Direction
 
 `ltr` · `rtl` (manga default) · `vertical`. Affects page-turn direction, spread
-pairing, and gesture mapping. Keyboard "turn page right/left" are *physical*;
+pairing, and gesture mapping. Keyboard "turn page right/left" are _physical_;
 core maps physical → logical via `direction`. Taken from the manifest,
 user-overridable (per-book).
 
@@ -277,10 +289,22 @@ The proven approach (epub.js / foliate-js lineage), reimplemented:
   style isolation.
 - Inject a **user stylesheet** into the iframe:
   ```css
-  html { column-width: <viewportWidth>px; column-gap: <gap>px; height: <viewportHeight>px;
-         overflow: hidden; }
-  body { margin: 0; padding: <margins>; }
-  img, svg, table { max-width: 100%; break-inside: avoid; }
+  html {
+    column-width: <viewportWidth>px;
+    column-gap: <gap>px;
+    height: <viewportHeight>px;
+    overflow: hidden;
+  }
+  body {
+    margin: 0;
+    padding: <margins>;
+  }
+  img,
+  svg,
+  table {
+    max-width: 100%;
+    break-inside: avoid;
+  }
   ```
   CSS multicol turns one tall document into N side-by-side columns; paginating =
   translating the scroll position by `pageWidth` increments.
@@ -297,12 +321,12 @@ The proven approach (epub.js / foliate-js lineage), reimplemented:
 - User controls: font family (bundled + embedded), size, line-height, text-align
   (justify toggle), margins, column count (1 or 2), theme (light / sepia / dark /
   black-OLED).
-- Injected as a **layered user stylesheet**, *not* blanket `!important`. Target
+- Injected as a **layered user stylesheet**, _not_ blanket `!important`. Target
   common selectors (`body, p, div, li, ...`) at low specificity; let deliberate
   author styling (drop caps, poem indentation) survive. Provide a "publisher
   styles off" switch that raises the gloves for stubborn books.
 - Dark theme: don't just invert — set `color` / `background`, and use
-  `filter: invert() hue-rotate()` *only* on images the user opts to dim.
+  `filter: invert() hue-rotate()` _only_ on images the user opts to dim.
 
 ### Writing modes
 
@@ -397,8 +421,10 @@ The proven approach (epub.js / foliate-js lineage), reimplemented:
 <ReaderProvider source={waSource}>
   <Reader
     bookId={id}
-    onPositionChange={(p) => {/* host may mirror to its own store */}}
-    initialSettings={{ theme: "sepia" }}
+    onPositionChange={(p) => {
+      /* host may mirror to its own store */
+    }}
+    initialSettings={{ theme: 'sepia' }}
   />
 </ReaderProvider>
 ```
@@ -413,15 +439,15 @@ The proven approach (epub.js / foliate-js lineage), reimplemented:
 
 ## 12. Known risks
 
-| Risk | Stance for v1 |
-|---|---|
-| EPUB pagination edge cases (nested floats, huge tables, MathML, fixed-layout EPUB) | v1 targets **reflowable** EPUB. Fixed-layout (many kids' books, some manga-as-epub) is detected and shown page-image style or deferred. |
-| CSS multicol performance on 400-page chapters | Paginate per spine item, not per book; most spine items are one chapter. Virtualize the spine. |
-| Theming overrides fighting publisher CSS | Layered low-specificity sheet + "publisher styles off" escape hatch. Accept it won't be perfect for every book. |
-| pdf.js bundle size | Lazy chunk; only loaded for PDF books. |
-| Anchor drift when a book is re-synced with different internal ids | `percent` fallback; anchors are best-effort, not guaranteed. |
-| Scope: this is a large frontend project | Vertical slices (§14); the image engine ships first and is genuinely small. |
-| Reimplementing what foliate-js already does well | Conscious choice for the showcase + unified shell. Study foliate-js source as prior art; don't copy-paste its license-incompatible bits. |
+| Risk                                                                               | Stance for v1                                                                                                                            |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| EPUB pagination edge cases (nested floats, huge tables, MathML, fixed-layout EPUB) | v1 targets **reflowable** EPUB. Fixed-layout (many kids' books, some manga-as-epub) is detected and shown page-image style or deferred.  |
+| CSS multicol performance on 400-page chapters                                      | Paginate per spine item, not per book; most spine items are one chapter. Virtualize the spine.                                           |
+| Theming overrides fighting publisher CSS                                           | Layered low-specificity sheet + "publisher styles off" escape hatch. Accept it won't be perfect for every book.                          |
+| pdf.js bundle size                                                                 | Lazy chunk; only loaded for PDF books.                                                                                                   |
+| Anchor drift when a book is re-synced with different internal ids                  | `percent` fallback; anchors are best-effort, not guaranteed.                                                                             |
+| Scope: this is a large frontend project                                            | Vertical slices (§14); the image engine ships first and is genuinely small.                                                              |
+| Reimplementing what foliate-js already does well                                   | Conscious choice for the showcase + unified shell. Study foliate-js source as prior art; don't copy-paste its license-incompatible bits. |
 
 ---
 

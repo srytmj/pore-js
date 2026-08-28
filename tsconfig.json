@@ -1,0 +1,8 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/reader-core" },
+    { "path": "./packages/reader-react" },
+    { "path": "./apps/demo" }
+  ]
+}

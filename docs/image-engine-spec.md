@@ -44,9 +44,9 @@ This spec merges the original design doc with UX patterns observed in MangaDex a
 ```ts
 interface ImageManifest {
   bookId: string;
-  kind: "image";
+  kind: 'image';
   title: string;
-  direction: "ltr" | "rtl" | "vertical";   // author/source default
+  direction: 'ltr' | 'rtl' | 'vertical'; // author/source default
   pages: ImagePage[];
   // optional chapter grouping for "next chapter" behavior
   chapters?: { id: string; label: string; startIndex: number }[];
@@ -54,11 +54,11 @@ interface ImageManifest {
 }
 
 interface ImagePage {
-  index: number;                 // 0-based, global across the book
+  index: number; // 0-based, global across the book
   src: string | (() => Promise<Blob>); // URL or lazy loader
-  width?: number;                // intrinsic px, if known (enables no-CLS layout + spread pairing)
+  width?: number; // intrinsic px, if known (enables no-CLS layout + spread pairing)
   height?: number;
-  isWide?: boolean;              // explicit "display solo in double mode"; else derived from width/height
+  isWide?: boolean; // explicit "display solo in double mode"; else derived from width/height
   chapterId?: string;
 }
 ```
@@ -71,8 +71,8 @@ Unchanged from `reader-engine-design.md`:
 
 ```ts
 type Position =
-  | { type: "page"; value: number; total: number }      // paged image / PDF
-  | { type: "scroll"; value: number; total: number };    // continuous (webtoon)
+  | { type: 'page'; value: number; total: number } // paged image / PDF
+  | { type: 'scroll'; value: number; total: number }; // continuous (webtoon)
 ```
 
 - `page.value` is the **leading page index** of the current view (for double spread, the first page of the pair in reading order).
@@ -83,7 +83,7 @@ type Position =
 
 The reader must **never restart from page 1** if the user has opened the book before.
 
-- **On `mount`**: engine calls `source.loadProgress(bookId)` *before* first paint. If a `Position` returns, the engine restores to it and only then reveals content (brief skeleton, no flash of page 1).
+- **On `mount`**: engine calls `source.loadProgress(bookId)` _before_ first paint. If a `Position` returns, the engine restores to it and only then reveals content (brief skeleton, no flash of page 1).
 - **Restore resolution**:
   - `page` → clamp to `[0, total-1]`; if `total` changed (re-sync), scale by ratio and snap to nearest spread.
   - `scroll` → restore by the stored page anchor first, then fine-tune with the fraction; fall back to fraction alone if the anchored page no longer exists.
@@ -97,55 +97,55 @@ The reader must **never restart from page 1** if the user has opened the book be
 ```ts
 interface ImageEngineSettings {
   // --- Layout ---
-  layout: "paged-single" | "paged-double" | "continuous-vertical" | "continuous-horizontal";
-  direction: "ltr" | "rtl" | "vertical";
-  spreadOffset: 0 | 1;              // shift double-spread pairing by one page
-  pageGap: number;                  // px between pages (paged-double + continuous)
+  layout: 'paged-single' | 'paged-double' | 'continuous-vertical' | 'continuous-horizontal';
+  direction: 'ltr' | 'rtl' | 'vertical';
+  spreadOffset: 0 | 1; // shift double-spread pairing by one page
+  pageGap: number; // px between pages (paged-double + continuous)
 
   // --- Fit / sizing ---
-  fit: "width" | "height" | "contain" | "original" | "smart";
-  stretchSmallPages: boolean;       // upscale pages smaller than viewport
-  maxWidth: number | null;          // clamp px (null = no clamp)
+  fit: 'width' | 'height' | 'contain' | 'original' | 'smart';
+  stretchSmallPages: boolean; // upscale pages smaller than viewport
+  maxWidth: number | null; // clamp px (null = no clamp)
   maxHeight: number | null;
 
   // --- Interface (state only; Shell renders) ---
   headerVisible: boolean;
   progressBar: {
-    style: "hidden" | "lightbar" | "normal";
-    position: "bottom" | "left" | "right";
-    thickness: number;             // px
+    style: 'hidden' | 'lightbar' | 'normal';
+    position: 'bottom' | 'left' | 'right';
+    thickness: number; // px
     showPageCounterWhenHidden: boolean;
   };
-  cursorHint: "none" | "overlay" | "cursor";
-  background: "theme" | "white" | "black";
+  cursorHint: 'none' | 'overlay' | 'cursor';
+  background: 'theme' | 'white' | 'black';
 
   // --- Image filters ---
-  brightness: number;              // 0.2..1.0, multiplies
+  brightness: number; // 0.2..1.0, multiplies
   greyscale: boolean;
-  dim: boolean;                    // subtle dark overlay for OLED/night
+  dim: boolean; // subtle dark overlay for OLED/night
 
   // --- Behavior ---
-  tapToTurn: "directional" | "always-forward" | "never";
-  scrollToTurn: "off" | "wheel" | "keys" | "both";   // paged modes only
+  tapToTurn: 'directional' | 'always-forward' | 'never';
+  scrollToTurn: 'off' | 'wheel' | 'keys' | 'both'; // paged modes only
   doubleClickFullscreen: boolean;
-  nextChapterAfterLastPage: "off" | "instant" | 3 | 5 | 10;  // seconds
-  historyMode: "none" | "title" | "url-and-title";
+  nextChapterAfterLastPage: 'off' | 'instant' | 3 | 5 | 10; // seconds
+  historyMode: 'none' | 'title' | 'url-and-title';
 
   // --- Autoscroll (continuous) ---
   autoscroll: boolean;
-  autoscrollSpeed: number;         // px/s
-  autoscrollSmooth: boolean;       // true = continuous, false = one screen per tick at same rate
+  autoscrollSpeed: number; // px/s
+  autoscrollSmooth: boolean; // true = continuous, false = one screen per tick at same rate
   pagedAutoAdvanceSeconds: number; // 0 = off; timer flips pages in paged modes
 
   // --- Fit-change side effects ---
-  autoScrollUpOnFit: ("width" | "height" | "none")[];  // which fit modes reset scroll to top
-  autoScrollOffset: number;        // px
+  autoScrollUpOnFit: ('width' | 'height' | 'none')[]; // which fit modes reset scroll to top
+  autoScrollOffset: number; // px
 
   // --- Performance ---
   preload: boolean;
-  loadingMethod: "native" | "blob" | "bitmap";  // <img src=url> | <img src=blobURL> | createImageBitmap off-thread
-  preloadAhead: number;            // default 4
-  preloadBehind: number;           // default 2
+  loadingMethod: 'native' | 'blob' | 'bitmap'; // <img src=url> | <img src=blobURL> | createImageBitmap off-thread
+  preloadAhead: number; // default 4
+  preloadBehind: number; // default 2
 }
 ```
 
@@ -159,12 +159,12 @@ fields, `keymap`, and image filters are **global only**.
 
 ## 3. Layout Modes
 
-| Mode | Behavior | Position type |
-|---|---|---|
-| **paged-single** | One page per screen. Page-turn advances by 1. | `page` |
-| **paged-double** | Two adjacent pages side by side, paired per reading direction. Wide pages render solo. First page can render solo (cover) unless `spreadOffset` says otherwise. | `page` |
-| **continuous-vertical** | Virtualized vertical stream (webtoon). Pages stack top→bottom with `pageGap`. | `scroll` |
-| **continuous-horizontal** | Virtualized horizontal stream, flow respects `direction` (RTL = right→left). | `scroll` |
+| Mode                      | Behavior                                                                                                                                                        | Position type |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| **paged-single**          | One page per screen. Page-turn advances by 1.                                                                                                                   | `page`        |
+| **paged-double**          | Two adjacent pages side by side, paired per reading direction. Wide pages render solo. First page can render solo (cover) unless `spreadOffset` says otherwise. | `page`        |
+| **continuous-vertical**   | Virtualized vertical stream (webtoon). Pages stack top→bottom with `pageGap`.                                                                                   | `scroll`      |
+| **continuous-horizontal** | Virtualized horizontal stream, flow respects `direction` (RTL = right→left).                                                                                    | `scroll`      |
 
 Reference mapping: MangaDex "Single / Double / Long Strip / Wide Strip" →
 `paged-single` / `paged-double` / `continuous-vertical` / `continuous-horizontal`.
@@ -190,21 +190,22 @@ Reference mapping: MangaDex "Single / Double / Long Strip / Wide Strip" →
 
 ### 4.1 Fit modes
 
-| Mode | Definition |
-|---|---|
-| **width** | Page width = viewport width (minus margins). Vertical scroll if taller. |
-| **height** | Page height = viewport height. Horizontal centering; page-turn on overflow. |
-| **contain** | Fit entirely within viewport, preserve aspect. No scroll within page. |
-| **original** | Intrinsic pixel size (1:1), pan both axes. |
-| **smart** | `contain`, but allow zoom past 100% with pan; double-tap / `I` cycles zoom presets. |
+| Mode         | Definition                                                                          |
+| ------------ | ----------------------------------------------------------------------------------- |
+| **width**    | Page width = viewport width (minus margins). Vertical scroll if taller.             |
+| **height**   | Page height = viewport height. Horizontal centering; page-turn on overflow.         |
+| **contain**  | Fit entirely within viewport, preserve aspect. No scroll within page.               |
+| **original** | Intrinsic pixel size (1:1), pan both axes.                                          |
+| **smart**    | `contain`, but allow zoom past 100% with pan; double-tap / `I` cycles zoom presets. |
 
 Reference "Contain to width" + "Contain to height" checkboxes (independent booleans) map to our single `fit` enum:
+
 - width only → `width`
 - height only → `height`
 - both → `contain`
 - neither → `original`
 
-We keep the enum internally; the settings UI *may* present the two-checkbox form and translate.
+We keep the enum internally; the settings UI _may_ present the two-checkbox form and translate.
 
 `stretchSmallPages`, `maxWidth`, `maxHeight` clamp the computed size after fit.
 
@@ -227,15 +228,15 @@ We keep the enum internally; the settings UI *may* present the two-checkbox form
 
 ### 5.2 Loading method (`loadingMethod`)
 
-| Value | Mechanism | Trade-off |
-|---|---|---|
-| **native** | `<img src="<url>">`, `decoding="async"`, `loading` managed by engine | Simplest; browser cache; no cancel granularity on decode |
-| **blob** | fetch → `Blob` → `URL.createObjectURL` → `<img>` | Works with auth headers / signed URLs; explicit lifecycle; revoke on evict |
-| **bitmap** | fetch → `createImageBitmap` (off main thread) → draw to `<canvas>` or `<img>` via `transferFromImageBitmap` | Smoothest large-page decode; higher memory; canvas path needed |
+| Value      | Mechanism                                                                                                   | Trade-off                                                                  |
+| ---------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **native** | `<img src="<url>">`, `decoding="async"`, `loading` managed by engine                                        | Simplest; browser cache; no cancel granularity on decode                   |
+| **blob**   | fetch → `Blob` → `URL.createObjectURL` → `<img>`                                                            | Works with auth headers / signed URLs; explicit lifecycle; revoke on evict |
+| **bitmap** | fetch → `createImageBitmap` (off main thread) → draw to `<canvas>` or `<img>` via `transferFromImageBitmap` | Smoothest large-page decode; higher memory; canvas path needed             |
 
 Default: `blob` (matches platform's signed media URLs). `bitmap` recommended for `original`/`smart` at high zoom.
 
-Rendering baseline: native `<img>` with `decoding="async"`. Switch the *current* page to `<canvas>` only when zoomed > 1× (perf) or when `loadingMethod = bitmap`.
+Rendering baseline: native `<img>` with `decoding="async"`. Switch the _current_ page to `<canvas>` only when zoomed > 1× (perf) or when `loadingMethod = bitmap`.
 
 ---
 
@@ -250,19 +251,20 @@ Rendering baseline: native `<img>` with `decoding="async"`. Switch the *current*
 
 ### 6.2 Input matrix
 
-| Input | Paged | Continuous |
-|---|---|---|
-| Arrow / A D / Num4 Num6 | turn ± (direction-aware) | scroll ± 1 screen |
-| W S / Num8 Num2 | (unused / zoomed pan) | scroll up / down |
-| Space / Shift+Space | turn forward / back | scroll down / up |
-| Home / End | first / last spread | scroll to top / bottom |
-| Wheel | turn if `scrollToTurn` ∈ {wheel, both}, else zoom w/ Ctrl | scroll |
-| Swipe | turn (direction-aware) | native scroll; horizontal swipe ignored |
-| Pinch / double-tap | zoom | zoom |
+| Input                       | Paged                                                             | Continuous                                      |
+| --------------------------- | ----------------------------------------------------------------- | ----------------------------------------------- |
+| Arrow / A D / Num4 Num6     | turn ± (direction-aware)                                          | scroll ± 1 screen                               |
+| W S / Num8 Num2             | (unused / zoomed pan)                                             | scroll up / down                                |
+| Space / Shift+Space         | turn forward / back                                               | scroll down / up                                |
+| Home / End                  | first / last spread                                               | scroll to top / bottom                          |
+| Wheel                       | turn if `scrollToTurn` ∈ {wheel, both}, else zoom w/ Ctrl         | scroll                                          |
+| Swipe                       | turn (direction-aware)                                            | native scroll; horizontal swipe ignored         |
+| Pinch / double-tap          | zoom                                                              | zoom                                            |
 | Tap left/center/right third | per `tapToTurn`: back / toggle chrome / forward (mirrored in RTL) | center = toggle chrome; edges = per `tapToTurn` |
-| Double-click | fullscreen if `doubleClickFullscreen` | same |
+| Double-click                | fullscreen if `doubleClickFullscreen`                             | same                                            |
 
 `tapToTurn`:
+
 - `directional` — left third = back, right third = forward (mirrored for RTL), center = chrome
 - `always-forward` — left & right both = forward, center = chrome
 - `never` — only center toggles chrome; edges do nothing
@@ -281,10 +283,10 @@ Rendering baseline: native `<img>` with `decoding="async"`. Switch the *current*
 
 ### 6.5 History mode
 
-| Value | Effect |
-|---|---|
-| `none` | URL and document.title never change on page turn |
-| `title` | `document.title` reflects `Ch X · p.Y` |
+| Value           | Effect                                                                                 |
+| --------------- | -------------------------------------------------------------------------------------- |
+| `none`          | URL and document.title never change on page turn                                       |
+| `title`         | `document.title` reflects `Ch X · p.Y`                                                 |
 | `url-and-title` | also `history.replaceState` the page into the URL; back/forward buttons navigate pages |
 
 Engine emits `reader:locationchange`; Shell (or host app) decides how to reflect it. Default `title`.
@@ -297,13 +299,23 @@ Engine emits `reader:locationchange`; Shell (or host app) decides how to reflect
 
 ```ts
 type ActionId =
-  | "toggle-menu" | "turn-forward" | "turn-back"
-  | "scroll-up" | "scroll-down"
-  | "chapter-forward" | "chapter-back"
-  | "toggle-fullscreen" | "cycle-fit" | "toggle-spread-offset"
-  | "first-page" | "last-page" | "toggle-autoscroll";
+  | 'toggle-menu'
+  | 'turn-forward'
+  | 'turn-back'
+  | 'scroll-up'
+  | 'scroll-down'
+  | 'chapter-forward'
+  | 'chapter-back'
+  | 'toggle-fullscreen'
+  | 'cycle-fit'
+  | 'toggle-spread-offset'
+  | 'first-page'
+  | 'last-page'
+  | 'toggle-autoscroll';
 
-interface Keymap { [action: ActionId]: string[] }  // e.g. { "turn-forward": ["ArrowRight","d","6"] }
+interface Keymap {
+  [action: ActionId]: string[];
+} // e.g. { "turn-forward": ["ArrowRight","d","6"] }
 ```
 
 - Multiple keys per action. A physical key binds to **one** action (last-write-wins with a warning).
@@ -329,15 +341,15 @@ Note: "turn page right/left" are **physical**; the engine maps physical→logica
 
 ```ts
 interface ImageEngineEvents {
-  "reader:ready": { manifest: ImageManifest };
-  "reader:resumed": { position: Position | null; page: number };
-  "reader:locationchange": { position: Position; page: number; chapter?: string; label: string };
-  "reader:layoutchange": { layout: LayoutMode; spreads: number };
-  "reader:loadingstate": { index: number; state: "idle" | "loading" | "loaded" | "error" };
-  "reader:end": { auto: "off" | "instant" | number };
-  "reader:start": {};
-  "reader:zoomchange": { scale: number };
-  "reader:error": { index?: number; error: unknown };
+  'reader:ready': { manifest: ImageManifest };
+  'reader:resumed': { position: Position | null; page: number };
+  'reader:locationchange': { position: Position; page: number; chapter?: string; label: string };
+  'reader:layoutchange': { layout: LayoutMode; spreads: number };
+  'reader:loadingstate': { index: number; state: 'idle' | 'loading' | 'loaded' | 'error' };
+  'reader:end': { auto: 'off' | 'instant' | number };
+  'reader:start': {};
+  'reader:zoomchange': { scale: number };
+  'reader:error': { index?: number; error: unknown };
 }
 ```
 
@@ -347,15 +359,15 @@ Progress persistence goes through `ReaderSource.saveProgress`; the engine never 
 
 ## 10. Core / React Split
 
-| Concern | `reader-core` | `reader-react` |
-|---|---|---|
-| Layout, virtualization, fit/zoom/pan, preload, input handling | ✅ imperative, mounts into a container ref | — |
-| Settings store (Zustand vanilla), persistence, per-book merge | ✅ | binds via hook |
-| Keymap resolution | ✅ | rebinding UI |
-| Progress model + debounced save | ✅ | — |
-| Event emitter | ✅ | `useReaderLocation`, `useReaderSettings` |
-| Chrome (bars, scrubber, countdown, settings panel) | — | ✅ |
-| Settings panel UI (the MangaDex-style tabbed modal) | — | ✅ (reads/writes core store) |
+| Concern                                                       | `reader-core`                              | `reader-react`                           |
+| ------------------------------------------------------------- | ------------------------------------------ | ---------------------------------------- |
+| Layout, virtualization, fit/zoom/pan, preload, input handling | ✅ imperative, mounts into a container ref | —                                        |
+| Settings store (Zustand vanilla), persistence, per-book merge | ✅                                         | binds via hook                           |
+| Keymap resolution                                             | ✅                                         | rebinding UI                             |
+| Progress model + debounced save                               | ✅                                         | —                                        |
+| Event emitter                                                 | ✅                                         | `useReaderLocation`, `useReaderSettings` |
+| Chrome (bars, scrubber, countdown, settings panel)            | —                                          | ✅                                       |
+| Settings panel UI (the MangaDex-style tabbed modal)           | —                                          | ✅ (reads/writes core store)             |
 
 Core exposes: `mount(el, { source, bookId, settings })`, `goto(target)`, `turn(dir)`, `setSettings(patch)`, `setKeymap(patch)`, `destroy()`, `on(event, cb)`.
 
@@ -373,7 +385,7 @@ mode, spread offset — the four controls used mid-read. Keybind editor, behavio
 filters, and progress-bar styling move to a tabbed panel in M0.5. Adding the panel
 later is pure `reader-react` work since core is already complete.
 
-*Trade-off accepted:* the M0 demo looks less polished than MangaDex.
+_Trade-off accepted:_ the M0 demo looks less polished than MangaDex.
 
 ### 11.2 `bitmap` loading path — **deferred to M0.5; `<img>` + `createImageBitmap` → canvas for the active page only, no worker**
 
@@ -388,14 +400,14 @@ large pages.
 
 `spreadOffset` is stored under `perBook[bookId]`. More broadly:
 
-| Scope | Settings |
-|---|---|
+| Scope                               | Settings                                       |
+| ----------------------------------- | ---------------------------------------------- |
 | **Per-book override** (over global) | everything in Layout + Fit groups, `direction` |
-| **Global only** | Behaviors, `keymap`, image filters |
+| **Global only**                     | Behaviors, `keymap`, image filters             |
 
-Rationale: layout/fit are properties of *the book* (a scanlation that starts on an
+Rationale: layout/fit are properties of _the book_ (a scanlation that starts on an
 even page, a webtoon that wants vertical+single); behaviors/keys/filters are
-properties of *the reader*.
+properties of _the reader_.
 
 ### 11.4 History `url-and-title` mode — **core emits, host executes**
 
