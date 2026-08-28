@@ -1,5 +1,9 @@
 # Pore.js — M0 Plan (Image Engine + DemoSource)
 
+**Status: ✅ COMPLETE (2026-08-28) — tagged `v0.1.0-m0`.** All of T0–T9 landed.
+Follow-ups: record a demo GIF, wire the deploy to `pore.suryatmaja.dev`, and the
+M0.5 backlog below.
+
 **Goal:** a deployable demo that reads bundled manga fixtures — paged
 (single/double) + continuous-vertical, LTR/RTL, fit/zoom/pan, preload, remappable
 keys + touch + click zones, and a **last-read checkpoint** that survives reload.
