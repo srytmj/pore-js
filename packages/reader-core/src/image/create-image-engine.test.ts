@@ -154,6 +154,40 @@ describe('createImageEngine (paged-single)', () => {
     engine.destroy();
   });
 
+  it('a center tap toggles chrome', async () => {
+    const container = document.createElement('div');
+    const engine = createImageEngine({ container, source: source(4), bookId: 'b' });
+    const chrome = collect(engine, 'reader:chrometoggle');
+    await engine.mount();
+    const el = container.querySelector('.pore-image')!;
+    // jsdom getBoundingClientRect is 0×0 → every tap resolves to the center zone
+    el.dispatchEvent(
+      new PointerEvent('pointerdown', { clientX: 5, clientY: 5, pointerId: 1, bubbles: true }),
+    );
+    el.dispatchEvent(
+      new PointerEvent('pointerup', { clientX: 5, clientY: 5, pointerId: 1, bubbles: true }),
+    );
+    expect(chrome.at(-1)?.visible).toBe(false); // headerVisible defaults true → toggled off
+    engine.destroy();
+  });
+
+  it('a wheel event turns the page when scrollToTurn is on', async () => {
+    const container = document.createElement('div');
+    const engine = createImageEngine({
+      container,
+      source: source(5),
+      bookId: 'b',
+      settings: { scrollToTurn: 'wheel' },
+    });
+    const loc = collect(engine, 'reader:locationchange');
+    await engine.mount();
+    container
+      .querySelector('.pore-image')!
+      .dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true }));
+    expect(loc.at(-1)?.page).toBe(1);
+    engine.destroy();
+  });
+
   it('rejects a non-image book', async () => {
     const fetch = vi.fn(
       async () => new Response(JSON.stringify({ pages: [] }), { status: 200 }),

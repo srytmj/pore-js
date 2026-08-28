@@ -32,6 +32,8 @@ export type { ImageEngineEvents, ImageEngineEventName, PageLoadState } from './i
 export type { ImageEngine, ImageEngineOptions, Unsubscribe } from './image/engine.js';
 export { createImageEngine, physicalToLogical } from './image/create-image-engine.js';
 export { buildSpreads, spreadIndexForPage, isNaturallyWide } from './image/spreads.js';
+export { zoneForPoint, resolveTap, swipeTurn, clampZoom } from './image/input.js';
+export type { TapZone, TapResult, TapToTurn } from './image/input.js';
 export type { Spread } from './image/spreads.js';
 export {
   estimateVerticalLayout,

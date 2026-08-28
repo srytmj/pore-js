@@ -114,15 +114,17 @@ _(continuous-horizontal stays deferred to M0.5)_
 
 Unify what T2–T5 stubbed.
 
-- [ ] Keyboard: `resolveAction` from `keymap`; physical→logical map via `direction`
-- [ ] Touch: swipe = turn (direction-aware), vertical swipe in continuous = scroll, pinch = zoom, double-tap = zoom toggle / fullscreen
-- [ ] Click zones: left/center/right thirds; `tapToTurn` = `directional`/`always-forward`/`never` (center always toggles chrome → emits `reader:chrometoggle`)
-- [ ] `scrollToTurn` in paged modes (`off`/`wheel`/`keys`/`both`)
-- [ ] Zoom/pan: 0.25×–5×, drag-pan when zoomed, `<canvas>` swap for active page > 1×
-- [ ] `cycle-fit`, `first-page`, `last-page`, `toggle-fullscreen` (Fullscreen API), Wake Lock while reading
-- [ ] Vitest + Playwright: rebinding a key takes effect; RTL swipe direction; click-zone thirds
+- [x] Keyboard: `resolveAction` + `physicalToLogical`; `setKeymap` merge (rebinding takes effect)
+- [x] `input.ts`: `zoneForPoint` (thirds), `resolveTap` (`tapToTurn` × direction), `swipeTurn` (direction-aware), `clampZoom` — pure & tested
+- [x] Pointer handlers: tap → zone → turn/chrome; horizontal swipe → turn (paged); vertical swipe = native scroll
+- [x] Click zones: center always `reader:chrometoggle`; edges per `tapToTurn`
+- [x] `scrollToTurn` `wheel`/`both` → wheel turns pages (paged); keys already turn
+- [x] Zoom/pan: 0.25×–5× via ctrl+wheel + double-tap toggle, drag-pan when zoomed, `translate+scale` on viewport, `reader:zoomchange`; reset on layout change
+- [x] `toggle-fullscreen` (Fullscreen API), `toggle-menu`, Wake Lock on mount + re-acquire on visibility
+- [x] Vitest (10): tap zones, resolveTap matrix, swipe direction, clampZoom; engine center-tap chrome + wheel-turn
 
-**Done when:** all of spec §6.2's input matrix works; keybind editor round-trips (even without the fancy UI).
+**Done when:** spec §6.2's input matrix works; keymap round-trips. ✅ done 2026-08-28
+_(`<canvas>` swap at zoom > 1× and pinch-zoom deferred to M0.5)_
 
 ---
 

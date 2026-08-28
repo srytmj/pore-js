@@ -23,11 +23,14 @@ import {
   visibleRange,
   type VerticalLayout,
 } from './continuous.js';
+import { clampZoom, resolveTap, swipeTurn, zoneForPoint } from './input.js';
 import { PageLoader } from './page-loader.js';
 import { PrefetchScheduler } from './prefetch.js';
 
 const FIT_CYCLE: ImageEngineSettings['fit'][] = ['contain', 'width', 'height', 'original', 'smart'];
 const OVERSCAN_PX = 1200;
+const TAP_SLOP = 10;
+const TAP_MS = 350;
 
 /** Translate a physical page-turn (screen direction) to a logical one. */
 export function physicalToLogical(
@@ -60,6 +63,13 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   let vlayout: VerticalLayout = { heights: [], offsets: [], total: 0 };
   const measured = new Map<number, number>();
   const mountedImgs = new Map<number, HTMLImageElement>();
+  // input state
+  let chromeVisible = settings.headerVisible;
+  let zoom = 1;
+  let panX = 0;
+  let panY = 0;
+  let pointer: { x: number; y: number; t: number; id: number } | null = null;
+  let wakeLock: WakeLockSentinel | null = null;
 
   const isContinuous = () => settings.layout === 'continuous-vertical';
 
@@ -252,6 +262,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       renderContinuous();
     } else {
       renderPaged();
+      applyZoom();
     }
     syncPrefetchAndRetain();
     emitLocation();
@@ -318,9 +329,125 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
         ev.preventDefault();
         setSettings({ spreadOffset: settings.spreadOffset === 1 ? 0 : 1 });
         break;
+      case 'toggle-fullscreen':
+        ev.preventDefault();
+        void toggleFullscreen();
+        break;
+      case 'toggle-menu':
+        ev.preventDefault();
+        toggleChrome();
+        break;
       default:
         break;
     }
+  };
+
+  const applyZoom = () => {
+    if (isContinuous()) return;
+    viewport.style.transform =
+      zoom === 1 && panX === 0 && panY === 0
+        ? ''
+        : `translate(${panX}px, ${panY}px) scale(${zoom})`;
+  };
+
+  const setZoom = (next: number, originX = 0.5, originY = 0.5) => {
+    const clamped = clampZoom(next);
+    if (clamped === zoom) return;
+    zoom = clamped;
+    if (zoom === 1) {
+      panX = 0;
+      panY = 0;
+    } else {
+      viewport.style.transformOrigin = `${originX * 100}% ${originY * 100}%`;
+    }
+    applyZoom();
+    emitter.emit('reader:zoomchange', { scale: zoom });
+  };
+
+  const toggleChrome = () => {
+    chromeVisible = !chromeVisible;
+    emitter.emit('reader:chrometoggle', { visible: chromeVisible });
+  };
+
+  const onPointerDown = (ev: PointerEvent) => {
+    pointer = { x: ev.clientX, y: ev.clientY, t: Date.now(), id: ev.pointerId };
+  };
+
+  const onPointerMove = (ev: PointerEvent) => {
+    if (!pointer || ev.pointerId !== pointer.id || zoom === 1) return;
+    panX += ev.clientX - pointer.x;
+    panY += ev.clientY - pointer.y;
+    pointer = { ...pointer, x: ev.clientX, y: ev.clientY };
+    applyZoom();
+  };
+
+  const onPointerUp = (ev: PointerEvent) => {
+    if (!pointer || ev.pointerId !== pointer.id) return;
+    const dx = ev.clientX - pointer.x;
+    const dy = ev.clientY - pointer.y;
+    const dt = Date.now() - pointer.t;
+    pointer = null;
+    if (zoom > 1) return; // panning, not a tap/swipe
+
+    const dist = Math.hypot(dx, dy);
+    if (dist <= TAP_SLOP && dt <= TAP_MS) {
+      const rect = root.getBoundingClientRect();
+      const zone = zoneForPoint(ev.clientX - rect.left, rect.width);
+      const result = resolveTap(zone, settings.tapToTurn, settings.direction);
+      if (result === 'toggle-chrome') toggleChrome();
+      else if (result) turn(result);
+      return;
+    }
+    // swipe: only horizontal swipes turn pages (vertical = native scroll)
+    if (!isContinuous() && Math.abs(dx) > Math.abs(dy)) {
+      const t = swipeTurn(dx, settings.direction);
+      if (t) turn(t);
+    }
+  };
+
+  const onWheel = (ev: WheelEvent) => {
+    if (ev.ctrlKey) {
+      ev.preventDefault();
+      const rect = root.getBoundingClientRect();
+      setZoom(
+        zoom * (ev.deltaY < 0 ? 1.1 : 0.9),
+        (ev.clientX - rect.left) / rect.width,
+        (ev.clientY - rect.top) / rect.height,
+      );
+      return;
+    }
+    if (isContinuous()) return;
+    const mode = settings.scrollToTurn;
+    if (mode === 'wheel' || mode === 'both') {
+      ev.preventDefault();
+      turn(ev.deltaY > 0 ? 'forward' : 'back');
+    }
+  };
+
+  const onDblClick = () => {
+    if (settings.doubleClickFullscreen) void toggleFullscreen();
+    else setZoom(zoom > 1 ? 1 : 2);
+  };
+
+  async function toggleFullscreen(): Promise<void> {
+    try {
+      if (doc.fullscreenElement) await doc.exitFullscreen();
+      else await root.requestFullscreen?.();
+    } catch {
+      /* user gesture / permission — ignore */
+    }
+  }
+
+  async function acquireWakeLock(): Promise<void> {
+    try {
+      wakeLock = (await navigator.wakeLock?.request('screen')) ?? null;
+    } catch {
+      wakeLock = null;
+    }
+  }
+
+  const onVisibility = () => {
+    if (doc.visibilityState === 'visible' && !wakeLock) void acquireWakeLock();
   };
 
   // ---- public API ---------------------------------------------------------------
@@ -368,6 +495,9 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       measured.clear();
       mountedImgs.clear();
       viewport.replaceChildren();
+      zoom = 1;
+      panX = 0;
+      panY = 0;
       rebuildSpreads(page);
     }
     prefetch?.setSettings(settings);
@@ -426,6 +556,14 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     }
     root.addEventListener('keydown', onKeyDown);
     root.addEventListener('scroll', onScroll, { passive: true });
+    root.addEventListener('pointerdown', onPointerDown);
+    root.addEventListener('pointermove', onPointerMove);
+    root.addEventListener('pointerup', onPointerUp);
+    root.addEventListener('pointercancel', () => (pointer = null));
+    root.addEventListener('wheel', onWheel, { passive: false });
+    root.addEventListener('dblclick', onDblClick);
+    doc.addEventListener('visibilitychange', onVisibility);
+    void acquireWakeLock();
 
     emitter.emit('reader:ready', { manifest: m });
     render();
@@ -443,9 +581,17 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     destroyed = true;
     root.removeEventListener('keydown', onKeyDown);
     root.removeEventListener('scroll', onScroll);
+    root.removeEventListener('pointerdown', onPointerDown);
+    root.removeEventListener('pointermove', onPointerMove);
+    root.removeEventListener('pointerup', onPointerUp);
+    root.removeEventListener('wheel', onWheel);
+    root.removeEventListener('dblclick', onDblClick);
+    doc.removeEventListener('visibilitychange', onVisibility);
     resizeObserver?.disconnect();
     prefetch?.destroy();
     loader?.destroy();
+    void wakeLock?.release().catch(() => {});
+    wakeLock = null;
     mountedImgs.clear();
     emitter.clear();
     root.remove();
