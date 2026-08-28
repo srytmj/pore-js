@@ -30,6 +30,10 @@ export { DEFAULT_KEYMAP, resolveAction } from './settings/keymap.js';
 
 export type { ImageEngineEvents, ImageEngineEventName, PageLoadState } from './image/types.js';
 export type { ImageEngine, ImageEngineOptions, Unsubscribe } from './image/engine.js';
+export { createImageEngine, physicalToLogical } from './image/create-image-engine.js';
+export { buildSpreads, spreadIndexForPage } from './image/spreads.js';
+export type { Spread } from './image/spreads.js';
+export { resolveSettings, resolveKeymap, mergeSettings, mergeKeymap } from './settings/merge.js';
 
 export { DemoSource } from './source/demo-source.js';
 export type { DemoSourceOptions } from './source/demo-source.js';

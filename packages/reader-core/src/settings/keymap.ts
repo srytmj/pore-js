@@ -2,14 +2,16 @@
  * Remappable keybindings — see docs/image-engine-spec.md §7.
  * Defaults follow the MangaDex web reader.
  *
- * "turn-forward" / "turn-back" are LOGICAL; the engine maps physical keys
- * (turn-right / turn-left) to these via `direction` (RTL swaps).
+ * Actions are **physical** where the reference UI is physical: `page-right` /
+ * `page-left` describe screen direction. The engine translates them to a
+ * logical turn (`forward` / `back`) via the current {@link Direction} — RTL
+ * swaps them.
  */
 
 export type ActionId =
   | 'toggle-menu'
-  | 'turn-forward'
-  | 'turn-back'
+  | 'page-right'
+  | 'page-left'
   | 'scroll-up'
   | 'scroll-down'
   | 'chapter-forward'
@@ -23,11 +25,10 @@ export type ActionId =
 
 export type Keymap = Record<ActionId, string[]>;
 
-/** Physical-key defaults; `turn-forward`/`turn-back` are filled per direction. */
 export const DEFAULT_KEYMAP: Keymap = {
   'toggle-menu': ['m'],
-  'turn-forward': ['ArrowRight', 'd', '6'],
-  'turn-back': ['ArrowLeft', 'a', '4'],
+  'page-right': ['ArrowRight', 'd', '6'],
+  'page-left': ['ArrowLeft', 'a', '4'],
   'scroll-up': ['w', '8'],
   'scroll-down': ['s', '2'],
   'chapter-forward': [','],

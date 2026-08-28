@@ -47,18 +47,19 @@ Make `DemoSource` actually serve content.
 
 The first thing on screen.
 
-- [ ] `createImageEngine({ container, source, bookId, settings })` → `{ goto, turn, setSettings, on, destroy }`
-- [ ] Event emitter (`image/types.ts` `ImageEngineEvents`), typed `on`/`off`
-- [ ] Mount lifecycle: `getManifest` → build spread list (all singles for now) → first paint
-- [ ] Render current page as `<img decoding="async">`, `loadingMethod: 'blob'` (fetch → objectURL → revoke on evict)
-- [ ] Fit modes: `width` / `height` / `contain` / `original` via `object-fit` + container sizing
-- [ ] `turn('forward' | 'back')` swaps page; direction-aware (RTL inverts)
-- [ ] `goto(pageIndex)` with clamp
-- [ ] Emits `reader:ready`, `reader:locationchange`, `reader:loadingstate`, `reader:end`, `reader:start`
-- [ ] Resize observer recomputes fit
-- [ ] Vitest (jsdom): mount → ready fires with manifest; `turn` past end fires `reader:end`; RTL turn direction
+- [x] `createImageEngine(options)` → `ImageEngine` (`mount`/`goto`/`turn`/`setSettings`/`setKeymap`/`on`/`destroy`)
+- [x] Typed emitter; `buildSpreads` (single + double + offset + wide) pure & unit-tested
+- [x] Mount: `getManifest` (rejects non-image) → build spreads → restore checkpoint before paint → first paint
+- [x] `PageLoader`: `source.getPage` → object URL, cache + retain-set eviction + abort (ring policy is T3)
+- [x] Fit modes width/height/contain/original/smart via `object-fit` + sizing; bg + brightness/greyscale filters
+- [x] `turn('forward'|'back')` direction-aware via `physicalToLogical`; `goto(pageIndex)` clamped
+- [x] Emits ready / resumed / locationchange / loadingstate / layoutchange / end / start / error
+- [x] `ResizeObserver` re-render (guarded for jsdom); keyboard: page turn, first/last, cycle-fit, spread-offset
+- [x] Vitest (jsdom, 12): mount, turn+clamp, goto, double pairing, checkpoint restore, non-image reject
+- [x] Demo wired: fixture picker + prev/next, verified in browser (RTL double spread, page advance, no console errors)
 
-**Done when:** demo shows fixture page 1, arrow-key/`turn()` moves through it, fit modes visibly change.
+**Done when:** demo shows a fixture, `turn()` / arrow keys move through it, fit modes change. ✅ done 2026-08-28
+_(continuous layouts fall back to paged-single until T5)_
 
 ---
 
