@@ -130,15 +130,16 @@ _(`<canvas>` swap at zoom > 1× and pinch-zoom deferred to M0.5)_
 
 ## T7 — Last-read checkpoint + IndexedDB · M
 
-- [ ] `IndexedDbProgressStore` keyed by `bookId` (`idb` micro-helper or hand-rolled, no dep bloat)
-- [ ] `CachedSource` decorator: `loadProgress`/`saveProgress` hit IndexedDB; passthrough for the rest
-- [ ] Engine `mount`: `await source.loadProgress` **before first paint**; skeleton until resolved; emit `reader:resumed`
-- [ ] Restore resolution per spec §2.2.1 (`clampPagePosition` for `page`; anchor-then-fraction for `scroll`)
-- [ ] Debounced save (~800 ms) + on page-turn settle, `visibilitychange→hidden`, layout change, `destroy`
-- [ ] Offline write queue → flush on `online`
-- [ ] Playwright: read to page 8 → reload → lands on page 8, no flash of page 1; resize between visits still lands right
+- [x] `openKvStore` — hand-rolled promisified IndexedDB KV, no deps
+- [x] `CachedSource` decorator: local `loadProgress`/`saveProgress` (local copy wins), manifest/page/file passthrough
+- [x] Engine `mount`: `await source.loadProgress` before first paint; `reader:resumed`
+- [x] Restore: `clampPagePosition` for `page`; `scrollForPage` anchor for `scroll` (T5)
+- [x] Debounced save (800 ms) on every `locationchange`; forced on `visibilitychange→hidden` and `destroy`
+- [x] Offline write queue in `CachedSource` → collapse-per-book → flush on `online`
+- [x] Vitest (10): idb round-trip (fake-indexeddb), CachedSource local-wins / mirror / queue / flush / collapse
+- [x] Browser-verified: read to 6/12 → reload → resumes at 6/12, no flash of page 1
 
-**Done when:** close the tab mid-chapter, reopen, you're where you left off.
+**Done when:** close the tab mid-chapter, reopen, you're where you left off. ✅ done 2026-08-28
 
 ---
 

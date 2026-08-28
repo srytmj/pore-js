@@ -1,4 +1,4 @@
-import { DemoSource, createImageEngine, type ImageEngine } from '@pore/reader-core';
+import { CachedSource, DemoSource, createImageEngine, type ImageEngine } from '@pore/reader-core';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 const BOOKS = [
@@ -7,7 +7,7 @@ const BOOKS = [
 ];
 
 export function App() {
-  const source = useMemo(() => new DemoSource(), []);
+  const source = useMemo(() => new CachedSource(new DemoSource()), []);
   const hostRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<ImageEngine | null>(null);
   const [bookId, setBookId] = useState(BOOKS[0]!.id);

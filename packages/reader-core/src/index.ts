@@ -49,6 +49,10 @@ export { resolveSettings, resolveKeymap, mergeSettings, mergeKeymap } from './se
 
 export { DemoSource } from './source/demo-source.js';
 export type { DemoSourceOptions } from './source/demo-source.js';
+export { CachedSource } from './source/cached-source.js';
+export type { CachedSourceOptions } from './source/cached-source.js';
+export { openKvStore } from './offline/idb.js';
+export type { KvStore } from './offline/idb.js';
 export { parseImageManifestFile, naturalCompare } from './source/manifest-file.js';
 export type { ImageManifestFile, ParsedFixtureManifest } from './source/manifest-file.js';
 

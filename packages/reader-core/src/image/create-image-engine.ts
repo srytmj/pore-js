@@ -31,6 +31,7 @@ const FIT_CYCLE: ImageEngineSettings['fit'][] = ['contain', 'width', 'height', '
 const OVERSCAN_PX = 1200;
 const TAP_SLOP = 10;
 const TAP_MS = 350;
+const SAVE_DEBOUNCE_MS = 800;
 
 /** Translate a physical page-turn (screen direction) to a logical one. */
 export function physicalToLogical(
@@ -70,6 +71,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   let panY = 0;
   let pointer: { x: number; y: number; t: number; id: number } | null = null;
   let wakeLock: WakeLockSentinel | null = null;
+  let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
   const isContinuous = () => settings.layout === 'continuous-vertical';
 
@@ -115,6 +117,21 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       ...(ch.id ? { chapter: ch.id } : {}),
       label: `${ch.label} · ${page + 1}/${manifest.pageCount}`,
     });
+    scheduleSave();
+  };
+
+  const scheduleSave = () => {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(flushSave, SAVE_DEBOUNCE_MS);
+  };
+
+  const flushSave = () => {
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    if (!manifest || destroyed) return;
+    void source.saveProgress(bookId, positionFor()).catch(() => {});
   };
 
   const applyContainerStyle = () => {
@@ -447,7 +464,8 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   }
 
   const onVisibility = () => {
-    if (doc.visibilityState === 'visible' && !wakeLock) void acquireWakeLock();
+    if (doc.visibilityState === 'hidden') flushSave();
+    else if (!wakeLock) void acquireWakeLock();
   };
 
   // ---- public API ---------------------------------------------------------------
@@ -578,6 +596,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   }
 
   function destroy(): void {
+    flushSave();
     destroyed = true;
     root.removeEventListener('keydown', onKeyDown);
     root.removeEventListener('scroll', onScroll);
