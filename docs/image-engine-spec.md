@@ -151,6 +151,10 @@ interface ImageEngineSettings {
 
 Keybindings are stored separately (see §7.1).
 
+**Persistence scope** (see §11.3): Layout + Fit fields and `direction` are
+**per-book overridable** (`perBook[bookId]` merged over global defaults); Behavior
+fields, `keymap`, and image filters are **global only**.
+
 ---
 
 ## 3. Layout Modes
@@ -357,14 +361,73 @@ Core exposes: `mount(el, { source, bookId, settings })`, `goto(target)`, `turn(d
 
 ---
 
-## 11. Open Questions
+## 11. Resolved Decisions
 
-1. **Settings panel scope for M0** — ship the full tabbed panel (Layout/Fit/Keybinds/Behaviors) or a minimal bar + "more settings later"? Full panel is UI-heavy for the first vertical slice.
-2. **`bitmap` loading path** — canvas-only, or `<img>` via `ImageBitmap`→`OffscreenCanvas`→`blob`? Canvas complicates CSS fit; decide before preload work.
-3. **Spread offset persistence** — per-book (sticky) or per-session only?
-4. **History `url-and-title` mode** — does the demo app own the URL scheme, or does core?
-5. **Webtoon gap/stitch** — some webtoons are pre-sliced with intentional gaps; expose `pageGap: 0` preset + "stitch adjacent" mode later?
-6. **CBZ** — handled here (unzip via fflate → `ImageManifest` with blob loaders) or as a `LocalFileSource` concern that produces a standard manifest? Proposed: source concern, engine stays clean.
+Resolved 2026-08-28.
+
+### 11.1 Settings panel scope for M0 — **minimal bar; full panel in M0.5**
+
+Core carries the **complete** `ImageEngineSettings` from day one (every field live and
+functional). M0 UI ships only an inline control bar: layout mode, direction, fit
+mode, spread offset — the four controls used mid-read. Keybind editor, behaviors,
+filters, and progress-bar styling move to a tabbed panel in M0.5. Adding the panel
+later is pure `reader-react` work since core is already complete.
+
+*Trade-off accepted:* the M0 demo looks less polished than MangaDex.
+
+### 11.2 `bitmap` loading path — **deferred to M0.5; `<img>` + `createImageBitmap` → canvas for the active page only, no worker**
+
+M0 ships `native` + `blob` only. If `loadingMethod: "bitmap"` is selected in M0 it
+falls back to `blob` with a console warning. When implemented in M0.5: decode via
+`createImageBitmap` (already off-thread) and paint the **active page** to `<canvas>`;
+all fit/zoom/pan math is reimplemented for that canvas path. No `OffscreenCanvas` /
+worker in v1 — over-engineering. Revisit only if profiling shows `blob` stutters on
+large pages.
+
+### 11.3 Spread-offset persistence — **per-book, sticky**
+
+`spreadOffset` is stored under `perBook[bookId]`. More broadly:
+
+| Scope | Settings |
+|---|---|
+| **Per-book override** (over global) | everything in Layout + Fit groups, `direction` |
+| **Global only** | Behaviors, `keymap`, image filters |
+
+Rationale: layout/fit are properties of *the book* (a scanlation that starts on an
+even page, a webtoon that wants vertical+single); behaviors/keys/filters are
+properties of *the reader*.
+
+### 11.4 History `url-and-title` mode — **core emits, host executes**
+
+Core never touches `window.history` or `document.title`. It emits
+`reader:locationchange { position, page, label }`; the host app decides:
+
+- `historyMode: "none"` → ignore
+- `historyMode: "title"` → `document.title = label`
+- `historyMode: "url-and-title"` → `history.replaceState(...)` + title
+
+`historyMode` lives in the settings store as a **hint** the host reads via
+`useReaderSettings()`. `reader-react` may ship an optional `useReaderHistory()`
+helper that wires the default behavior, but core stays embeddable anywhere without
+seizing the URL. URL scheme (`/read/:bookId/:page` vs `?p=`) belongs to the host
+router.
+
+### 11.5 Webtoon gap / stitch — **`pageGap` numeric only; stitch mode deferred (low priority)**
+
+`pageGap` (default `0` for webtoon, `~16` for comics) covers the normal case. A
+"stitch adjacent" mode (seamlessly merge pages that are one sliced image) is niche —
+most webtoons ship pre-sliced and read continuously at `pageGap: 0`. If a fixture
+ever needs it, add `webtoonStitch: boolean` (forces exact-0 gap, kills sub-pixel
+borders, sets `image-rendering`). Not on the roadmap. See §12 → Deferred.
+
+### 11.6 CBZ — **`LocalFileSource` concern; engine stays source-blind**
+
+`LocalFileSource` unzips the `.cbz` with `fflate`, natural-sorts image entries, and
+returns a standard `{ type: "image" }` `ImageManifest` with per-page blob loaders.
+`getPage(i)` inflates **only** entry `i` on demand (keep the ZIP central directory /
+index in the source) so a 200 MB archive never fully decompresses into memory. The
+engine only ever sees `ImageManifest` + `Blob` — consistent with "everything above
+the source is source-blind" (`reader-engine-design.md` §4).
 
 ---
 
@@ -372,4 +435,5 @@ Core exposes: `mount(el, { source, bookId, settings })`, `goto(target)`, `turn(d
 
 - **M0 core**: paged-single/double, continuous-vertical, LTR/RTL, fit modes, zoom/pan, spread pairing+offset, preload ring buffer + `native`/`blob`, keyboard (remappable) + touch + click zones, DemoSource, **last-read checkpoint (IndexedDB) with restore-before-paint**.
 - **M0.5 (stretch)**: continuous-horizontal, vertical direction, autoscroll, paged auto-advance, `bitmap` loading, full tabbed settings panel, image filters, history modes.
-- **Deferred**: webtoon stitch modes, per-page fit overrides.
+- **Deferred** (not on the roadmap): `webtoonStitch` mode (§11.5), per-page fit
+  overrides, `OffscreenCanvas`/worker decode path (§11.2).
