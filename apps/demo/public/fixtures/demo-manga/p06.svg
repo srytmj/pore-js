@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="1200" viewBox="0 0 1680 1200">
+  <rect width="1680" height="1200" fill="#0c4a6e"/>
+  <rect x="24" y="124" width="528" height="504" rx="10" fill="#7dd3fc" opacity="0.14" stroke="#7dd3fc" stroke-opacity="0.5"/>
+  <rect x="576" y="124" width="528" height="504" rx="10" fill="#7dd3fc" opacity="0.14" stroke="#7dd3fc" stroke-opacity="0.5"/>
+  <rect x="1128" y="124" width="528" height="504" rx="10" fill="#7dd3fc" opacity="0.14" stroke="#7dd3fc" stroke-opacity="0.5"/>
+  <rect x="24" y="652" width="528" height="504" rx="10" fill="#7dd3fc" opacity="0.14" stroke="#7dd3fc" stroke-opacity="0.5"/>
+  <rect x="576" y="652" width="528" height="504" rx="10" fill="#7dd3fc" opacity="0.14" stroke="#7dd3fc" stroke-opacity="0.5"/>
+  <rect x="1128" y="652" width="528" height="504" rx="10" fill="#7dd3fc" opacity="0.14" stroke="#7dd3fc" stroke-opacity="0.5"/>
+  <text x="840" y="64" fill="#7dd3fc" font-family="system-ui, sans-serif" font-size="40" font-weight="700" text-anchor="middle">SPREAD 6</text>
+  <text x="840" y="1168" fill="#7dd3fc" font-family="system-ui, sans-serif" font-size="22" text-anchor="middle" opacity="0.8">demo-manga · RTL · CC0</text>
+</svg>

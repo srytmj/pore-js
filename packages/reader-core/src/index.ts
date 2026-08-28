@@ -33,6 +33,8 @@ export type { ImageEngine, ImageEngineOptions, Unsubscribe } from './image/engin
 
 export { DemoSource } from './source/demo-source.js';
 export type { DemoSourceOptions } from './source/demo-source.js';
+export { parseImageManifestFile, naturalCompare } from './source/manifest-file.js';
+export type { ImageManifestFile, ParsedFixtureManifest } from './source/manifest-file.js';
 
 export { createStore } from './internal/store.js';
 export type { Store } from './internal/store.js';

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="1200" viewBox="0 0 840 1200">
+  <rect width="840" height="1200" fill="#422006"/>
+  <rect x="24" y="124" width="384" height="504" rx="10" fill="#fbbf24" opacity="0.14" stroke="#fbbf24" stroke-opacity="0.5"/>
+  <rect x="432" y="124" width="384" height="504" rx="10" fill="#fbbf24" opacity="0.14" stroke="#fbbf24" stroke-opacity="0.5"/>
+  <rect x="24" y="652" width="384" height="504" rx="10" fill="#fbbf24" opacity="0.14" stroke="#fbbf24" stroke-opacity="0.5"/>
+  <rect x="432" y="652" width="384" height="504" rx="10" fill="#fbbf24" opacity="0.14" stroke="#fbbf24" stroke-opacity="0.5"/>
+  <text x="420" y="64" fill="#fbbf24" font-family="system-ui, sans-serif" font-size="40" font-weight="700" text-anchor="middle">PAGE 11</text>
+  <text x="420" y="1168" fill="#fbbf24" font-family="system-ui, sans-serif" font-size="22" text-anchor="middle" opacity="0.8">demo-manga · RTL · CC0</text>
+</svg>

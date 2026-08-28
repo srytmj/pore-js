@@ -1,0 +1,48 @@
+{
+  "type": "image",
+  "title": "Demo Webtoon (synthetic)",
+  "direction": "vertical",
+  "preferredLayout": "continuous-vertical",
+  "pages": [
+    {
+      "src": "s01.svg",
+      "width": 800,
+      "height": 2200
+    },
+    {
+      "src": "s02.svg",
+      "width": 800,
+      "height": 2200
+    },
+    {
+      "src": "s03.svg",
+      "width": 800,
+      "height": 2200
+    },
+    {
+      "src": "s04.svg",
+      "width": 800,
+      "height": 2200
+    },
+    {
+      "src": "s05.svg",
+      "width": 800,
+      "height": 2200
+    },
+    {
+      "src": "s06.svg",
+      "width": 800,
+      "height": 2200
+    },
+    {
+      "src": "s07.svg",
+      "width": 800,
+      "height": 2200
+    },
+    {
+      "src": "s08.svg",
+      "width": 800,
+      "height": 2200
+    }
+  ]
+}

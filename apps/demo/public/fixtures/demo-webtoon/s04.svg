@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="2200" viewBox="0 0 800 2200">
+  <rect width="800" height="2200" fill="#450a0a"/>
+  <rect x="24" y="124" width="364" height="490" rx="10" fill="#fb7185" opacity="0.14" stroke="#fb7185" stroke-opacity="0.5"/>
+  <rect x="412" y="124" width="364" height="490" rx="10" fill="#fb7185" opacity="0.14" stroke="#fb7185" stroke-opacity="0.5"/>
+  <rect x="24" y="638" width="364" height="490" rx="10" fill="#fb7185" opacity="0.14" stroke="#fb7185" stroke-opacity="0.5"/>
+  <rect x="412" y="638" width="364" height="490" rx="10" fill="#fb7185" opacity="0.14" stroke="#fb7185" stroke-opacity="0.5"/>
+  <rect x="24" y="1152" width="364" height="490" rx="10" fill="#fb7185" opacity="0.14" stroke="#fb7185" stroke-opacity="0.5"/>
+  <rect x="412" y="1152" width="364" height="490" rx="10" fill="#fb7185" opacity="0.14" stroke="#fb7185" stroke-opacity="0.5"/>
+  <rect x="24" y="1666" width="364" height="490" rx="10" fill="#fb7185" opacity="0.14" stroke="#fb7185" stroke-opacity="0.5"/>
+  <rect x="412" y="1666" width="364" height="490" rx="10" fill="#fb7185" opacity="0.14" stroke="#fb7185" stroke-opacity="0.5"/>
+  <text x="400" y="64" fill="#fb7185" font-family="system-ui, sans-serif" font-size="40" font-weight="700" text-anchor="middle">STRIP 4</text>
+  <text x="400" y="2168" fill="#fb7185" font-family="system-ui, sans-serif" font-size="22" text-anchor="middle" opacity="0.8">demo-webtoon · vertical · CC0</text>
+</svg>
