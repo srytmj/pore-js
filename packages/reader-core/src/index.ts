@@ -31,7 +31,7 @@ export { DEFAULT_KEYMAP, resolveAction } from './settings/keymap.js';
 export type { ImageEngineEvents, ImageEngineEventName, PageLoadState } from './image/types.js';
 export type { ImageEngine, ImageEngineOptions, Unsubscribe } from './image/engine.js';
 export { createImageEngine, physicalToLogical } from './image/create-image-engine.js';
-export { buildSpreads, spreadIndexForPage } from './image/spreads.js';
+export { buildSpreads, spreadIndexForPage, isNaturallyWide } from './image/spreads.js';
 export type { Spread } from './image/spreads.js';
 export { PageLoader } from './image/page-loader.js';
 export { PrefetchScheduler } from './image/prefetch.js';

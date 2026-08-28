@@ -22,6 +22,22 @@ function isWide(p: ImagePage | undefined): boolean {
   return p?.isWide === true;
 }
 
+/**
+ * Decide whether a page should render solo in double-spread mode based on its
+ * decoded natural size — used when the manifest carried no dimensions and no
+ * explicit `isWide`. Landscape (ratio > 1) ⇒ wide.
+ */
+export function isNaturallyWide(
+  page: ImagePage,
+  naturalWidth: number,
+  naturalHeight: number,
+): boolean {
+  if (page.isWide !== undefined) return page.isWide;
+  if (page.width !== undefined && page.height !== undefined) return false; // manifest already knew
+  if (naturalHeight <= 0 || naturalWidth <= 0) return false;
+  return naturalWidth / naturalHeight > 1;
+}
+
 /** Build the spread list for a manifest under the given layout options. Pure. */
 export function buildSpreads(pages: ImagePage[], opts: SpreadOptions): Spread[] {
   const n = pages.length;

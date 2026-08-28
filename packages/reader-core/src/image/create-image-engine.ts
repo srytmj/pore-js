@@ -9,7 +9,13 @@ import type { Direction, TurnDirection } from '../types.js';
 import { createEmitter } from '../internal/emitter.js';
 import type { ImageEngine, ImageEngineOptions } from './engine.js';
 import type { ImageEngineEvents } from './types.js';
-import { buildSpreads, clampSpreadIndex, spreadIndexForPage, type Spread } from './spreads.js';
+import {
+  buildSpreads,
+  clampSpreadIndex,
+  isNaturallyWide,
+  spreadIndexForPage,
+  type Spread,
+} from './spreads.js';
 import { PageLoader } from './page-loader.js';
 import { PrefetchScheduler } from './prefetch.js';
 
@@ -125,6 +131,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       img.decoding = 'async';
       img.alt = `page ${pageIndex + 1}`;
       applyFitStyle(img);
+      img.addEventListener('load', () => maybeDiscoverWide(pageIndex, img), { once: true });
       viewport.appendChild(img);
       loader
         ?.get(pageIndex)
@@ -135,6 +142,18 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     }
     retainWindow();
     emitLocation();
+  };
+
+  /** Re-pair spreads if a page turns out to be landscape and the manifest didn't say so. */
+  const maybeDiscoverWide = (pageIndex: number, img: HTMLImageElement) => {
+    if (destroyed || !manifest || settings.layout !== 'paged-double') return;
+    const page = manifest.pages[pageIndex];
+    if (!page || page.isWide !== undefined) return;
+    if (!isNaturallyWide(page, img.naturalWidth, img.naturalHeight)) return;
+    page.isWide = true;
+    const leading = spreads[current]?.leading ?? 0;
+    rebuildSpreads(leading);
+    render();
   };
 
   const goToSpread = (index: number) => {

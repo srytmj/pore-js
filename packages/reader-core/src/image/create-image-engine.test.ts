@@ -116,6 +116,31 @@ describe('createImageEngine (paged-single)', () => {
     engine.destroy();
   });
 
+  it('toggle-spread-offset (key "o") re-pairs and keeps the current page on screen', async () => {
+    const container = document.createElement('div');
+    const engine = createImageEngine({
+      container,
+      source: source(6),
+      bookId: 'b',
+      settings: { layout: 'paged-double', direction: 'ltr' },
+    });
+    const layout = collect(engine, 'reader:layoutchange');
+    await engine.mount();
+    engine.turn('forward'); // spread [2,3]
+    const altCount = container.querySelectorAll('img').length;
+    expect(altCount).toBe(2);
+
+    container
+      .querySelector('.pore-image')
+      ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'o', bubbles: true }));
+
+    // offset 1 → spreads [0] [1,2] [3,4] [5]; page 2 still rendered
+    const alts = [...container.querySelectorAll('img')].map((i) => i.getAttribute('alt'));
+    expect(alts).toContain('page 3'); // 0-based index 2
+    expect(layout.length).toBeGreaterThan(1);
+    engine.destroy();
+  });
+
   it('restores the last-read checkpoint before first paint', async () => {
     const src = source(20);
     await src.saveProgress('b', { type: 'page', value: 8, total: 20 });

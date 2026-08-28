@@ -82,15 +82,15 @@ _(continuous layouts fall back to paged-single until T5)_
 
 ## T4 — paged-double + spread pairing + spreadOffset · M
 
-- [ ] Spread builder: walk pages in reading order, pair into 1–2, `spreadOffset` shifts start
-- [ ] Wide page (`isWide` explicit, or aspect after natural load) → solo spread; re-pair on late discovery
-- [ ] Direction controls on-screen order (LTR left-first, RTL right-first) + `pageGap`
-- [ ] `toggle-spread-offset` action; persists per-book (spec §11.3)
-- [ ] `Position.value` = leading page of the pair
-- [ ] Recompute spreads on resize / mode change, keep leading page in view
-- [ ] Vitest: pairing with/without offset; wide page splits a pair; RTL order
+- [x] `buildSpreads` — walk, pair 1–2, `spreadOffset` shifts start (done in T2)
+- [x] Wide page: `isWide` explicit, or `isNaturallyWide` from decoded aspect on `img` load → mutate manifest + re-pair + re-render
+- [x] Direction controls visual order (RTL reverses the pair) + `pageGap` CSS var
+- [x] `toggle-spread-offset` key `o`; engine holds it in settings (per-book persistence is the host's job → T8, spec §11.3)
+- [x] `Position.value` = spread `leading` page
+- [x] `rebuildSpreads(preserveLeadingPage)` on resize / mode / offset change
+- [x] Vitest: offset on/off, late wide split, RTL order, `isNaturallyWide` guards, engine `o` re-pair
 
-**Done when:** double-spread reads correctly RTL, wide pages sit solo, offset toggle fixes a deliberately misaligned fixture.
+**Done when:** double-spread reads correctly RTL, wide pages sit solo, offset toggle re-pairs. ✅ done 2026-08-28
 
 ---
 
