@@ -1,59 +1,49 @@
-import { CachedSource, DemoSource, createImageEngine, type ImageEngine } from '@pore/reader-core';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { CachedSource, DemoSource } from '@pore/reader-core';
+import { Reader, ReaderProvider } from '@pore/reader-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Chrome } from './Chrome.js';
 
 const BOOKS = [
-  { id: 'demo-manga', label: 'Demo Manga (RTL, double)' },
-  { id: 'demo-webtoon', label: 'Demo Webtoon (vertical)' },
+  {
+    id: 'demo-manga',
+    label: 'Demo Manga',
+    settings: { layout: 'paged-double', direction: 'rtl' } as const,
+  },
+  {
+    id: 'demo-webtoon',
+    label: 'Demo Webtoon',
+    settings: { layout: 'continuous-vertical' } as const,
+  },
 ];
 
 export function App() {
   const source = useMemo(() => new CachedSource(new DemoSource()), []);
-  const hostRef = useRef<HTMLDivElement>(null);
-  const engineRef = useRef<ImageEngine | null>(null);
-  const [bookId, setBookId] = useState(BOOKS[0]!.id);
-  const [loc, setLoc] = useState<{ page: number; label: string } | null>(null);
+  const [bookId, setBookId] = useState(() => {
+    const fromUrl = new URLSearchParams(location.search).get('book');
+    return BOOKS.some((b) => b.id === fromUrl) ? fromUrl! : BOOKS[0]!.id;
+  });
+  const book = BOOKS.find((b) => b.id === bookId)!;
 
   useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return;
-    let disposed = false;
-    const engine = createImageEngine({
-      container: host,
-      source,
-      bookId,
-      settings:
-        bookId === 'demo-manga'
-          ? { layout: 'paged-double', direction: 'rtl' }
-          : { layout: 'continuous-vertical' },
-    });
-    engineRef.current = engine;
-    engine.on('reader:locationchange', (p) => setLoc({ page: p.page, label: p.label }));
-    engine.mount().catch((err) => {
-      if (!disposed) console.error(err);
-    });
-    return () => {
-      disposed = true;
-      engine.destroy();
-      engineRef.current = null;
-    };
-  }, [source, bookId]);
+    const url = new URL(location.href);
+    url.searchParams.set('book', bookId);
+    history.replaceState(null, '', url);
+  }, [bookId]);
 
   return (
-    <main className="shell">
-      <header className="bar">
-        <strong>Pore.js</strong>
-        <select value={bookId} onChange={(e) => setBookId(e.target.value)}>
-          {BOOKS.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.label}
-            </option>
-          ))}
-        </select>
-        <button onClick={() => engineRef.current?.turn('back')}>‹ Prev</button>
-        <button onClick={() => engineRef.current?.turn('forward')}>Next ›</button>
-        <span className="loc">{loc?.label ?? '…'}</span>
-      </header>
-      <div className="stage" ref={hostRef} />
-    </main>
+    <ReaderProvider source={source}>
+      <main className="shell">
+        <Reader
+          key={bookId}
+          bookId={bookId}
+          initialSettings={book.settings}
+          onPositionChange={(l) => {
+            document.title = `Pore.js — ${l.label}`;
+          }}
+        >
+          <Chrome books={BOOKS} bookId={bookId} onBook={setBookId} />
+        </Reader>
+      </main>
+    </ReaderProvider>
   );
 }

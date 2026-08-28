@@ -1,11 +1,11 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import type { ReaderSource } from '@pore/reader-core';
 
-interface ReaderContextValue {
+interface ReaderProviderValue {
   source: ReaderSource;
 }
 
-const ReaderContext = createContext<ReaderContextValue | null>(null);
+const ProviderContext = createContext<ReaderProviderValue | null>(null);
 
 export interface ReaderProviderProps {
   source: ReaderSource;
@@ -13,12 +13,12 @@ export interface ReaderProviderProps {
 }
 
 export function ReaderProvider({ source, children }: ReaderProviderProps) {
-  const value = useMemo<ReaderContextValue>(() => ({ source }), [source]);
-  return <ReaderContext.Provider value={value}>{children}</ReaderContext.Provider>;
+  const value = useMemo<ReaderProviderValue>(() => ({ source }), [source]);
+  return <ProviderContext.Provider value={value}>{children}</ProviderContext.Provider>;
 }
 
-export function useReaderContext(): ReaderContextValue {
-  const ctx = useContext(ReaderContext);
-  if (!ctx) throw new Error('useReaderContext must be used within <ReaderProvider>');
-  return ctx;
+export function useReaderSource(): ReaderSource {
+  const ctx = useContext(ProviderContext);
+  if (!ctx) throw new Error('useReaderSource must be used within <ReaderProvider>');
+  return ctx.source;
 }

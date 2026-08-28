@@ -18,29 +18,65 @@ body {
   height: 100dvh;
 }
 
+/* Reader renders directly into .shell: <header> <progress> <toast?> <host flex:1> */
+
 .bar {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   align-items: center;
-  padding: 0.5rem 0.75rem;
+  padding: 0.4rem 0.6rem;
   border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
   flex: none;
+  flex-wrap: wrap;
 }
 
 .bar .loc {
   margin-left: auto;
   opacity: 0.7;
   font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
 }
 
 .bar button,
 .bar select {
   font: inherit;
-  padding: 0.25rem 0.6rem;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.5rem;
 }
 
-.stage {
-  flex: 1;
-  min-height: 0;
+.bar button.active {
+  background: color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.progress {
+  height: 3px;
+  background: #f26d3d;
+  flex: none;
+  transition: width 0.2s;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: #222;
+  color: #fff;
+  font-size: 0.85rem;
+  z-index: 10;
+}
+
+.toast button {
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 0.1rem 0.4rem;
+}
+
+.pore-image {
   background: #111;
 }

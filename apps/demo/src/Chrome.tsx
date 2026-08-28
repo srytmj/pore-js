@@ -1,0 +1,105 @@
+import {
+  useReader,
+  useReaderLocation,
+  useReaderSettings,
+  useResumedFromPage,
+} from '@pore/reader-react';
+import { useEffect, useState } from 'react';
+
+interface BookOpt {
+  id: string;
+  label: string;
+}
+
+export function Chrome({
+  books,
+  bookId,
+  onBook,
+}: {
+  books: BookOpt[];
+  bookId: string;
+  onBook: (id: string) => void;
+}) {
+  const loc = useReaderLocation();
+  const reader = useReader();
+  const [settings, setSettings] = useReaderSettings();
+  const resumed = useResumedFromPage();
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => setDismissed(false), [bookId]);
+
+  const pos = loc?.position;
+  const total = pos && pos.type !== 'anchor' ? pos.total : 0;
+  const pct = total > 0 && loc ? ((loc.page + 1) / total) * 100 : 0;
+
+  return (
+    <>
+      <header className="bar">
+        <strong>Pore.js</strong>
+        <select value={bookId} onChange={(e) => onBook(e.target.value)}>
+          {books.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.label}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={settings.layout}
+          onChange={(e) => setSettings({ layout: e.target.value as typeof settings.layout })}
+        >
+          <option value="paged-single">Single</option>
+          <option value="paged-double">Double</option>
+          <option value="continuous-vertical">Long strip</option>
+        </select>
+
+        <select
+          value={settings.direction}
+          onChange={(e) => setSettings({ direction: e.target.value as typeof settings.direction })}
+        >
+          <option value="ltr">LTR</option>
+          <option value="rtl">RTL</option>
+        </select>
+
+        <select
+          value={settings.fit}
+          onChange={(e) => setSettings({ fit: e.target.value as typeof settings.fit })}
+        >
+          <option value="contain">Fit</option>
+          <option value="width">Width</option>
+          <option value="height">Height</option>
+          <option value="original">1:1</option>
+        </select>
+
+        <button
+          className={settings.spreadOffset ? 'active' : ''}
+          onClick={() => setSettings({ spreadOffset: settings.spreadOffset ? 0 : 1 })}
+          title="Offset double spreads"
+        >
+          Offset
+        </button>
+
+        <button onClick={() => reader.turn('back')}>‹</button>
+        <button onClick={() => reader.turn('forward')}>›</button>
+        <span className="loc">{loc?.label ?? '…'}</span>
+      </header>
+
+      <div className="progress" style={{ width: `${pct}%` }} />
+
+      {resumed !== null && !dismissed && (
+        <div className="toast">
+          Resumed from p.{resumed + 1}
+          <button
+            onClick={() => {
+              reader.goto(0);
+              setDismissed(true);
+            }}
+          >
+            Restart
+          </button>
+          <button onClick={() => setDismissed(true)}>×</button>
+        </div>
+      )}
+    </>
+  );
+}

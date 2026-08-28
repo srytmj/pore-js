@@ -145,14 +145,14 @@ _(`<canvas>` swap at zoom > 1× and pinch-zoom deferred to M0.5)_
 
 ## T8 — Demo wiring + minimal control bar · M
 
-- [ ] `reader-react`: `<Reader bookId onPositionChange initialSettings>` mounts core into a ref'd container; `useReaderLocation`, `useReaderSettings`
-- [ ] History: core emits `reader:locationchange`; demo applies `historyMode` (`title` default)
-- [ ] Minimal inline control bar (spec §11.1): layout, direction, fit, spread offset — 4 controls
-- [ ] Fixture picker (manga / webtoon), progress bar (normal style), page counter
-- [ ] `"Resumed from p.X — restart?"` toast
-- [ ] Deploy config for `pore.suryatmaja.dev` (static host; SW deferred to M3)
+- [x] `reader-react`: `<Reader bookId initialSettings onPositionChange>` + `children` chrome slot inside hook context; `useReader`, `useReaderLocation`, `useReaderSettings`, `useResumedFromPage`
+- [x] History: `onPositionChange` sets `document.title`; demo reflects `?book=` in the URL
+- [x] Control bar: layout, direction, fit, spread-offset + prev/next + fixture picker
+- [x] Progress bar (orange fill), page counter in the bar
+- [x] "Resumed from p.X" toast with Restart / dismiss
+- [x] `apps/demo/vercel.json` (SPA rewrite + monorepo build); browser-verified: pick book → controls → restart → layout switch, no console errors
 
-**Done when:** `pnpm dev` → pick a book → read it with the 4 controls → reload resumes. Deployable build.
+**Done when:** pick a book → read with the controls → reload resumes. Deployable build. ✅ done 2026-08-28
 
 ---
 

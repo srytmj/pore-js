@@ -5,5 +5,14 @@
  * No React inside iframes — ever. See docs/reader-engine-design.md §11.
  */
 
-export { ReaderProvider, useReaderContext } from './provider.js';
+export { ReaderProvider, useReaderSource } from './provider.js';
 export type { ReaderProviderProps } from './provider.js';
+
+export {
+  Reader,
+  useReader,
+  useReaderLocation,
+  useReaderSettings,
+  useResumedFromPage,
+} from './reader.js';
+export type { ReaderProps, ReaderHandle, ReaderLocation } from './reader.js';
