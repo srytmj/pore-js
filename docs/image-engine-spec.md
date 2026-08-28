@@ -44,9 +44,10 @@ This spec merges the original design doc with UX patterns observed in MangaDex a
 ```ts
 interface ImageManifest {
   bookId: string;
-  kind: 'image';
+  type: 'image'; // discriminant, matches reader-engine-design.md §4
   title: string;
   direction: 'ltr' | 'rtl' | 'vertical'; // author/source default
+  pageCount: number;
   pages: ImagePage[];
   // optional chapter grouping for "next chapter" behavior
   chapters?: { id: string; label: string; startIndex: number }[];
@@ -55,13 +56,18 @@ interface ImageManifest {
 
 interface ImagePage {
   index: number; // 0-based, global across the book
-  src: string | (() => Promise<Blob>); // URL or lazy loader
   width?: number; // intrinsic px, if known (enables no-CLS layout + spread pairing)
   height?: number;
   isWide?: boolean; // explicit "display solo in double mode"; else derived from width/height
   chapterId?: string;
 }
 ```
+
+**Page bytes are not in the manifest.** The manifest carries only metadata
+(dimensions, wide flag, chapter). Actual image data is fetched lazily via
+`source.getPage(bookId, index, { variant?, signal? })` → `Blob | string` — keeps
+the engine source-blind (`reader-engine-design.md` §4). A CBZ, a folder of images,
+and the Platform API all present the same `ImageManifest`.
 
 `isWide` resolution order: explicit `isWide` → `width/height` aspect ratio > `wideThreshold` (default `1.0`, i.e. landscape) → after natural load, re-evaluate and re-pair if needed.
 
