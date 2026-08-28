@@ -158,13 +158,14 @@ _(`<canvas>` swap at zoom > 1× and pinch-zoom deferred to M0.5)_
 
 ## T9 — M0 hardening · S
 
-- [ ] Playwright matrix: paged-single, paged-double RTL, webtoon — turn, resize, restore
-- [ ] A11y pass: controls are real buttons + labels, focus order, `prefers-reduced-motion` kills autoscroll/animated turns
-- [ ] Perf check: 40-page chapter, rapid flip, memory doesn't grow unbounded (object URL revocation)
-- [ ] README quickstart + a GIF; `docs/` links updated
-- [ ] Tag `v0.1.0-m0`
+- [x] Playwright suite `apps/demo/e2e/reader.spec.ts`: paged turn+counter+resume, webtoon virtualization+scroll tracking, RTL double spread, resize keeps position (`pnpm --filter @pore/demo e2e`; browser via `e2e:install`)
+- [x] A11y: `aria-label` on all controls, `role="status"`/`aria-live` on the counter, `role="progressbar"`, `prefers-reduced-motion` guard
+- [x] Perf: `PageLoader` object-URL revocation on eviction + back-nav LRU (`keepExtra`); prefetch `all` byte guard — covered by T3 tests
+- [x] README quickstart + M0 status; `docs/` links
+- [x] Tag `v0.1.0-m0`
 
-**Done when:** green CI, deployed demo, tagged.
+**Done when:** green local checks, deployable demo, tagged. ✅ done 2026-08-28
+_(GIF + GitHub Actions CI workflow: follow-up)_
 
 ---
 

@@ -55,6 +55,12 @@ body {
   transition: width 0.2s;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .progress {
+    transition: none;
+  }
+}
+
 .toast {
   position: fixed;
   bottom: 1rem;

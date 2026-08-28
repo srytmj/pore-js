@@ -36,7 +36,7 @@ export function Chrome({
     <>
       <header className="bar">
         <strong>Pore.js</strong>
-        <select value={bookId} onChange={(e) => onBook(e.target.value)}>
+        <select aria-label="Book" value={bookId} onChange={(e) => onBook(e.target.value)}>
           {books.map((b) => (
             <option key={b.id} value={b.id}>
               {b.label}
@@ -45,6 +45,7 @@ export function Chrome({
         </select>
 
         <select
+          aria-label="Layout"
           value={settings.layout}
           onChange={(e) => setSettings({ layout: e.target.value as typeof settings.layout })}
         >
@@ -54,6 +55,7 @@ export function Chrome({
         </select>
 
         <select
+          aria-label="Reading direction"
           value={settings.direction}
           onChange={(e) => setSettings({ direction: e.target.value as typeof settings.direction })}
         >
@@ -62,6 +64,7 @@ export function Chrome({
         </select>
 
         <select
+          aria-label="Fit mode"
           value={settings.fit}
           onChange={(e) => setSettings({ fit: e.target.value as typeof settings.fit })}
         >
@@ -79,12 +82,23 @@ export function Chrome({
           Offset
         </button>
 
-        <button onClick={() => reader.turn('back')}>‹</button>
-        <button onClick={() => reader.turn('forward')}>›</button>
-        <span className="loc">{loc?.label ?? '…'}</span>
+        <button aria-label="Previous page" onClick={() => reader.turn('back')}>
+          ‹
+        </button>
+        <button aria-label="Next page" onClick={() => reader.turn('forward')}>
+          ›
+        </button>
+        <span className="loc" role="status" aria-live="polite">
+          {loc?.label ?? '…'}
+        </span>
       </header>
 
-      <div className="progress" style={{ width: `${pct}%` }} />
+      <div
+        className="progress"
+        role="progressbar"
+        aria-valuenow={Math.round(pct)}
+        style={{ width: `${pct}%` }}
+      />
 
       {resumed !== null && !dismissed && (
         <div className="toast">
