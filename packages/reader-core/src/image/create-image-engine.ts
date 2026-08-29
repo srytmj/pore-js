@@ -131,6 +131,14 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     return ch ? { id: ch.id, label: ch.label } : { label: manifest?.title ?? '' };
   };
 
+  /** Descriptive alt text for a page image (chapter + position). */
+  const altFor = (pageIndex: number): string => {
+    const total = manifest?.pageCount ?? 0;
+    const ch = chapterFor(pageIndex);
+    const base = `page ${pageIndex + 1}${total ? ` of ${total}` : ''}`;
+    return ch.id ? `${ch.label} — ${base}` : base;
+  };
+
   const engineChapters = (): Chapter[] => {
     const total = manifest?.pageCount ?? 0;
     return (manifest?.chapters ?? []).map((c) => ({
@@ -294,7 +302,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       }
       const img = doc.createElement('img');
       img.decoding = 'async';
-      img.alt = `page ${pageIndex + 1}`;
+      img.alt = altFor(pageIndex);
       applyFitStyle(img);
       img.addEventListener('load', () => maybeDiscoverWide(pageIndex, img), { once: true });
       viewport.appendChild(img);
@@ -361,7 +369,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       if (!img) {
         img = doc.createElement('img');
         img.decoding = 'async';
-        img.alt = `page ${p + 1}`;
+        img.alt = altFor(p);
         img.style.cssText = horiz
           ? 'position:absolute;top:0;height:100%;width:auto;'
           : 'position:absolute;left:0;width:100%;height:auto;';

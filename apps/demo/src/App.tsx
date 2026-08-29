@@ -1,5 +1,5 @@
 import { CachedSource, DemoSource, LocalFileSource, type ReaderSource } from '@pore/reader-core';
-import { Reader, ReaderProvider } from '@pore/reader-react';
+import { Reader, ReaderAnnouncer, ReaderProvider } from '@pore/reader-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Chrome } from './Chrome.js';
 
@@ -67,6 +67,7 @@ export function App() {
           bookId={activeBook}
           {...(!dropped && book.settings ? { initialSettings: book.settings } : {})}
         >
+          <ReaderAnnouncer />
           <Chrome
             books={BOOKS}
             bookId={bookId}

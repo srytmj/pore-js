@@ -155,7 +155,7 @@ describe('createImageEngine (paged-single)', () => {
 
     // offset 1 → spreads [0] [1,2] [3,4] [5]; page 2 still rendered
     const alts = [...container.querySelectorAll('img')].map((i) => i.getAttribute('alt'));
-    expect(alts).toContain('page 3'); // 0-based index 2
+    expect(alts).toContain('page 3 of 6'); // 0-based index 2
     expect(layout.length).toBeGreaterThan(1);
     engine.destroy();
   });

@@ -87,16 +87,27 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
 
   /** Resolve the `verticalText` setting against the book's metadata. */
   const verticalActive = (): boolean => {
+    if (flowActive()) return false; // flow mode is always horizontal-tb scroll
     if (settings.verticalText === 'on') return true;
     if (settings.verticalText === 'off') return false;
     return book?.metadata.direction === 'rtl' && /^ja/i.test(book?.metadata.language ?? '');
+  };
+
+  const mql = (q: string): boolean =>
+    typeof matchMedia === 'function' ? matchMedia(q).matches : false;
+
+  /** Single scrolling column (screen-reader friendly). */
+  const flowActive = (): boolean => {
+    if (settings.flowMode === 'flow') return true;
+    if (settings.flowMode === 'paged') return false;
+    return mql('(forced-colors: active)');
   };
 
   const layout = (): TextLayout =>
     computeTextLayout({
       viewportWidth: root.clientWidth || 800,
       viewportHeight: root.clientHeight || 1000,
-      columns: settings.columns,
+      columns: flowActive() ? 1 : settings.columns,
       columnGap: settings.columnGap,
       marginPct: settings.marginPct,
       fontSizePct: settings.fontSizePct,
@@ -194,6 +205,9 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   const flowEl = (): HTMLElement | null =>
     (frame.contentDocument?.getElementById(FLOW_ID) as HTMLElement | null) ?? null;
 
+  const viewportEl = (): HTMLElement | null =>
+    (frame.contentDocument?.getElementById(VIEWPORT_ID) as HTMLElement | null) ?? null;
+
   /** Move the spine body's content into a clipped viewport + multicol flow. */
   const wrapContent = () => {
     const cdoc = frame.contentDocument;
@@ -276,15 +290,21 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     const land = () => {
       const cdoc = frame.contentDocument;
       if (!cdoc) return;
-      const flow = flowEl();
-      if (flow) flow.style.transform = 'translateX(0)';
       const { el, fraction } = blockForOffset(cdoc, hit.start);
       const last = Math.max(0, spinePageCount - 1);
-      page = layout().vertical
-        ? Math.min(Math.round(fraction * last), last)
-        : el
-          ? Math.min(pageForElement(el, layout().pageStep), last)
-          : page;
+      if (flowActive()) {
+        el?.scrollIntoView({ block: 'start' });
+        const vp = viewportEl();
+        page = vp ? Math.round(vp.scrollTop / (vp.clientHeight || 1)) : Math.round(fraction * last);
+      } else {
+        const flow = flowEl();
+        if (flow) flow.style.transform = 'translateX(0)';
+        page = layout().vertical
+          ? Math.min(Math.round(fraction * last), last)
+          : el
+            ? Math.min(pageForElement(el, layout().pageStep), last)
+            : page;
+      }
       renderView();
       emitLocation();
     };
@@ -368,9 +388,16 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   };
 
   const applyPage = () => {
+    const l = layout();
+    if (flowActive()) {
+      const vp = viewportEl();
+      // scrolling to `page * clientHeight` yields a scroll event that computes
+      // back to the same `page` (a no-op), so no suppression flag is needed.
+      if (vp) vp.scrollTop = page * (vp.clientHeight || 0);
+      return;
+    }
     const flow = flowEl();
     if (!flow) return;
-    const l = layout();
     // vertical-rl content grows leftward from a right-pinned flow, so paging
     // forward shifts it right by `+pageStep` (mirror of the horizontal case).
     const x = l.vertical ? page * l.pageStep : offsetForPage(page, l.pageStep);
@@ -378,12 +405,46 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   };
 
   const measure = () => {
+    if (flowActive()) {
+      const vp = viewportEl();
+      const h = vp?.clientHeight || 1;
+      spinePageCount = Math.max(1, Math.ceil((vp?.scrollHeight ?? h) / h));
+      spinePages[spineIndex] = spinePageCount;
+      wireScrollSync();
+      page = Math.min(page, maxPage());
+      applyPage();
+      return;
+    }
     const flow = flowEl();
     if (!flow) return;
     spinePageCount = pageCountFor(flow.scrollWidth, layout().pageStep);
     spinePages[spineIndex] = spinePageCount;
     page = Math.min(page, maxPage());
     applyPage();
+  };
+
+  // Keep `page` in step with manual / assistive-tech scrolling in flow mode.
+  let scrollSyncEl: HTMLElement | null = null;
+  let scrollSyncTimer: ReturnType<typeof setTimeout> | null = null;
+  const onFlowScroll = () => {
+    if (scrollSyncTimer) clearTimeout(scrollSyncTimer);
+    scrollSyncTimer = setTimeout(() => {
+      const vp = viewportEl();
+      if (!vp) return;
+      const next = Math.round(vp.scrollTop / (vp.clientHeight || 1));
+      if (next !== page && next >= 0 && next <= maxPage()) {
+        page = next;
+        emitLocation();
+      }
+    }, 120);
+  };
+  const wireScrollSync = () => {
+    if (!flowActive()) return;
+    const vp = viewportEl();
+    if (!vp || vp === scrollSyncEl) return;
+    scrollSyncEl?.removeEventListener('scroll', onFlowScroll);
+    vp.addEventListener('scroll', onFlowScroll, { passive: true });
+    scrollSyncEl = vp;
   };
 
   const injectStyle = () => {
@@ -406,6 +467,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       direction: book?.metadata.direction ?? 'ltr',
       publisherStyles: settings.publisherStyles,
       dimImages: settings.dimImages && THEME_COLORS[settings.theme].dark,
+      flow: flowActive(),
     });
   };
 
@@ -419,7 +481,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     const { page: resolved } = resolveAnchor(cdoc, anchor, {
       spinePages: spinePageCount,
       pageStep: layout().pageStep,
-      vertical: layout().vertical,
+      byPercent: layout().vertical || flowActive(),
     });
     page = Math.min(Math.max(resolved, 0), spinePageCount - 1);
   };
@@ -595,7 +657,11 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     const jump = () => {
       const cdoc = frame.contentDocument;
       const el = frag && cdoc ? cdoc.getElementById(frag) : null;
-      if (el && cdoc && !layout().vertical) {
+      if (el && cdoc && flowActive()) {
+        el.scrollIntoView({ block: 'start' });
+        const vp = viewportEl();
+        page = vp ? Math.round(vp.scrollTop / (vp.clientHeight || 1)) : 0;
+      } else if (el && cdoc && !layout().vertical) {
         const flow = flowEl();
         if (flow) flow.style.transform = 'translateX(0)';
         page = Math.min(pageForElement(el, layout().pageStep), Math.max(0, spinePageCount - 1));
@@ -694,8 +760,11 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     if (settings.publisherStyles !== prev.publisherStyles) {
       // author CSS is baked in at render time — re-render the spine
       void renderSpine(spineIndex);
-    } else if (settings.verticalText !== prev.verticalText) {
-      // writing mode flips the whole pagination axis — re-measure from scratch
+    } else if (
+      settings.verticalText !== prev.verticalText ||
+      settings.flowMode !== prev.flowMode
+    ) {
+      // writing mode / flow flips the whole pagination model — re-measure fresh
       injectStyle();
       measure();
       page = 0;
@@ -753,6 +822,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       metadata: book.metadata,
       spineCount: book.spine.length,
       vertical: verticalActive(),
+      flow: flowActive(),
     });
   }
 
@@ -771,6 +841,8 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     root.removeEventListener('click', onClick);
     root.removeEventListener('dblclick', onDblClick);
     resizeObserver?.disconnect();
+    if (scrollSyncTimer) clearTimeout(scrollSyncTimer);
+    scrollSyncEl?.removeEventListener('scroll', onFlowScroll);
     revokeUrls();
     search.destroy();
     emitter.clear();

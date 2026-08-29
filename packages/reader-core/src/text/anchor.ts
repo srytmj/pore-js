@@ -73,13 +73,13 @@ export interface ResolvedAnchor {
 export function resolveAnchor(
   doc: Document,
   anchor: Extract<Position, { type: 'anchor' }>,
-  opts: { spinePages: number; pageStep: number; vertical?: boolean },
+  opts: { spinePages: number; pageStep: number; byPercent?: boolean },
   rectOf: RectOf = domRect,
 ): ResolvedAnchor {
   const blocks = blockElements(doc);
   const target = blocks[anchor.block] ?? blocks[Math.min(anchor.block, blocks.length - 1)];
-  // vertical-rl block boxes don't map to pages by `rect.left`; use the percent.
-  if (target && !opts.vertical) {
+  // vertical-rl / flow boxes don't map to pages by `rect.left`; use the percent.
+  if (target && !opts.byPercent) {
     return {
       page: Math.min(
         pageForElement(target, opts.pageStep, rectOf),

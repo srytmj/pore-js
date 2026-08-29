@@ -108,6 +108,8 @@ export interface TypographyOptions {
   publisherStyles: boolean;
   /** Invert images (dark theme). */
   dimImages?: boolean;
+  /** Single scrolling column instead of horizontal pagination (a11y). */
+  flow?: boolean;
 }
 
 const FONT_STACKS: Record<TypographyOptions['fontFamily'], string> = {
@@ -149,21 +151,33 @@ body {
   width:${layout.contentWidth}px;
   max-width:100%;
   height:100%;
-  overflow:hidden;
   position:relative;
-${layout.vertical ? '  display:flex;\n  justify-content:flex-end;' : ''}
+${
+  t.flow
+    ? '  overflow-y:auto;\n  overflow-x:hidden;'
+    : layout.vertical
+      ? '  overflow:hidden;\n  display:flex;\n  justify-content:flex-end;'
+      : '  overflow:hidden;'
+}
 }
 #${FLOW_ID} {
-  height:100%;
+${
+  t.flow
+    ? `  height:auto;
+  width:100%;
+  transform:none;`
+    : layout.vertical
+      ? `  height:100%;
   transform:translateX(0);
   will-change:transform;
-${
-  layout.vertical
-    ? `  writing-mode:vertical-rl;
+  writing-mode:vertical-rl;
   -webkit-writing-mode:vertical-rl;
   width:max-content;
   text-orientation:mixed;`
-    : `  column-width:${layout.measure}px;
+      : `  height:100%;
+  transform:translateX(0);
+  will-change:transform;
+  column-width:${layout.measure}px;
   column-gap:${layout.columnGap}px;
   column-fill:auto;`
 }

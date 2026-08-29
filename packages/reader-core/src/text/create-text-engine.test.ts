@@ -175,6 +175,32 @@ describe('createTextEngine', () => {
     engine.destroy();
   });
 
+  it('flow mode reports itself and still navigates', async () => {
+    const container = document.createElement('div');
+    const engine = createTextEngine({
+      container,
+      source: source(),
+      bookId: 'b',
+      settings: { flowMode: 'flow' },
+    });
+    let ready: { flow: boolean; vertical: boolean } | null = null;
+    engine.on('reader:ready', (p) => (ready = p));
+    const locs: Array<{ chapter?: string }> = [];
+    engine.on('reader:locationchange', (p) => locs.push(p));
+    await engine.mount();
+    expect(ready).toMatchObject({ flow: true, vertical: false });
+
+    // forward from the (short) first chapter walks into the next spine item
+    engine.turn('forward');
+    await new Promise((r) => setTimeout(r, 90));
+    expect(locs.at(-1)?.chapter).toBe('c2');
+
+    // toggling back to paged re-measures without throwing
+    engine.setSettings({ flowMode: 'paged' });
+    expect(locs.length).toBeGreaterThan(0);
+    engine.destroy();
+  });
+
   it('endpage mode pauses between chapters', async () => {
     const container = document.createElement('div');
     const engine = createTextEngine({

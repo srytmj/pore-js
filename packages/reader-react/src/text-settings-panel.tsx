@@ -131,9 +131,22 @@ export function TextSettingsPanel({ onClose }: { onClose?: () => void }) {
 
         {tab === 'nav' && (
           <>
+            <Row label="Reading mode">
+              <select
+                value={s.flowMode}
+                onChange={(e) =>
+                  set({ flowMode: e.target.value as TextEngineSettings['flowMode'] })
+                }
+              >
+                <option value="paged">Paged</option>
+                <option value="flow">Flow (scroll, a11y)</option>
+                <option value="auto">Auto (high-contrast → flow)</option>
+              </select>
+            </Row>
             <Row label="Vertical text">
               <select
                 value={s.verticalText}
+                disabled={s.flowMode === 'flow'}
                 onChange={(e) =>
                   set({ verticalText: e.target.value as TextEngineSettings['verticalText'] })
                 }

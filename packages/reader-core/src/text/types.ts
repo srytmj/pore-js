@@ -30,6 +30,14 @@ export interface TextEngineSettings {
    * language.
    */
   verticalText: 'auto' | 'on' | 'off';
+  /**
+   * Reading mode:
+   * - `paged`: the default column pagination
+   * - `flow`: a single scrolling column — semantic, screen-reader friendly,
+   *   no transforms
+   * - `auto`: `flow` when the OS reports forced colors (high-contrast), else `paged`
+   */
+  flowMode: 'paged' | 'flow' | 'auto';
   /** Where the chrome/menu bar sits. */
   menuPosition: 'top' | 'left' | 'right';
   /** How a side menu is revealed (ignored when `menuPosition: 'top'`). */
@@ -49,12 +57,18 @@ export const DEFAULT_TEXT_SETTINGS: TextEngineSettings = {
   dimImages: false,
   endBehavior: 'continuous',
   verticalText: 'auto',
+  flowMode: 'paged',
   menuPosition: 'top',
   menuReveal: 'click',
 };
 
 export interface TextEngineEvents {
-  'reader:ready': { metadata: EpubMetadata; spineCount: number; vertical: boolean };
+  'reader:ready': {
+    metadata: EpubMetadata;
+    spineCount: number;
+    vertical: boolean;
+    flow: boolean;
+  };
   'reader:resumed': { position: Position | null };
   'reader:locationchange': Locator;
   'reader:progress': ReaderProgress;

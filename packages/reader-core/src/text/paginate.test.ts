@@ -115,6 +115,32 @@ describe('computeTextLayout — vertical', () => {
   });
 });
 
+describe('buildBaseStylesheet — flow mode', () => {
+  it('makes the viewport a vertical scroller and drops the multicol transform', () => {
+    const l = computeTextLayout({
+      viewportWidth: 900,
+      viewportHeight: 700,
+      columns: 1,
+      columnGap: 40,
+      marginPct: 5,
+      fontSizePct: 100,
+    });
+    const css = buildBaseStylesheet(l, {
+      fontSizePct: 100,
+      lineHeight: 1.6,
+      textAlign: 'start',
+      fontFamily: 'original',
+      direction: 'ltr',
+      publisherStyles: true,
+      flow: true,
+    });
+    expect(css).toContain('overflow-y:auto');
+    expect(css).toContain('transform:none');
+    expect(css).not.toContain('column-width:');
+    expect(css).not.toContain('will-change:transform');
+  });
+});
+
 describe('buildBaseStylesheet', () => {
   it('emits fixed html gutters and a body multicol surface', () => {
     const layout = computeTextLayout({

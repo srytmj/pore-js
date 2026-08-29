@@ -130,18 +130,28 @@ column order is CSS's job and largely works — a dedicated pass is M4+.)_
 
 ---
 
-## I5 — a11y flow mode · M
+## I5 — a11y flow mode · M ✅
 
-- [ ] Text engine: a "continuous flow" mode — no pagination, semantic HTML in
-      the iframe rendered as a normal vertical scroll for screen readers
-- [ ] Toggle: `TextEngineSettings.flowMode` or auto when a screen reader / forced
-      colors is detected
-- [ ] Image engine: a linear "one image per screen, scroll" a11y fallback with
-      `alt` from the manifest
-- [ ] Focus management, live-region page announcements, skip-to-content
-- [ ] Playwright + axe: keyboard-only traversal of a whole book
+- [x] Text engine flow mode: `#pore-viewport` becomes a vertical scroller,
+      `#pore-flow` a single static column (no transform, `column-width:auto`,
+      `writing-mode:horizontal-tb`). `turn()` scrolls one screen; a debounced
+      scroll listener keeps `page` / progress in sync with manual / AT scrolling.
+- [x] `TextEngineSettings.flowMode: 'paged' | 'flow' | 'auto'`; `auto` →
+      `flow` under `@media (forced-colors: active)`. `reader:ready` carries
+      `flow`. Anchor resume + search `gotoHit` use `scrollIntoView` /
+      spine-percent in flow mode.
+- [x] Image engine: page `alt` text is now `"<chapter> — page N of M"` (was
+      `"page N"`); continuous-vertical is the linear a11y reading path
+- [x] `reader-react` `<ReaderAnnouncer>` — a visually-hidden `aria-live=polite`
+      region announcing chapter + progress changes (debounced); wired into the demo
+- [x] Demo: "Reading mode" select in the Nav tab
+- [x] Vitest (2): flow-mode stylesheet (scroller, no multicol/transform),
+      engine reports `flow` + navigates + toggles back to paged
+- [x] Browser-verified: flow mode scrolls by screen, progress tracks manual
+      scroll, announcer fires, paged mode unaffected
+- [ ] Playwright + axe keyboard traversal → **I6**
 
-**Done when:** a screen-reader user can read a book linearly.
+**Done when:** a screen-reader user can read a book linearly. ✅ done 2026-08-29
 
 ---
 
