@@ -93,6 +93,32 @@ export function Chrome({
           {settings.autoscroll ? '⏸' : '▶'}
         </button>
 
+        <label className="slider" title="Brightness">
+          ☀
+          <input
+            type="range"
+            min={0.3}
+            max={1}
+            step={0.05}
+            value={settings.brightness}
+            onChange={(e) => setSettings({ brightness: Number(e.target.value) })}
+          />
+        </label>
+        <button
+          className={settings.greyscale ? 'active' : ''}
+          onClick={() => setSettings({ greyscale: !settings.greyscale })}
+          title="Greyscale"
+        >
+          B/W
+        </button>
+        <button
+          className={settings.dim ? 'active' : ''}
+          onClick={() => setSettings({ dim: !settings.dim })}
+          title="Dim"
+        >
+          Dim
+        </button>
+
         <button aria-label="Previous page" onClick={() => reader.turn('back')}>
           ‹
         </button>

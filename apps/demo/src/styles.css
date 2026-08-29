@@ -48,6 +48,17 @@ body {
   background: color-mix(in srgb, currentColor 20%, transparent);
 }
 
+.bar .slider {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.bar .slider input {
+  width: 70px;
+}
+
 .progress {
   height: 3px;
   background: #f26d3d;

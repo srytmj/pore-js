@@ -115,6 +115,11 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   const viewport = doc.createElement('div');
   viewport.className = 'pore-image__viewport';
   root.appendChild(viewport);
+  const dimEl = doc.createElement('div');
+  dimEl.className = 'pore-image__dim';
+  dimEl.style.cssText =
+    'position:absolute;inset:0;pointer-events:none;background:#000;opacity:0;transition:opacity .2s;z-index:1;';
+  root.appendChild(dimEl);
 
   // ---- shared helpers -------------------------------------------------------
 
@@ -176,6 +181,10 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     root.style.overflowX = isContinuous() && axis() === 'x' ? 'auto' : 'hidden';
     root.style.background =
       settings.background === 'white' ? '#fff' : settings.background === 'black' ? '#000' : '';
+    dimEl.style.opacity = settings.dim ? '0.12' : '0';
+  };
+
+  const applyFilters = () => {
     const filters: string[] = [];
     if (settings.brightness !== 1) filters.push(`brightness(${settings.brightness})`);
     if (settings.greyscale) filters.push('grayscale(1)');
@@ -345,6 +354,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       renderPaged();
       applyZoom();
     }
+    applyFilters();
     syncPrefetchAndRetain();
     emitLocation();
   };
@@ -352,6 +362,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   const onScroll = () => {
     if (destroyed || !isContinuous()) return;
     renderContinuous();
+    applyFilters();
     syncPrefetchAndRetain();
     emitLocation();
   };

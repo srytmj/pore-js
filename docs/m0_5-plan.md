@@ -64,13 +64,14 @@ _(vertical-rl writing mode for light novels lands with the Text engine, M1)_
 
 ---
 
-## P5 — image filters in the UI · S
+## P5 — image filters in the UI · S ✅
 
-- [ ] Engine already applies `brightness`/`greyscale`/`dim` — expose in the settings panel (P7) and a quick control
-- [ ] `dim` overlay element above pages, below chrome
-- [ ] Vitest/browser: filter string composes
+- [x] `applyFilters()` split out (renderPaged/renderContinuous wipe `viewport.style.cssText`, so filters re-applied after every render + on scroll)
+- [x] `dimEl` overlay (`position:absolute;inset:0;pointer-events:none;z-index:1`) toggled to `opacity:.12`
+- [x] Demo: brightness slider + B/W + Dim toggles
+- [x] Vitest: filter string composes, dim overlay opacity
 
-**Done when:** brightness slider + greyscale + dim toggles work live.
+**Done when:** brightness slider + greyscale + dim toggles work live. ✅ done 2026-08-29
 
 ---
 

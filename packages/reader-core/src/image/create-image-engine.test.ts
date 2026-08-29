@@ -175,6 +175,25 @@ describe('createImageEngine (paged-single)', () => {
     engine.destroy();
   });
 
+  it('applies brightness/greyscale filters and the dim overlay', async () => {
+    const container = document.createElement('div');
+    const engine = createImageEngine({
+      container,
+      source: source(3),
+      bookId: 'b',
+      settings: { brightness: 0.6, greyscale: true, dim: true },
+    });
+    await engine.mount();
+    const vp = container.querySelector('.pore-image__viewport') as HTMLElement;
+    const dim = container.querySelector('.pore-image__dim') as HTMLElement;
+    expect(vp.style.filter).toBe('brightness(0.6) grayscale(1)');
+    expect(dim.style.opacity).toBe('0.12');
+    engine.setSettings({ greyscale: false, dim: false, brightness: 1 });
+    expect(vp.style.filter).toBe('');
+    expect(dim.style.opacity).toBe('0');
+    engine.destroy();
+  });
+
   it('a wheel event turns the page when scrollToTurn is on', async () => {
     const container = document.createElement('div');
     const engine = createImageEngine({
