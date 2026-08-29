@@ -151,12 +151,15 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   const emitLocation = () => {
     if (!manifest) return;
     const page = currentPage();
+    const total = manifest.pageCount;
     const ch = chapterFor(page);
     emitter.emit('reader:locationchange', {
       position: positionFor(),
       page,
+      total,
+      percent: total > 1 ? page / (total - 1) : 0,
       ...(ch.id ? { chapter: ch.id } : {}),
-      label: `${ch.label} · ${page + 1}/${manifest.pageCount}`,
+      label: `${ch.label} · ${page + 1}/${total}`,
     });
     scheduleSave();
   };

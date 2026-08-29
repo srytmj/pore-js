@@ -17,6 +17,7 @@ import {
   DEFAULT_TEXT_SETTINGS,
   type ImageEngineSettings,
   type Keymap,
+  type Locator,
   type Position,
   type TextEngineSettings,
   type TocEntry,
@@ -28,13 +29,7 @@ import { createSettingsPersistence, type SettingsPersistence } from './settings-
 export type ReaderKind = 'image' | 'text';
 export type AnySettings = ImageEngineSettings | TextEngineSettings;
 
-export interface ReaderLocation {
-  page: number;
-  label: string;
-  position: Position;
-  percent: number;
-  chapter?: string;
-}
+export type ReaderLocation = Locator;
 
 export interface Footnote {
   html: string;
@@ -168,20 +163,7 @@ export function Reader({
 
       offs.push(
         engine.on('reader:locationchange', (p: never) => {
-          const q = p as {
-            page: number;
-            label: string;
-            position: Position;
-            percent?: number;
-            chapter?: string;
-          };
-          const loc: ReaderLocation = {
-            page: q.page,
-            label: q.label,
-            position: q.position,
-            percent: q.percent ?? 0,
-            ...(q.chapter ? { chapter: q.chapter } : {}),
-          };
+          const loc = p as Locator;
           setLocation(loc);
           onPosRef.current?.(loc);
         }),

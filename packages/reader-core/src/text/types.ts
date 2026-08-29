@@ -1,6 +1,7 @@
 import type { Position } from '../position/types.js';
 import type { TocEntry, EpubMetadata } from './epub/types.js';
 import type { PageLoadState } from '../image/types.js';
+import type { Locator } from '../reader-engine.js';
 
 export interface TextEngineSettings {
   fontSizePct: number; // 100 = author default
@@ -47,14 +48,7 @@ export const DEFAULT_TEXT_SETTINGS: TextEngineSettings = {
 export interface TextEngineEvents {
   'reader:ready': { metadata: EpubMetadata; spineCount: number };
   'reader:resumed': { position: Position | null };
-  'reader:locationchange': {
-    position: Position;
-    page: number; // book-level page
-    totalPages: number;
-    percent: number;
-    label: string;
-    spine: number;
-  };
+  'reader:locationchange': Locator;
   'reader:loadingstate': { spine: number; state: PageLoadState };
   'reader:toc': { toc: TocEntry[] };
   'reader:footnote': { html: string; href: string };

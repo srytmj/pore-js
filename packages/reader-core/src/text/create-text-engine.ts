@@ -140,13 +140,14 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     const bookPage = bookPageBefore(spineIndex) + page;
     const atBookEnd = onEndSlot() && spineIndex === lastSpine();
     const percent = atBookEnd ? 1 : total > 0 ? bookPage / total : 0;
+    const ch = chapterLabel(spineIndex);
     emitter.emit('reader:locationchange', {
       position: anchorFor(),
       page: bookPage,
-      totalPages: total,
+      total,
       percent,
-      label: `${book.metadata.title} · ${Math.round(percent * 100)}%`,
-      spine: spineIndex,
+      label: `${ch} · ${Math.round(percent * 100)}%`,
+      chapter: book.spine[spineIndex]?.idref ?? String(spineIndex),
     });
     scheduleSave();
   };

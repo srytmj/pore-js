@@ -67,7 +67,7 @@ describe('createImageEngine (paged-single)', () => {
     await engine.mount();
 
     expect(ready).toHaveLength(1);
-    expect(loc.at(-1)?.page).toBe(0);
+    expect(loc.at(-1)).toMatchObject({ page: 0, total: 5, percent: 0 });
     expect(container.querySelectorAll('img')).toHaveLength(1);
     engine.destroy();
   });

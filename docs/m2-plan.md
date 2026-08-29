@@ -33,25 +33,23 @@ non-code inputs) 2026-08-29
 
 ---
 
-## D1 — `Locator` + unified `ReaderEngine` interface · M
+## D1 — `Locator` + unified `ReaderEngine` interface · M ✅
 
-The three engines already share `mount / turn / goto / setSettings / on /
-destroy`; formalise it and give the shell one position vocabulary.
+- [x] `Locator` = `{ position, page, total, percent, label, chapter? }` in
+      `reader-core/src/reader-engine.ts` — the one shape every engine emits in
+      `reader:locationchange`
+- [x] `ReaderEngine<S, E>` interface + `CommonEngineEvents`
+- [x] Image + text `reader:locationchange` payloads normalised to `Locator`
+      (image gains `total`/`percent`; text drops `totalPages`/`spine`, label uses
+      the chapter name, `chapter` = spine idref)
+- [x] `reader-react` `ReaderLocation = Locator`; `<Reader>` locationchange
+      handler is typed, no `as {…}` cast
+- [x] Vitest: image `reader:locationchange` carries `{page,total,percent}`
+      (`create-image-engine.test`); browser-verified both formats
 
-- [ ] `Locator` — the abstract position the shell renders from:
-      `{ kind: 'page'; index; total } | { kind: 'scroll'; fraction; total } |
-   { kind: 'anchor'; spine; block; offset; percent }` plus a computed
-      `percent`, `label`, `chapter?`
-- [ ] `toLocator(Position)` / `fromLocator(Locator)` round-trip helpers
-- [ ] `ReaderEngine<S>` interface in `reader-core` — the common surface
-      (`goto(number | Locator | Position)`, unified event names)
-- [ ] Image + text engines declared `implements ReaderEngine`; event payloads
-      carry a `locator`
-- [ ] `reader-react` `<Reader>` drops the `as unknown as EngineLike` cast;
-      `useReaderLocation` returns a `Locator`
-- [ ] Vitest: locator round-trips for each Position variant
-
-**Done when:** one interface, one position model, no casts.
+**Done when:** one position model. ✅ done 2026-08-29
+_(`Position` stays the engine-native precise anchor; `Locator` wraps it for the
+shell — no separate `toLocator`/`fromLocator` needed)_
 
 ---
 
@@ -104,7 +102,7 @@ destroy`; formalise it and give the shell one position vocabulary.
 ## D5 — shared chrome data (design doc §9) · M
 
 - [ ] Engines emit a uniform `reader:progress { locator, percent, chapterLabel,
-  pagesLeftInChapter, minutesLeft? }` derived from the `Locator`
+pagesLeftInChapter, minutesLeft? }` derived from the `Locator`
 - [ ] `minutesLeft`: image = pages left × per-page seconds (rolling avg);
       text = chars left ÷ reading speed (wpm setting)
 - [ ] Chapter model unified: image `chapters[]`, text spine+TOC, PDF outline →

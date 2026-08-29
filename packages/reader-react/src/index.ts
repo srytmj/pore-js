@@ -15,6 +15,7 @@ export type {
   ImageEngineSettings,
   TextEngineSettings,
   Position,
+  Locator,
   TocEntry,
 } from '@pore/reader-core';
 

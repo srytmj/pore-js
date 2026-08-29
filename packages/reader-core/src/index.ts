@@ -20,6 +20,7 @@ export type {
 } from './source/types.js';
 
 export type { Position } from './position/types.js';
+export type { Locator, ReaderEngine, CommonEngineEvents } from './reader-engine.js';
 export { clampPagePosition, isPagePosition, isScrollPosition } from './position/position.js';
 
 export type { ImageEngineSettings, ProgressBarSettings } from './settings/types.js';
