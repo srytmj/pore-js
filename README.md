@@ -36,7 +36,14 @@ pnpm --filter @pore/demo e2e           # end-to-end demo tests
 
 Requires Node >= 20.
 
-## Status — image + EPUB + PDF readers (`v0.4.0-m2`)
+## Status — engine fundamentals complete (`v0.5.0-m3`)
+
+**Integration & a11y (M3):** `KavitaSource` reads from a live
+[Kavita](https://www.kavitareader.com/) server; `CachedSource` v2 + `MediaCache`
+download whole books for offline reading (`useDownload`); in-book search runs in
+a Worker (`useReaderSearch`); vertical Japanese (`vertical-rl`) and an accessible
+scrolling **flow mode**; `<ReaderAnnouncer>` for screen readers. Next: UI &
+animation (`docs/ui-foundation-plan.md`).
 
 **PDF (M2):** `loadPdf` wraps `pdfjs-dist`; `PdfImageSource` renders pages to
 webp and feeds the image engine unchanged; `createPdfEngine` adds the outline as
@@ -61,14 +68,15 @@ navigation, footnote popovers.
 - Input: remappable keyboard, tap zones, swipe, wheel; autoscroll, paged
   auto-advance, next-chapter countdown
 - Last-read checkpoint (IndexedDB via `CachedSource`)
-- Sources: `DemoSource`, `LocalFileSource` (drop a `.cbz`, `.epub`, `.pdf` or images)
-- React: `<Reader>`, `<SettingsPanel>`, hooks, `useReaderHistory`
+- Sources: `DemoSource`, `LocalFileSource` (drop a `.cbz`, `.epub`, `.pdf` or
+  images), `KavitaSource`, `CachedSource` (offline)
+- React: `<Reader>`, `<SettingsPanel>`, `<ReaderAnnouncer>`, hooks
+  (`useReaderProgress`, `useReaderSearch`, `useDownload`, `useReaderHistory`, …)
 
-See [`docs/m0-plan.md`](docs/m0-plan.md), [`docs/m0_5-plan.md`](docs/m0_5-plan.md),
-[`docs/m1-plan.md`](docs/m1-plan.md), [`docs/m2-plan.md`](docs/m2-plan.md) for the
-task breakdowns, and [`CHANGELOG.md`](CHANGELOG.md).
+See `docs/m0-plan.md` … `docs/m3-plan.md` for the task breakdowns, and
+[`CHANGELOG.md`](CHANGELOG.md).
 
-Next milestone (design doc §14): **M3** platform integration + offline + search.
+Next: **UI foundation** — Radix + Tailwind + GSAP ([`docs/ui-foundation-plan.md`](docs/ui-foundation-plan.md)).
 
 ## License
 

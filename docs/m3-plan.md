@@ -155,13 +155,21 @@ column order is CSS's job and largely works — a dedicated pass is M4+.)_
 
 ---
 
-## I6 — hardening + release · S
+## I6 — hardening + release · S ✅
 
-- [ ] Playwright: Kavita-source mock flow, offline download+read, search,
-      vertical-JP, flow mode
-- [ ] Perf: worker lifecycle, index memory, cache budget honoured
-- [ ] CHANGELOG `v0.5.0-m3`; README; docs; **fundamentals complete** note
-- [ ] Tag `v0.5.0-m3` → then start `docs/ui-foundation-plan.md`
+- [x] Playwright: vertical-JP RTL turn, flow-mode scroller, in-book search jump,
+      download → `context.setOffline(true)` → reload → keep reading, plus an
+      `@axe-core/playwright` no-critical-violations gate. Kavita flow is covered
+      by the 10 `kavita-source` vitest cases (a live server isn't reachable in CI).
+- [x] Perf: `SearchController.destroy()` terminates the worker (called from the
+      text engine's `destroy`); the search index is built once, lazily;
+      `MediaCache` LRU eviction is unit-tested against the budget; `createPdfEngine`
+      disposes its `PdfDoc`
+- [x] CHANGELOG `v0.5.0-m3`; README status ("fundamentals complete"); all plan
+      checkboxes
+- [x] Tag `v0.5.0-m3` → **UI foundation next** (`docs/ui-foundation-plan.md`)
+
+**Done: M3 complete, engine fundamentals done.** 2026-08-29
 
 ---
 

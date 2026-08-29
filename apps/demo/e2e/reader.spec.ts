@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
 test.describe('Pore.js demo', () => {
@@ -154,5 +155,79 @@ test.describe('Pore.js demo — PDF', () => {
     await page.getByRole('button', { name: '⚙' }).click();
     await page.getByRole('dialog').locator('select').first().selectOption('width');
     await expect(page.locator('.pore-image img').first()).toHaveAttribute('style', /width:\s*100%/);
+  });
+});
+
+test.describe('Pore.js demo — M3', () => {
+  test('vertical-JP EPUB reads right-to-left', async ({ page }) => {
+    await page.goto('/?book=demo-vertical');
+    const css = await page
+      .frameLocator('iframe.pore-text__frame')
+      .locator('#pore-base-style')
+      .textContent();
+    expect(css).toContain('writing-mode:vertical-rl');
+
+    const loc = page.locator('.loc');
+    await expect(loc).toContainText('%');
+    const flow = page.frameLocator('iframe.pore-text__frame').locator('#pore-flow');
+    const before = await flow.evaluate((el) => el.style.transform);
+    // ArrowLeft = forward in a vertical book
+    await page.locator('.pore-text').press('ArrowLeft');
+    await expect
+      .poll(() => flow.evaluate((el) => el.style.transform))
+      .not.toBe(before);
+  });
+
+  test('flow mode turns the reader into a semantic scroller', async ({ page }) => {
+    await page.goto('/?book=demo-book');
+    await page.getByRole('button', { name: '⚙' }).click();
+    await page.getByRole('dialog', { name: 'Reader settings' }).getByText('Navigation').click();
+    await page.getByRole('dialog').getByLabel('Reading mode').selectOption('flow');
+    await page.getByRole('button', { name: '⚙' }).click();
+
+    const vp = page.frameLocator('iframe.pore-text__frame').locator('#pore-viewport');
+    await expect(vp).toHaveCSS('overflow-y', 'auto');
+    const loc = page.locator('.loc');
+    const start = await loc.textContent();
+    await page.locator('.pore-text').press('ArrowDown');
+    await expect(loc).not.toHaveText(start!.trim());
+  });
+
+  test('in-book search jumps between hits', async ({ page }) => {
+    await page.goto('/?book=demo-book');
+    await page.getByRole('button', { name: 'Search in book' }).click();
+    await page.getByPlaceholder('Search in book…').fill('consequat');
+    const hits = page.locator('.search__hits li button');
+    await expect(hits.first()).toBeVisible();
+    await hits.nth(3).click();
+    await expect(page.locator('.search__count')).toContainText('/');
+  });
+
+  test('download a book, go offline, keep reading', async ({ page, context }) => {
+    await page.goto('/?book=demo-manga');
+    await page.getByRole('button', { name: 'Download for offline' }).click();
+    await expect(page.getByRole('button', { name: 'Download for offline' })).toContainText(
+      'offline',
+      { timeout: 15_000 },
+    );
+    await context.setOffline(true);
+    await page.reload();
+    await expect(page.locator('.pore-image img').first()).toBeVisible();
+    await page.getByRole('button', { name: '›' }).click();
+    await expect(page.locator('.loc')).toContainText('/12');
+    await context.setOffline(false);
+  });
+
+  test('reader has no critical axe violations (keyboard + ARIA)', async ({ page }) => {
+    await page.goto('/?book=demo-book');
+    await page.locator('iframe.pore-text__frame').waitFor();
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa'])
+      .disableRules(['region']) // demo shell, not the library
+      .analyze();
+    const serious = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    );
+    expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
   });
 });

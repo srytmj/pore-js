@@ -30,5 +30,5 @@ engine code — the demo consumes the built `dist/`.
 
 ## Milestones
 
-See `docs/*-plan.md`. Current: **M3** (Kavita source, offline, search, vertical
-text, a11y) → then `docs/ui-foundation-plan.md`.
+See `docs/*-plan.md`. M0–M3 done (engine fundamentals complete, `v0.5.0-m3`).
+Current: **UI foundation** — Radix + Tailwind + GSAP (`docs/ui-foundation-plan.md`).

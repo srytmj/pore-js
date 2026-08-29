@@ -1,5 +1,51 @@
 # Changelog
 
+## v0.5.0-m3 — 2026-08-29
+
+Platform integration, offline, in-book search, vertical text, and an accessible
+flow mode. **The engine fundamentals are complete** — UI/animation work starts
+next (`docs/ui-foundation-plan.md`).
+
+### Added — a real library server
+
+- **`KavitaSource`** — `ReaderSource` over [Kavita](https://www.kavitareader.com/)'s
+  REST API. `bookId` = a Kavita `chapterId`; plugin-key auth exchanged for a JWT
+  with one transparent re-auth on 401; `chapter-info` drives the manifest
+  (Archive/Image → `image`, Epub, Pdf); pages via `/api/Reader/image`, files via
+  `/api/Download/chapter` (`KavitaDownloadForbiddenError` on 403); progress
+  round-tripped through `/api/Reader/progress`
+
+### Added — offline
+
+- **`MediaCache`** — IndexedDB blob store (its own DB) for downloaded pages /
+  files with LRU whole-book eviction against a byte budget (default 500 MB)
+- **`CachedSource` v2** — `getPage` / `getFile` serve the cached blob first;
+  `download(bookId, { signal, onProgress })` (resumable), `downloadStatus`
+  (`none` / `partial` / `complete`), `removeDownload`. `cache: false` keeps the
+  progress-only behaviour.
+- `reader-react` `useDownload(bookId)`; demo download button + a dependency-free
+  service worker (SWR shell, cache-first fixtures + workers)
+
+### Added — in-book search
+
+- **`search/`** — normalised substring index + snippet/match-range extraction;
+  `SearchController` runs queries in a Worker (own bundle entry) with a
+  synchronous fallback, latest-query-wins
+- Text engine `search(query)` / `gotoHit(hit)` + `reader:searchresults`;
+  `reader-react` `useReaderSearch()` (debounced, `next`/`prev`); demo search panel
+
+### Added — vertical & accessible reading
+
+- **Vertical writing mode** (`vertical-rl`) — `TextEngineSettings.verticalText`
+  (`auto` | `on` | `off`; `auto` = RTL progression + Japanese language). RTL and
+  vertical books swap the horizontal keys; `reader:ready` carries `vertical`.
+- **Flow mode** — `TextEngineSettings.flowMode` (`paged` | `flow` | `auto`;
+  `auto` follows `forced-colors`). A single scrolling column, no transforms;
+  `turn()` scrolls one screen, manual/AT scrolling stays in sync.
+- Image page `alt` text gains chapter context; `<ReaderAnnouncer>` — a hidden
+  `aria-live` region for chapter/progress announcements
+- Playwright + `@axe-core/playwright` coverage for all of the above
+
 ## v0.4.0-m2 — 2026-08-29
 
 PDF support and one unified position/chrome model across image, text and PDF.
