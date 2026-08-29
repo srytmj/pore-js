@@ -97,3 +97,85 @@ body {
 .pore-image {
   background: #111;
 }
+
+.panel-wrap {
+  position: fixed;
+  top: 3rem;
+  right: 1rem;
+  z-index: 20;
+}
+
+.pore-settings {
+  width: 320px;
+  max-height: 75vh;
+  overflow-y: auto;
+  background: Canvas;
+  color: CanvasText;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.3);
+  font-size: 0.85rem;
+}
+
+.pore-settings__tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.4rem;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  position: sticky;
+  top: 0;
+  background: inherit;
+}
+
+.pore-settings__tabs button {
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+.pore-settings__tabs button.active {
+  background: color-mix(in srgb, currentColor 18%, transparent);
+}
+
+.pore-settings__close {
+  margin-left: auto;
+}
+
+.pore-settings__body {
+  padding: 0.5rem 0.75rem;
+}
+
+.pore-settings__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  min-height: 2rem;
+}
+
+.pore-settings__row select,
+.pore-settings__row input[type='range'] {
+  max-width: 160px;
+}
+
+.pore-settings__keys {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pore-settings__keys kbd {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  border-radius: 4px;
+  padding: 0 0.3rem;
+  font-family: ui-monospace, monospace;
+}
+
+.pore-settings__keys button {
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 0 0.35rem;
+}

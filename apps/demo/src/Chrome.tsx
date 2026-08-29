@@ -1,4 +1,5 @@
 import {
+  SettingsPanel,
   useReader,
   useReaderHistory,
   useReaderLocation,
@@ -26,6 +27,7 @@ export function Chrome({
   const [settings, setSettings] = useReaderSettings();
   const resumed = useResumedFromPage();
   const [dismissed, setDismissed] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
 
   useReaderHistory({ mode: 'url-and-title' });
   useEffect(() => setDismissed(false), [bookId]);
@@ -46,43 +48,11 @@ export function Chrome({
           ))}
         </select>
 
-        <select
-          aria-label="Layout"
-          value={settings.layout}
-          onChange={(e) => setSettings({ layout: e.target.value as typeof settings.layout })}
-        >
-          <option value="paged-single">Single</option>
-          <option value="paged-double">Double</option>
-          <option value="continuous-vertical">Long strip</option>
-          <option value="continuous-horizontal">Wide strip</option>
-        </select>
-
-        <select
-          aria-label="Reading direction"
-          value={settings.direction}
-          onChange={(e) => setSettings({ direction: e.target.value as typeof settings.direction })}
-        >
-          <option value="ltr">LTR</option>
-          <option value="rtl">RTL</option>
-        </select>
-
-        <select
-          aria-label="Fit mode"
-          value={settings.fit}
-          onChange={(e) => setSettings({ fit: e.target.value as typeof settings.fit })}
-        >
-          <option value="contain">Fit</option>
-          <option value="width">Width</option>
-          <option value="height">Height</option>
-          <option value="original">1:1</option>
-        </select>
-
-        <button
-          className={settings.spreadOffset ? 'active' : ''}
-          onClick={() => setSettings({ spreadOffset: settings.spreadOffset ? 0 : 1 })}
-          title="Offset double spreads"
-        >
-          Offset
+        <button onClick={() => reader.turn('back')} aria-label="Previous page">
+          ‹
+        </button>
+        <button onClick={() => reader.turn('forward')} aria-label="Next page">
+          ›
         </button>
 
         <button
@@ -92,39 +62,14 @@ export function Chrome({
         >
           {settings.autoscroll ? '⏸' : '▶'}
         </button>
-
-        <label className="slider" title="Brightness">
-          ☀
-          <input
-            type="range"
-            min={0.3}
-            max={1}
-            step={0.05}
-            value={settings.brightness}
-            onChange={(e) => setSettings({ brightness: Number(e.target.value) })}
-          />
-        </label>
         <button
-          className={settings.greyscale ? 'active' : ''}
-          onClick={() => setSettings({ greyscale: !settings.greyscale })}
-          title="Greyscale"
+          className={panelOpen ? 'active' : ''}
+          onClick={() => setPanelOpen((v) => !v)}
+          aria-label="Reader settings"
         >
-          B/W
-        </button>
-        <button
-          className={settings.dim ? 'active' : ''}
-          onClick={() => setSettings({ dim: !settings.dim })}
-          title="Dim"
-        >
-          Dim
+          ⚙
         </button>
 
-        <button aria-label="Previous page" onClick={() => reader.turn('back')}>
-          ‹
-        </button>
-        <button aria-label="Next page" onClick={() => reader.turn('forward')}>
-          ›
-        </button>
         <span className="loc" role="status" aria-live="polite">
           {loc?.label ?? '…'}
         </span>
@@ -134,8 +79,14 @@ export function Chrome({
         className="progress"
         role="progressbar"
         aria-valuenow={Math.round(pct)}
-        style={{ width: `${pct}%` }}
+        style={{ width: `${pct}%`, opacity: settings.progressBar.style === 'hidden' ? 0 : 1 }}
       />
+
+      {panelOpen && (
+        <div className="panel-wrap">
+          <SettingsPanel onClose={() => setPanelOpen(false)} />
+        </div>
+      )}
 
       {resumed !== null && !dismissed && (
         <div className="toast">

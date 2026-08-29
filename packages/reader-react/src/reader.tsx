@@ -12,9 +12,11 @@ import {
 import {
   createImageEngine,
   DEFAULT_IMAGE_SETTINGS,
+  DEFAULT_KEYMAP,
   type ImageEngine,
   type ImageEngineEvents,
   type ImageEngineSettings,
+  type Keymap,
   type Position,
   type TurnDirection,
 } from '@pore/reader-core';
@@ -31,11 +33,13 @@ export interface ReaderHandle {
   turn(dir: TurnDirection): void;
   goto(page: number): void;
   setSettings(patch: Partial<ImageEngineSettings>): void;
+  setKeymap(patch: Partial<Keymap>): void;
 }
 
 interface ReaderCtx {
   location: ReaderLocation | null;
   settings: ImageEngineSettings;
+  keymap: Keymap;
   resumedFromPage: number | null;
   handle: ReaderHandle;
 }
@@ -71,6 +75,7 @@ export function Reader({
     ...DEFAULT_IMAGE_SETTINGS,
     ...initialSettings,
   }));
+  const [keymap, setKeymap] = useState<Keymap>(DEFAULT_KEYMAP);
   const [resumedFromPage, setResumedFromPage] = useState<number | null>(null);
 
   useEffect(() => {
@@ -98,6 +103,10 @@ export function Reader({
       engine.on('reader:resumed', (p) => {
         setResumedFromPage(p.position && p.page > 0 ? p.page : null);
       }),
+      engine.on('reader:settingschange', (p) => {
+        setSettings(p.settings);
+        setKeymap(p.keymap);
+      }),
     ];
 
     void engine.mount();
@@ -113,10 +122,8 @@ export function Reader({
     () => ({
       turn: (d) => engineRef.current?.turn(d),
       goto: (p) => engineRef.current?.goto(p),
-      setSettings: (patch) => {
-        engineRef.current?.setSettings(patch);
-        setSettings((s) => ({ ...s, ...patch }));
-      },
+      setSettings: (patch) => engineRef.current?.setSettings(patch),
+      setKeymap: (patch) => engineRef.current?.setKeymap(patch),
     }),
     [],
   );
@@ -124,8 +131,8 @@ export function Reader({
   useImperativeHandle(ref, () => handle, [handle]);
 
   const ctx = useMemo<ReaderCtx>(
-    () => ({ location, settings, resumedFromPage, handle }),
-    [location, settings, resumedFromPage, handle],
+    () => ({ location, settings, keymap, resumedFromPage, handle }),
+    [location, settings, keymap, resumedFromPage, handle],
   );
 
   return (
@@ -149,6 +156,11 @@ export function useReaderLocation(): ReaderLocation | null {
 export function useReaderSettings(): [ImageEngineSettings, ReaderHandle['setSettings']] {
   const { settings, handle } = useRuntime();
   return [settings, handle.setSettings];
+}
+
+export function useReaderKeymap(): [Keymap, ReaderHandle['setKeymap']] {
+  const { keymap, handle } = useRuntime();
+  return [keymap, handle.setKeymap];
 }
 
 export function useReader(): ReaderHandle {

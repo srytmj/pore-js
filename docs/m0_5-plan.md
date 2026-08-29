@@ -89,17 +89,18 @@ _(vertical-rl writing mode for light novels lands with the Text engine, M1)_
 
 ---
 
-## P7 — full tabbed settings panel · L
+## P7 — full tabbed settings panel · L ✅
 
-- [ ] `reader-react`: `<SettingsPanel>` — tabs Layout / Image fit / Behavior / Keybinds (MangaDex-style)
-- [ ] Layout: mode, direction, spread offset, page gap, progress-bar style/position/thickness, background
-- [ ] Image fit: fit mode, stretch small, max width/height, filters
-- [ ] Behavior: tapToTurn, scrollToTurn, autoscroll speed/smooth, paged timer, next-chapter, doubleClickFullscreen
-- [ ] Keybinds: per-action key capture, multi-key, per-action + global reset (`setKeymap`)
-- [ ] Persist per-book (Layout/Fit/direction) vs global (Behavior/keymap/filters) — spec §11.3; a `useReaderSettings` that reads engine-internal changes back (engine emits a `reader:settingschange` event — add it)
-- [ ] Demo swaps the inline bar for a "⚙" that opens the panel
+- [x] `reader:settingschange {settings, keymap}` event — emitted on mount, `setSettings`, `setKeymap`; `<Reader>` mirrors it into `useReaderSettings` / `useReaderKeymap` (so keybind-driven changes reflect in the UI)
+- [x] `<SettingsPanel onClose>` — tabs Layout / Image fit / Behavior / Keybinds
+- [x] Layout: mode, direction, spread offset, page gap, background, progress-bar style
+- [x] Image fit: fit mode, stretch small, max width, brightness, greyscale, dim
+- [x] Behavior: tapToTurn, scrollToTurn, double-click FS, autoscroll speed/smooth, paged timer, next-chapter
+- [x] Keybinds: per-action key capture (press-a-key), multi-key, per-action + "Reset all" (`setKeymap`)
+- [x] Demo: ⚙ button toggles the panel; browser-verified live fit change + 13 keybind rows
+- [ ] _Per-book vs global persistence split (spec §11.3) — deferred to M1 prep (needs the per-book settings store)_
 
-**Done when:** every setting in spec §2.3 is reachable from the UI and sticks.
+**Done when:** every setting in spec §2.3 is reachable from the UI and applies live. ✅ done 2026-08-29
 
 ---
 

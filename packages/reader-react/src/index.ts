@@ -13,9 +13,13 @@ export {
   useReader,
   useReaderLocation,
   useReaderSettings,
+  useReaderKeymap,
   useResumedFromPage,
 } from './reader.js';
 export type { ReaderProps, ReaderHandle, ReaderLocation } from './reader.js';
+
+export { SettingsPanel } from './settings-panel.js';
+export type { SettingsPanelProps } from './settings-panel.js';
 
 export { useReaderHistory } from './history.js';
 export type { HistoryMode, UseReaderHistoryOptions } from './history.js';

@@ -721,10 +721,12 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       autoPagedTimer = null;
       startPagedAutoAdvance();
     }
+    emitter.emit('reader:settingschange', { settings, keymap });
   }
 
   function setKeymap(patch: Partial<Keymap>): void {
     keymap = { ...keymap, ...patch };
+    emitter.emit('reader:settingschange', { settings, keymap });
   }
 
   async function mount(): Promise<void> {
@@ -784,6 +786,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     void acquireWakeLock();
 
     emitter.emit('reader:ready', { manifest: m });
+    emitter.emit('reader:settingschange', { settings, keymap });
     render();
     if (isContinuous() && restoredPage > 0) goto(restoredPage);
     if (settings.autoscroll) startAutoscroll();
