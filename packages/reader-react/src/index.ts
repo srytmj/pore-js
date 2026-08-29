@@ -23,6 +23,7 @@ export {
   useReaderSettings,
   useReaderKeymap,
   useTableOfContents,
+  useFootnote,
   useResumedFromPage,
 } from './reader.js';
 export type {
@@ -31,6 +32,7 @@ export type {
   ReaderLocation,
   ReaderKind,
   AnySettings,
+  Footnote,
 } from './reader.js';
 
 export { SettingsPanel } from './settings-panel.js';

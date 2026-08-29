@@ -35,9 +35,15 @@ export interface ReaderLocation {
   chapter?: string;
 }
 
+export interface Footnote {
+  html: string;
+  href: string;
+}
+
 export interface ReaderHandle {
   turn(dir: TurnDirection): void;
   goto(target: number | Position): void;
+  goToHref(href: string): void;
   setSettings(patch: Partial<AnySettings>): void;
   setKeymap(patch: Partial<Keymap>): void;
 }
@@ -46,6 +52,7 @@ interface EngineLike {
   mount(): Promise<void>;
   turn(dir: TurnDirection): void;
   goto(target: never): void;
+  goToHref?(href: string): void;
   setSettings(patch: never): void;
   setKeymap?(patch: Partial<Keymap>): void;
   on(event: string, handler: (payload: never) => void): () => void;
@@ -58,6 +65,8 @@ interface ReaderCtx {
   settings: AnySettings;
   keymap: Keymap;
   toc: TocEntry[];
+  footnote: Footnote | null;
+  clearFootnote: () => void;
   resumedFromPage: number | null;
   handle: ReaderHandle;
 }
@@ -95,6 +104,7 @@ export function Reader({
   }));
   const [keymap, setKeymap] = useState<Keymap>(DEFAULT_KEYMAP);
   const [toc, setToc] = useState<TocEntry[]>([]);
+  const [footnote, setFootnote] = useState<Footnote | null>(null);
   const [resumedFromPage, setResumedFromPage] = useState<number | null>(null);
 
   useEffect(() => {
@@ -162,6 +172,7 @@ export function Reader({
           if (q.keymap) setKeymap(q.keymap);
         }),
         engine.on('reader:toc', (p: never) => setToc((p as { toc: TocEntry[] }).toc)),
+        engine.on('reader:footnote', (p: never) => setFootnote(p as Footnote)),
       );
 
       await engine.mount();
@@ -179,17 +190,29 @@ export function Reader({
     () => ({
       turn: (d) => engineRef.current?.turn(d),
       goto: (t) => engineRef.current?.goto(t as never),
+      goToHref: (href) => engineRef.current?.goToHref?.(href),
       setSettings: (patch) => engineRef.current?.setSettings(patch as never),
       setKeymap: (patch) => engineRef.current?.setKeymap?.(patch),
     }),
     [],
   );
+  const clearFootnote = useMemo(() => () => setFootnote(null), []);
 
   useImperativeHandle(ref, () => handle, [handle]);
 
   const ctx = useMemo<ReaderCtx>(
-    () => ({ kind, location, settings, keymap, toc, resumedFromPage, handle }),
-    [kind, location, settings, keymap, toc, resumedFromPage, handle],
+    () => ({
+      kind,
+      location,
+      settings,
+      keymap,
+      toc,
+      footnote,
+      clearFootnote,
+      resumedFromPage,
+      handle,
+    }),
+    [kind, location, settings, keymap, toc, footnote, clearFootnote, resumedFromPage, handle],
   );
 
   return (
@@ -229,6 +252,11 @@ export function useReaderKeymap(): [Keymap, ReaderHandle['setKeymap']] {
 
 export function useTableOfContents(): TocEntry[] {
   return useRuntime().toc;
+}
+
+export function useFootnote(): [Footnote | null, () => void] {
+  const { footnote, clearFootnote } = useRuntime();
+  return [footnote, clearFootnote];
 }
 
 export function useReader(): ReaderHandle {

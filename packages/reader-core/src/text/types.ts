@@ -40,6 +40,7 @@ export interface TextEngineEvents {
   };
   'reader:loadingstate': { spine: number; state: PageLoadState };
   'reader:toc': { toc: TocEntry[] };
+  'reader:footnote': { html: string; href: string };
   'reader:settingschange': { settings: TextEngineSettings };
   'reader:end': Record<string, never>;
   'reader:start': Record<string, never>;
@@ -50,6 +51,8 @@ export interface TextEngine {
   mount(): Promise<void>;
   /** Absolute book page, or a resolved anchor Position. */
   goto(target: number | Position): void;
+  /** Jump to an EPUB href like `OEBPS/ch02.xhtml#s2` (from the TOC). */
+  goToHref(href: string): void;
   turn(dir: 'forward' | 'back'): void;
   setSettings(patch: Partial<TextEngineSettings>): void;
   on<E extends keyof TextEngineEvents>(

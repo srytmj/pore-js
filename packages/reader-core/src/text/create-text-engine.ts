@@ -3,9 +3,9 @@ import type { Position } from '../position/types.js';
 import { createEmitter } from '../internal/emitter.js';
 import { parseEpub } from './epub/parse.js';
 import type { EpubBook } from './epub/types.js';
-import { stripHash } from './epub/path.js';
+import { dirOf, resolveHref, stripHash } from './epub/path.js';
 import { rewriteResources } from './rewrite.js';
-import { generateAnchor, resolveAnchor } from './anchor.js';
+import { generateAnchor, pageForElement, resolveAnchor } from './anchor.js';
 import {
   buildBaseStylesheet,
   offsetForPage,
@@ -208,7 +208,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     const { html, urls } = rewriteResources(source_, book, item.href, parser);
     objectUrls = urls;
 
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
       let settled = false;
       const finish = () => {
         if (settled || destroyed) return;
@@ -226,7 +226,72 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       // jsdom / edge cases where `load` never fires for srcdoc
       setTimeout(finish, 60);
       frame.srcdoc = html;
+    }).then(() => wireLinks());
+  };
+
+  /** Intercept footnote / same-doc links inside the iframe. */
+  const wireLinks = () => {
+    const cdoc = frame.contentDocument;
+    if (!cdoc) return;
+    cdoc.addEventListener('click', (ev) => {
+      const a = (ev.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
+      if (!a) return;
+      const href = a.getAttribute('href') ?? '';
+      const isNote =
+        a.getAttribute('epub:type')?.includes('noteref') ||
+        a.getAttribute('type')?.includes('noteref');
+      if (href.startsWith('#') || isNote) {
+        ev.preventDefault();
+        openFootnote(href);
+      } else if (!/^[a-z]+:/i.test(href)) {
+        ev.preventDefault();
+        gotoHref(href, item()?.href ?? '');
+      }
     });
+  };
+
+  const item = () => book?.spine[spineIndex];
+
+  const openFootnote = (href: string) => {
+    const cdoc = frame.contentDocument;
+    if (!book || !cdoc) return;
+    const [pathPart, frag] = href.split('#');
+    let targetDoc = cdoc;
+    let noteHtml = '';
+    if (pathPart) {
+      const resolved = resolveHref(dirOf(item()?.href ?? ''), pathPart);
+      const res = book.resource(resolved);
+      if (res) targetDoc = parser.parseFromString(new TextDecoder().decode(res.bytes), 'text/html');
+    }
+    const el = frag ? targetDoc.getElementById(frag) : null;
+    noteHtml = (el?.innerHTML ?? el?.textContent ?? '').trim();
+    if (noteHtml) emitter.emit('reader:footnote', { html: noteHtml, href });
+  };
+
+  const gotoHref = (href: string, fromHref: string) => {
+    if (!book) return;
+    const [pathPart, frag] = href.split('#');
+    const resolved = pathPart ? resolveHref(dirOf(fromHref), pathPart) : fromHref;
+    const targetPath = stripHash(resolved);
+    const idx = book.spine.findIndex((s) => s.href === targetPath);
+    if (idx === -1) return;
+    const jump = () => {
+      const cdoc = frame.contentDocument;
+      const el = frag && cdoc ? cdoc.getElementById(frag) : null;
+      if (el && cdoc) {
+        (cdoc.body as HTMLElement).style.transform = 'translateX(0)';
+        page = Math.min(
+          pageForElement(el, styleOptions().pageWidth, settings.columnGap),
+          Math.max(0, spinePageCount - 1),
+        );
+      } else {
+        page = 0;
+      }
+      applyPage();
+      emitLocation();
+    };
+    if (idx === spineIndex) jump();
+    else void renderSpine(idx).then(jump);
   };
 
   const revokeUrls = () => {
@@ -369,7 +434,13 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     root.remove();
   }
 
-  void stripHash; // reserved for E4 anchor resolution
-
-  return { mount, goto, turn, setSettings, on, destroy };
+  return {
+    mount,
+    goto,
+    goToHref: (href: string) => gotoHref(href, item()?.href ?? ''),
+    turn,
+    setSettings,
+    on,
+    destroy,
+  };
 }

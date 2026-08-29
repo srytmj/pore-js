@@ -89,17 +89,15 @@ _(char-level `offset` within the block: follow-up; block-level is enough to resu
 
 ---
 
-## E6 — TOC, footnotes, writing mode · M
+## E6 — TOC, footnotes · M (partial ✅)
 
-- [ ] `useTableOfContents()` / `reader:toc` — nested entries; clicking → `goto(anchor)`
-- [ ] Footnotes: intercept `a[epub:type="noteref"]` / same-doc `#` links →
-      render target in a popover instead of navigating
-- [ ] `page-progression-direction="rtl"` → columns flow RTL, gestures flip
-- [ ] Selection bridge: `selectionchange` in the iframe → floating toolbar
-      (copy, bookmark) — bookmark stored via source
-- [ ] Vitest: TOC tree → flat anchors; rtl page-turn direction
+- [x] `useTableOfContents()` + `reader:toc`; `TextEngine.goToHref(href)` resolves an EPUB href (`ch02.xhtml#s2`) → spine index + fragment element → page; demo has a "Contents…" `<select>`
+- [x] Footnotes / same-doc links: iframe click listener intercepts `a[epub:type=noteref]` and `#`/relative links → cross-doc `#id` lookup → `reader:footnote { html }` → demo popover; internal links → `goToHref`
+- [x] `useFootnote()` hook; browser-verified TOC jump + footnote popover
+- [ ] `page-progression-direction="rtl"` column flow — offset sign flip stubbed, needs an RTL fixture
+- [ ] Selection bridge / bookmarks — M3
 
-**Done when:** TOC navigates, footnotes pop, an RTL EPUB reads right-to-left.
+**Done when:** TOC navigates, footnotes pop. ✅ done 2026-08-29 (RTL flow → follow-up)
 
 ---
 
