@@ -102,18 +102,31 @@ source is usable programmatically now)_
 
 ---
 
-## I4 — vertical-JP text · M
+## I4 — vertical-JP text · M ✅
 
-- [ ] Text engine: `writing-mode: vertical-rl` on `#pore-flow`; pagination math
-      switches to `scrollHeight / pageHeight` (columns become rows)
-- [ ] Page-turn + gestures flip to the vertical axis; RTL column flow reuses this
-- [ ] `TextEngineSettings.verticalText: boolean` (or auto from
-      `-epub-writing-mode` / `page-progression-direction`)
-- [ ] A vertical-JP fixture (public-domain Aozora Bunko text repackaged, or
-      synthetic)
-- [ ] Vitest: vertical page math; turn direction
+- [x] `computeTextLayout({ vertical })` drops multicol; `#pore-flow` gets
+      `writing-mode: vertical-rl` and is pinned to the viewport's right edge
+      (`justify-content: flex-end`). A page is one viewport-width slice, so
+      paging forward is `translateX(+page·pageStep)` — the mirror of horizontal.
+- [x] `TextEngineSettings.verticalText: 'auto' | 'on' | 'off'`; `auto` = RTL page
+      progression + Japanese `dc:language`. `reader:ready` now carries
+      `vertical`.
+- [x] Input: RTL / vertical books swap the horizontal keys (ArrowLeft = forward);
+      wheel takes the dominant axis; click zones already reversed for RTL. This
+      path also fixes keyboard direction for plain RTL-horizontal EPUBs.
+- [x] Anchor resume + search `gotoHit` fall back to percent-of-spine in vertical
+      mode (block-rect → page math doesn't apply)
+- [x] `demo-vertical` fixture — synthetic Japanese, `page-progression-direction`
+      `rtl`, `lang="ja"`; demo book list + a "Vertical text" setting in the Nav tab
+- [x] Vitest (3): `computeTextLayout` vertical (pageStep, no multicol),
+      `buildBaseStylesheet` vertical CSS, engine auto-detect + swapped keys
+- [x] Browser-verified: reads top-to-bottom right-to-left, `translateX` steps
+      `0 → +1240 → …`, progress + chapter tracking correct, no LTR regression
 
-**Done when:** a vertical Japanese EPUB reads top-to-bottom, right-to-left.
+**Done when:** a vertical Japanese EPUB reads top-to-bottom, right-to-left. ✅
+done 2026-08-29
+_(full RTL-horizontal column flow for Arabic/Hebrew: keys are fixed; the visual
+column order is CSS's job and largely works — a dedicated pass is M4+.)_
 
 ---
 

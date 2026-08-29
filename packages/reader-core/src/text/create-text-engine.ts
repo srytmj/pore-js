@@ -85,6 +85,13 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
 
   // ---- helpers -------------------------------------------------------------
 
+  /** Resolve the `verticalText` setting against the book's metadata. */
+  const verticalActive = (): boolean => {
+    if (settings.verticalText === 'on') return true;
+    if (settings.verticalText === 'off') return false;
+    return book?.metadata.direction === 'rtl' && /^ja/i.test(book?.metadata.language ?? '');
+  };
+
   const layout = (): TextLayout =>
     computeTextLayout({
       viewportWidth: root.clientWidth || 800,
@@ -93,6 +100,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       columnGap: settings.columnGap,
       marginPct: settings.marginPct,
       fontSizePct: settings.fontSizePct,
+      vertical: verticalActive(),
     });
 
   const lastSpine = () => (book ? book.spine.length - 1 : 0);
@@ -242,16 +250,23 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     return hits;
   };
 
-  /** Block element whose accumulated collapsed text spans `offset`. */
-  const blockForOffset = (doc: Document, offset: number): Element | null => {
+  /** Block element whose accumulated collapsed text spans `offset`, and how far through the doc that is. */
+  const blockForOffset = (doc: Document, offset: number): { el: Element | null; fraction: number } => {
     const blocks = blockElements(doc);
     let seen = 0;
-    for (const el of blocks) {
+    let total = 0;
+    const lens = blocks.map((el) => {
       const len = (el.textContent ?? '').replace(/\s+/g, ' ').trim().length + 1;
-      if (seen + len > offset) return el;
-      seen += len;
+      total += len;
+      return len;
+    });
+    for (let i = 0; i < blocks.length; i++) {
+      if (seen + lens[i]! > offset) {
+        return { el: blocks[i]!, fraction: total > 0 ? seen / total : 0 };
+      }
+      seen += lens[i]!;
     }
-    return blocks.at(-1) ?? null;
+    return { el: blocks.at(-1) ?? null, fraction: total > 0 ? seen / total : 0 };
   };
 
   const gotoHit = (hit: SearchHit): void => {
@@ -263,10 +278,13 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       if (!cdoc) return;
       const flow = flowEl();
       if (flow) flow.style.transform = 'translateX(0)';
-      const el = blockForOffset(cdoc, hit.start);
-      if (el) {
-        page = Math.min(pageForElement(el, layout().pageStep), Math.max(0, spinePageCount - 1));
-      }
+      const { el, fraction } = blockForOffset(cdoc, hit.start);
+      const last = Math.max(0, spinePageCount - 1);
+      page = layout().vertical
+        ? Math.min(Math.round(fraction * last), last)
+        : el
+          ? Math.min(pageForElement(el, layout().pageStep), last)
+          : page;
       renderView();
       emitLocation();
     };
@@ -352,7 +370,11 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   const applyPage = () => {
     const flow = flowEl();
     if (!flow) return;
-    flow.style.transform = `translateX(${offsetForPage(page, layout().pageStep)}px)`;
+    const l = layout();
+    // vertical-rl content grows leftward from a right-pinned flow, so paging
+    // forward shifts it right by `+pageStep` (mirror of the horizontal case).
+    const x = l.vertical ? page * l.pageStep : offsetForPage(page, l.pageStep);
+    flow.style.transform = `translateX(${x}px)`;
   };
 
   const measure = () => {
@@ -397,6 +419,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     const { page: resolved } = resolveAnchor(cdoc, anchor, {
       spinePages: spinePageCount,
       pageStep: layout().pageStep,
+      vertical: layout().vertical,
     });
     page = Math.min(Math.max(resolved, 0), spinePageCount - 1);
   };
@@ -473,10 +496,16 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   const onKey = (ev: KeyboardEvent) => {
     if (ev.defaultPrevented || ev.metaKey || ev.ctrlKey || ev.altKey) return;
     const k = ev.key;
+    // RTL / vertical-JP books read leftward: swap the horizontal keys.
+    const reverse = book?.metadata.direction === 'rtl';
+    const rightKeys = ['ArrowRight', 'd', 'D', 'l'];
+    const leftKeys = ['ArrowLeft', 'a', 'A', 'h'];
+    const horizFwd = reverse ? leftKeys : rightKeys;
+    const horizBack = reverse ? rightKeys : leftKeys;
     const fwd =
-      ['ArrowRight', 'ArrowDown', 'PageDown', 'd', 'D', 'l', ' '].includes(k) && !ev.shiftKey;
+      ([...horizFwd, 'ArrowDown', 'PageDown', ' '].includes(k) && !ev.shiftKey);
     const back =
-      ['ArrowLeft', 'ArrowUp', 'PageUp', 'a', 'A', 'h'].includes(k) || (k === ' ' && ev.shiftKey);
+      [...horizBack, 'ArrowUp', 'PageUp'].includes(k) || (k === ' ' && ev.shiftKey);
     if (fwd) {
       ev.preventDefault();
       turn('forward');
@@ -498,10 +527,13 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   const onWheel = (ev: WheelEvent) => {
     if (ev.ctrlKey) return;
     const now = Date.now();
-    if (Math.abs(ev.deltaY) < 4 || now - lastWheel < 320) return;
+    // vertical-rl readers often scroll horizontally; take the dominant axis.
+    const horizontal = layout().vertical && Math.abs(ev.deltaX) > Math.abs(ev.deltaY);
+    const delta = horizontal ? -ev.deltaX : ev.deltaY;
+    if (Math.abs(delta) < 4 || now - lastWheel < 320) return;
     lastWheel = now;
     ev.preventDefault();
-    turn(ev.deltaY > 0 ? 'forward' : 'back');
+    turn(delta > 0 ? 'forward' : 'back');
   };
 
   const centerToggleOnSingleClick = () =>
@@ -563,7 +595,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     const jump = () => {
       const cdoc = frame.contentDocument;
       const el = frag && cdoc ? cdoc.getElementById(frag) : null;
-      if (el && cdoc) {
+      if (el && cdoc && !layout().vertical) {
         const flow = flowEl();
         if (flow) flow.style.transform = 'translateX(0)';
         page = Math.min(pageForElement(el, layout().pageStep), Math.max(0, spinePageCount - 1));
@@ -662,6 +694,13 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     if (settings.publisherStyles !== prev.publisherStyles) {
       // author CSS is baked in at render time — re-render the spine
       void renderSpine(spineIndex);
+    } else if (settings.verticalText !== prev.verticalText) {
+      // writing mode flips the whole pagination axis — re-measure from scratch
+      injectStyle();
+      measure();
+      page = 0;
+      renderView();
+      emitLocation();
     } else {
       reflowKeepingPlace();
     }
@@ -710,7 +749,11 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     if (restore?.type === 'anchor') pendingAnchor = restore;
     await renderSpine(startSpine);
     emitter.emit('reader:chrometoggle', { visible: chromeVisible });
-    emitter.emit('reader:ready', { metadata: book.metadata, spineCount: book.spine.length });
+    emitter.emit('reader:ready', {
+      metadata: book.metadata,
+      spineCount: book.spine.length,
+      vertical: verticalActive(),
+    });
   }
 
   function on<E extends keyof TextEngineEvents>(

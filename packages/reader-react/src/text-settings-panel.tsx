@@ -131,6 +131,18 @@ export function TextSettingsPanel({ onClose }: { onClose?: () => void }) {
 
         {tab === 'nav' && (
           <>
+            <Row label="Vertical text">
+              <select
+                value={s.verticalText}
+                onChange={(e) =>
+                  set({ verticalText: e.target.value as TextEngineSettings['verticalText'] })
+                }
+              >
+                <option value="auto">Auto (from book)</option>
+                <option value="on">Always on</option>
+                <option value="off">Always off</option>
+              </select>
+            </Row>
             <Row label="At chapter end">
               <select
                 value={s.endBehavior}

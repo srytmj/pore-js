@@ -6,6 +6,8 @@ export interface TextLayoutInput {
   /** Vertical reading margin as a % of the viewport's smaller dimension. */
   marginPct: number;
   fontSizePct: number;
+  /** Vertical writing mode (`vertical-rl`, e.g. Japanese). Disables multicol. */
+  vertical?: boolean;
 }
 
 export interface TextLayout {
@@ -24,6 +26,8 @@ export interface TextLayout {
   contentWidth: number;
   /** Body content-box height, px. */
   contentHeight: number;
+  /** Vertical writing mode is active. */
+  vertical: boolean;
 }
 
 const MIN_MEASURE = 280;
@@ -32,6 +36,24 @@ const MIN_SIDE = 20;
 /** Work out a book-like, centred column layout for the given viewport. */
 export function computeTextLayout(i: TextLayoutInput): TextLayout {
   const marginV = Math.round((Math.min(i.viewportWidth, i.viewportHeight) * i.marginPct) / 100);
+
+  if (i.vertical) {
+    // No multicol: `writing-mode: vertical-rl` flows lines top-to-bottom then
+    // right-to-left, overflowing left. A "page" is one viewport-width slice, so
+    // the translateX math is identical to the horizontal case.
+    const contentWidth = Math.max(MIN_MEASURE, i.viewportWidth - MIN_SIDE * 2);
+    return {
+      measure: contentWidth,
+      columnGap: i.columnGap,
+      colsPerPage: 1,
+      sidePad: MIN_SIDE,
+      marginV,
+      pageStep: contentWidth,
+      contentWidth,
+      contentHeight: Math.max(1, i.viewportHeight - marginV * 2),
+      vertical: true,
+    };
+  }
   // a comfortable measure caps around ~66 characters ≈ 33em at the current size
   const maxMeasure = Math.round(33 * 16 * (i.fontSizePct / 100));
   const avail = Math.max(MIN_MEASURE, i.viewportWidth - MIN_SIDE * 2);
@@ -60,6 +82,7 @@ export function computeTextLayout(i: TextLayoutInput): TextLayout {
     pageStep,
     contentWidth,
     contentHeight: Math.max(1, i.viewportHeight - marginV * 2),
+    vertical: false,
   };
 }
 
@@ -128,14 +151,22 @@ body {
   height:100%;
   overflow:hidden;
   position:relative;
+${layout.vertical ? '  display:flex;\n  justify-content:flex-end;' : ''}
 }
 #${FLOW_ID} {
   height:100%;
-  column-width:${layout.measure}px;
-  column-gap:${layout.columnGap}px;
-  column-fill:auto;
   transform:translateX(0);
   will-change:transform;
+${
+  layout.vertical
+    ? `  writing-mode:vertical-rl;
+  -webkit-writing-mode:vertical-rl;
+  width:max-content;
+  text-orientation:mixed;`
+    : `  column-width:${layout.measure}px;
+  column-gap:${layout.columnGap}px;
+  column-fill:auto;`
+}
 }
 ${forceFamily ? `body, body * { font-family:${family} !important; }` : ''}
 #${FLOW_ID} p, #${FLOW_ID} li, #${FLOW_ID} blockquote, #${FLOW_ID} div { text-align:inherit; }

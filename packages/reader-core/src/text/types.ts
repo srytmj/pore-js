@@ -24,6 +24,12 @@ export interface TextEngineSettings {
    * The last chapter always shows a "The End" card so progress reaches 100%.
    */
   endBehavior: 'continuous' | 'endpage';
+  /**
+   * Vertical writing mode (`vertical-rl`, Japanese-style). `auto` turns it on
+   * for EPUBs that declare RTL page progression with a Japanese primary
+   * language.
+   */
+  verticalText: 'auto' | 'on' | 'off';
   /** Where the chrome/menu bar sits. */
   menuPosition: 'top' | 'left' | 'right';
   /** How a side menu is revealed (ignored when `menuPosition: 'top'`). */
@@ -42,12 +48,13 @@ export const DEFAULT_TEXT_SETTINGS: TextEngineSettings = {
   fontFamily: 'original',
   dimImages: false,
   endBehavior: 'continuous',
+  verticalText: 'auto',
   menuPosition: 'top',
   menuReveal: 'click',
 };
 
 export interface TextEngineEvents {
-  'reader:ready': { metadata: EpubMetadata; spineCount: number };
+  'reader:ready': { metadata: EpubMetadata; spineCount: number; vertical: boolean };
   'reader:resumed': { position: Position | null };
   'reader:locationchange': Locator;
   'reader:progress': ReaderProgress;

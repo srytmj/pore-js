@@ -109,6 +109,46 @@ describe('createTextEngine', () => {
     engine.destroy();
   });
 
+  it('auto-enables vertical writing mode for a Japanese rtl EPUB', async () => {
+    const jpOpf = OPF.replace('<dc:title>Fixture</dc:title>', '<dc:title>縦</dc:title><dc:language>ja</dc:language>')
+      .replace('<spine>', '<spine page-progression-direction="rtl">');
+    const src: ReaderSource = {
+      getManifest: vi.fn(async () => ({ bookId: 'b', type: 'epub' as const, title: '縦' })),
+      getPage: vi.fn(),
+      getFile: vi.fn(
+        async () =>
+          new Blob([
+            zipSync({
+              mimetype: strToU8('application/epub+zip'),
+              'META-INF/container.xml': strToU8(CONTAINER),
+              'OEBPS/content.opf': strToU8(jpOpf),
+              'OEBPS/nav.xhtml': strToU8(NAV),
+              'OEBPS/ch01.xhtml': strToU8('<html lang="ja"><body><p>あいうえお、かきくけこ。</p></body></html>'),
+              'OEBPS/ch02.xhtml': strToU8('<html lang="ja"><body><p>さしすせそ。</p></body></html>'),
+            }),
+          ]),
+      ),
+      loadProgress: vi.fn(async () => null),
+      saveProgress: vi.fn(async () => {}),
+    };
+    const container = document.createElement('div');
+    const engine = createTextEngine({ container, source: src, bookId: 'b' });
+    let ready: { vertical: boolean } | null = null;
+    engine.on('reader:ready', (p) => (ready = p));
+    await engine.mount();
+    expect(ready).toMatchObject({ vertical: true });
+
+    // In a vertical/rtl book the horizontal keys are swapped:
+    // ArrowRight at page 0 reads *backward* → hits the start of the book.
+    let started = false;
+    engine.on('reader:start', () => (started = true));
+    container
+      .querySelector('.pore-text')!
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    expect(started).toBe(true);
+    engine.destroy();
+  });
+
   it('searches the whole book and emits reader:searchresults', async () => {
     const container = document.createElement('div');
     const engine = createTextEngine({

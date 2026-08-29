@@ -74,6 +74,47 @@ describe('pageCountFor / offsetForPage', () => {
   });
 });
 
+describe('computeTextLayout — vertical', () => {
+  it('drops multicol and steps by a full viewport-width slice', () => {
+    const l = computeTextLayout({
+      viewportWidth: 1000,
+      viewportHeight: 700,
+      columns: 2,
+      columnGap: 48,
+      marginPct: 6,
+      fontSizePct: 100,
+      vertical: true,
+    });
+    expect(l.vertical).toBe(true);
+    expect(l.colsPerPage).toBe(1);
+    expect(l.pageStep).toBe(l.contentWidth);
+    expect(l.contentWidth).toBe(1000 - 40); // viewport minus min side gutters
+  });
+
+  it('emits writing-mode:vertical-rl and a right-pinned flow, no column-width', () => {
+    const l = computeTextLayout({
+      viewportWidth: 900,
+      viewportHeight: 700,
+      columns: 1,
+      columnGap: 40,
+      marginPct: 5,
+      fontSizePct: 100,
+      vertical: true,
+    });
+    const css = buildBaseStylesheet(l, {
+      fontSizePct: 100,
+      lineHeight: 1.7,
+      textAlign: 'start',
+      fontFamily: 'original',
+      direction: 'rtl',
+      publisherStyles: true,
+    });
+    expect(css).toContain('writing-mode:vertical-rl');
+    expect(css).toContain('justify-content:flex-end');
+    expect(css).not.toContain('column-width:');
+  });
+});
+
 describe('buildBaseStylesheet', () => {
   it('emits fixed html gutters and a body multicol surface', () => {
     const layout = computeTextLayout({
