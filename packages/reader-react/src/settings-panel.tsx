@@ -203,6 +203,25 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                 onChange={(e) => set({ doubleClickFullscreen: e.target.checked })}
               />
             </Row>
+            <Row label="Loading method">
+              <select
+                value={s.loadingMethod}
+                onChange={(e) => set({ loadingMethod: e.target.value as never })}
+              >
+                <option value="native">Native</option>
+                <option value="blob">Blob</option>
+                <option value="bitmap">Bitmap (canvas)</option>
+              </select>
+            </Row>
+            <Row label="Preload">
+              <select
+                value={s.preloadStrategy}
+                onChange={(e) => set({ preloadStrategy: e.target.value as never })}
+              >
+                <option value="window">Around current page</option>
+                <option value="all">Whole chapter</option>
+              </select>
+            </Row>
             <Row label={`Autoscroll speed (${s.autoscrollSpeed} px/s)`}>
               <input
                 type="range"

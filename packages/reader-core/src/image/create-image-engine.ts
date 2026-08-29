@@ -238,6 +238,9 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
 
   // ---- paged rendering ----------------------------------------------------------
 
+  const bitmapMode = () =>
+    settings.loadingMethod === 'bitmap' && settings.preloadStrategy !== 'all';
+
   const renderPaged = () => {
     const spread = spreads[currentSpread];
     if (!spread) return;
@@ -245,6 +248,21 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:var(--pore-page-gap,0px);';
     viewport.replaceChildren();
     for (const pageIndex of spread.pages) {
+      if (bitmapMode()) {
+        const canvas = doc.createElement('canvas');
+        canvas.setAttribute('role', 'img');
+        canvas.setAttribute('aria-label', `page ${pageIndex + 1}`);
+        applyFitStyle(canvas as unknown as HTMLImageElement);
+        viewport.appendChild(canvas);
+        void loader?.getBitmap(pageIndex).then((bmp) => {
+          if (destroyed || !bmp) return;
+          canvas.width = bmp.width;
+          canvas.height = bmp.height;
+          canvas.getContext('2d')?.drawImage(bmp, 0, 0);
+          maybeDiscoverWideDims(pageIndex, bmp.width, bmp.height);
+        });
+        continue;
+      }
       const img = doc.createElement('img');
       img.decoding = 'async';
       img.alt = `page ${pageIndex + 1}`;
@@ -255,11 +273,14 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     }
   };
 
-  const maybeDiscoverWide = (pageIndex: number, img: HTMLImageElement) => {
+  const maybeDiscoverWide = (pageIndex: number, img: HTMLImageElement) =>
+    maybeDiscoverWideDims(pageIndex, img.naturalWidth, img.naturalHeight);
+
+  const maybeDiscoverWideDims = (pageIndex: number, w: number, h: number) => {
     if (destroyed || !manifest || settings.layout !== 'paged-double') return;
     const page = manifest.pages[pageIndex];
     if (!page || page.isWide !== undefined) return;
-    if (!isNaturallyWide(page, img.naturalWidth, img.naturalHeight)) return;
+    if (!isNaturallyWide(page, w, h)) return;
     page.isWide = true;
     rebuildSpreads(currentPage());
     render();
@@ -735,13 +756,18 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       throw new Error(`createImageEngine: "${bookId}" is a ${m.type} book, not an image book`);
     }
     manifest = m;
-    if (settings.loadingMethod === 'bitmap') {
-      console.warn('[pore] loadingMethod "bitmap" not implemented yet — using "blob"');
+    // `bitmap` + whole-chapter preload would pin hundreds of decoded bitmaps → force blob.
+    const effectiveMethod =
+      settings.loadingMethod === 'bitmap' && settings.preloadStrategy === 'all'
+        ? 'blob'
+        : settings.loadingMethod;
+    if (effectiveMethod !== settings.loadingMethod) {
+      console.warn('[pore] loadingMethod "bitmap" with preloadStrategy "all" → using "blob"');
     }
     loader = new PageLoader({
       source,
       bookId,
-      loadingMethod: settings.loadingMethod === 'bitmap' ? 'blob' : settings.loadingMethod,
+      loadingMethod: effectiveMethod,
       onState: (index, state) => emitter.emit('reader:loadingstate', { index, state }),
     });
     prefetch = new PrefetchScheduler({

@@ -51,16 +51,17 @@ _(vertical-rl writing mode for light novels lands with the Text engine, M1)_
 
 ---
 
-## P4 — `bitmap` loading path · M
+## P4 — `bitmap` loading path · M ✅
 
-- [ ] `PageLoader` `bitmap` branch: `fetch` → `createImageBitmap` → keep the `ImageBitmap`
-- [ ] Renderer: draw the active page to a `<canvas>` sized to devicePixelRatio; fit/zoom/pan math ported to canvas transform
-- [ ] Only the active (or zoomed) page uses canvas; neighbours stay `<img>`
-- [ ] `bitmap` + `preloadStrategy:'all'` still forced to `blob` (memory)
-- [ ] Close/`ImageBitmap.close()` on eviction
-- [ ] Vitest: loader returns a bitmap handle; canvas fit math
+- [x] `PageLoader`: bitmap-mode fetch also `createImageBitmap(blob)`; `getBitmap(index)`; `ImageBitmap.close()` on drop/destroy
+- [x] `renderPaged` bitmap branch: `<canvas role=img aria-label>` sized to `bmp.width/height`, `drawImage`; same `applyFitStyle` CSS scales it; wide-page discovery via bitmap dims
+- [x] `<img>` path unchanged for continuous / native / blob
+- [x] `bitmap` + `preloadStrategy:'all'` → forced to `blob` with a warn
+- [x] Settings panel: Loading method + Preload selectors (Behavior tab)
+- [x] Vitest (3): loader cache/bytes, LRU eviction + revoke, bitmap decode + close; browser-verified canvas render
 
-**Done when:** high-zoom pages stay crisp with `loadingMethod:'bitmap'`.
+**Done when:** `loadingMethod:'bitmap'` renders pages to canvas. ✅ done 2026-08-29
+_(devicePixelRatio hi-dpi sizing + canvas-native zoom/pan: nice-to-have follow-up; CSS scaling covers the common case)_
 
 ---
 

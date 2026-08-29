@@ -19,6 +19,7 @@ interface Entry {
   url: string | undefined;
   objectUrl: boolean;
   bytes: number;
+  bitmap: ImageBitmap | undefined;
   promise: Promise<string> | undefined;
   controller: AbortController | undefined;
 }
@@ -51,6 +52,14 @@ export class PageLoader {
     return this.#entries.get(index)?.state === 'loaded';
   }
 
+  /** Decoded bitmap for a page (bitmap loading method only). Triggers a load if needed. */
+  async getBitmap(index: number): Promise<ImageBitmap | null> {
+    const existing = this.#entries.get(index);
+    if (existing?.bitmap) return existing.bitmap;
+    await this.get(index).catch(() => undefined);
+    return this.#entries.get(index)?.bitmap ?? null;
+  }
+
   get(index: number): Promise<string> {
     const existing = this.#entries.get(index);
     if (existing?.url) return Promise.resolve(existing.url);
@@ -62,6 +71,7 @@ export class PageLoader {
       url: undefined,
       objectUrl: false,
       bytes: 0,
+      bitmap: undefined,
       promise: undefined,
       controller,
     };
@@ -69,10 +79,11 @@ export class PageLoader {
     this.#emit(index, 'loading');
 
     entry.promise = this.#fetch(index, controller.signal)
-      .then(({ url, objectUrl, bytes }) => {
+      .then(({ url, objectUrl, bytes, bitmap }) => {
         entry.url = url;
         entry.objectUrl = objectUrl;
         entry.bytes = bytes;
+        entry.bitmap = bitmap;
         entry.state = 'loaded';
         entry.promise = undefined;
         entry.controller = undefined;
@@ -117,6 +128,7 @@ export class PageLoader {
     for (const entry of this.#entries.values()) {
       entry.controller?.abort();
       if (entry.objectUrl && entry.url) URL.revokeObjectURL(entry.url);
+      entry.bitmap?.close();
     }
     this.#entries.clear();
     this.#retained.clear();
@@ -141,6 +153,7 @@ export class PageLoader {
     const entry = this.#entries.get(index);
     if (!entry) return;
     if (entry.objectUrl && entry.url) URL.revokeObjectURL(entry.url);
+    entry.bitmap?.close();
     this.#entries.delete(index);
     this.#lru = this.#lru.filter((i) => i !== index);
   }
@@ -148,18 +161,39 @@ export class PageLoader {
   async #fetch(
     index: number,
     signal: AbortSignal,
-  ): Promise<{ url: string; objectUrl: boolean; bytes: number }> {
+  ): Promise<{
+    url: string;
+    objectUrl: boolean;
+    bytes: number;
+    bitmap: ImageBitmap | undefined;
+  }> {
     const { source, bookId, variant, loadingMethod } = this.#opts;
     const opts = variant ? { variant, signal } : { signal };
     const result = await source.getPage(bookId, index, opts);
+
+    let blob: Blob;
+    let url: string;
+    let objectUrl: boolean;
     if (typeof result === 'string') {
-      if (loadingMethod === 'native') return { url: result, objectUrl: false, bytes: 0 };
+      if (loadingMethod === 'native') {
+        return { url: result, objectUrl: false, bytes: 0, bitmap: undefined };
+      }
       const res = await fetch(result, { signal });
       if (!res.ok) throw new Error(`page ${index}: HTTP ${res.status}`);
-      const blob = await res.blob();
-      return { url: URL.createObjectURL(blob), objectUrl: true, bytes: blob.size };
+      blob = await res.blob();
+      url = URL.createObjectURL(blob);
+      objectUrl = true;
+    } else {
+      blob = result;
+      url = URL.createObjectURL(blob);
+      objectUrl = true;
     }
-    return { url: URL.createObjectURL(result), objectUrl: true, bytes: result.size };
+
+    let bitmap: ImageBitmap | undefined;
+    if (loadingMethod === 'bitmap' && typeof createImageBitmap === 'function') {
+      bitmap = await createImageBitmap(blob).catch(() => undefined);
+    }
+    return { url, objectUrl, bytes: blob.size, bitmap };
   }
 
   #emit(index: number, state: PageLoadState): void {
