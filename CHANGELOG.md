@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Fixed — EPUB reader (post-M1 feedback)
+
+- **Book-like layout**: the text engine now centres a capped reading measure
+  (~33em, grows with font size) inside a clipped `#pore-viewport` / `#pore-flow`
+  wrapper — no more full-width lines or columns bleeding in from adjacent pages;
+  1 or 2 columns per page per the setting, dropping to 1 when it won't fit
+  (`computeTextLayout`)
+- **Input**: the text engine had none — added keyboard (← → ↑ ↓ A/D/H/L,
+  Space / Shift+Space, PageUp/Down, Home/End, M), mouse wheel (throttled), and
+  left/right/centre click zones, wired on both `root` and the iframe document
+  (iframe events don't bubble)
+
 ## v0.3.0-m1 — 2026-08-29
 
 EPUB reflowable text engine.

@@ -41,6 +41,7 @@ export interface TextEngineEvents {
   'reader:loadingstate': { spine: number; state: PageLoadState };
   'reader:toc': { toc: TocEntry[] };
   'reader:footnote': { html: string; href: string };
+  'reader:chrometoggle': { visible: boolean };
   'reader:settingschange': { settings: TextEngineSettings };
   'reader:end': Record<string, never>;
   'reader:start': Record<string, never>;

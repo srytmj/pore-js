@@ -39,7 +39,7 @@ describe('generateAnchor', () => {
 });
 
 describe('resolveAnchor', () => {
-  const opts = { spinePages: 10, pageWidth: 800, columnGap: 40 };
+  const opts = { spinePages: 10, pageStep: 840 };
 
   it('resolves an exact block to its page', () => {
     const doc = docWith(PARAS);
@@ -75,10 +75,10 @@ describe('resolveAnchor', () => {
 });
 
 describe('pageForElement', () => {
-  it('divides left by page width + gap', () => {
+  it('divides left by the page step', () => {
     const el = docWith('<p>x</p>').querySelector('p')!;
-    expect(
-      pageForElement(el, 800, 40, () => ({ left: 2520, right: 3000, top: 0, bottom: 10 })),
-    ).toBe(3);
+    expect(pageForElement(el, 840, () => ({ left: 2520, right: 3000, top: 0, bottom: 10 }))).toBe(
+      3,
+    );
   });
 });

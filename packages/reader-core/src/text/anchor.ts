@@ -52,16 +52,12 @@ export function generateAnchor(
 
 /**
  * Which 0-based page a block sits on, from its left edge relative to the
- * *untransformed* body. Caller resets the transform before measuring.
+ * *untransformed* body. `pageStep` is the x distance between pages.
+ * Caller resets the transform before measuring.
  */
-export function pageForElement(
-  el: Element,
-  pageWidth: number,
-  columnGap: number,
-  rectOf: RectOf = domRect,
-): number {
-  const left = rectOf(el).left;
-  return Math.max(0, Math.round(left / (pageWidth + columnGap)));
+export function pageForElement(el: Element, pageStep: number, rectOf: RectOf = domRect): number {
+  if (pageStep <= 0) return 0;
+  return Math.max(0, Math.round(rectOf(el).left / pageStep));
 }
 
 export interface ResolvedAnchor {
@@ -77,7 +73,7 @@ export interface ResolvedAnchor {
 export function resolveAnchor(
   doc: Document,
   anchor: Extract<Position, { type: 'anchor' }>,
-  opts: { spinePages: number; pageWidth: number; columnGap: number },
+  opts: { spinePages: number; pageStep: number },
   rectOf: RectOf = domRect,
 ): ResolvedAnchor {
   const blocks = blockElements(doc);
@@ -85,7 +81,7 @@ export function resolveAnchor(
   if (target) {
     return {
       page: Math.min(
-        pageForElement(target, opts.pageWidth, opts.columnGap, rectOf),
+        pageForElement(target, opts.pageStep, rectOf),
         Math.max(0, opts.spinePages - 1),
       ),
       exact: !!blocks[anchor.block],

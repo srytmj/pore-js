@@ -8,9 +8,12 @@ import { rewriteResources } from './rewrite.js';
 import { generateAnchor, pageForElement, resolveAnchor } from './anchor.js';
 import {
   buildBaseStylesheet,
+  computeTextLayout,
+  FLOW_ID,
   offsetForPage,
   pageCountFor,
-  type BaseStyleOptions,
+  VIEWPORT_ID,
+  type TextLayout,
 } from './paginate.js';
 import {
   DEFAULT_TEXT_SETTINGS,
@@ -70,27 +73,15 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
 
   // ---- helpers -------------------------------------------------------------
 
-  const pageWidthPx = () => root.clientWidth || 800;
-  const pageHeightPx = () => root.clientHeight || 1000;
-  const marginPx = () =>
-    Math.round((Math.min(pageWidthPx(), pageHeightPx()) * settings.marginPct) / 100);
-
-  const styleOptions = (): BaseStyleOptions => {
-    const theme = THEME_COLORS[settings.theme];
-    const cols = settings.columns;
-    return {
-      pageWidth: pageWidthPx() / cols,
-      pageHeight: pageHeightPx(),
+  const layout = (): TextLayout =>
+    computeTextLayout({
+      viewportWidth: root.clientWidth || 800,
+      viewportHeight: root.clientHeight || 1000,
+      columns: settings.columns,
       columnGap: settings.columnGap,
-      margin: marginPx(),
+      marginPct: settings.marginPct,
       fontSizePct: settings.fontSizePct,
-      lineHeight: settings.lineHeight,
-      textAlign: settings.textAlign,
-      color: theme.color,
-      background: theme.background,
-      direction: book?.metadata.direction ?? 'ltr',
-    };
-  };
+    });
 
   const totalPages = (): number =>
     spinePages.reduce<number>((sum, n, i) => sum + (n ?? estimateSpinePages(i)), 0);
@@ -121,7 +112,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       page,
       spinePages: spinePageCount,
       bookPercent,
-      pageWidth: styleOptions().pageWidth,
+      pageWidth: layout().measure,
     });
   };
 
@@ -151,18 +142,32 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     void source.saveProgress(bookId, anchorFor()).catch(() => {});
   };
 
-  const bodyEl = (): HTMLElement | null => frame.contentDocument?.body ?? null;
+  const flowEl = (): HTMLElement | null =>
+    (frame.contentDocument?.getElementById(FLOW_ID) as HTMLElement | null) ?? null;
+
+  /** Move the spine body's content into a clipped viewport + multicol flow. */
+  const wrapContent = () => {
+    const cdoc = frame.contentDocument;
+    if (!cdoc?.body || cdoc.getElementById(FLOW_ID)) return;
+    const viewport = cdoc.createElement('div');
+    viewport.id = VIEWPORT_ID;
+    const flow = cdoc.createElement('div');
+    flow.id = FLOW_ID;
+    while (cdoc.body.firstChild) flow.appendChild(cdoc.body.firstChild);
+    viewport.appendChild(flow);
+    cdoc.body.appendChild(viewport);
+  };
 
   const applyPage = () => {
-    const body = bodyEl();
-    if (!body) return;
-    body.style.transform = `translateX(${offsetForPage(page, styleOptions().pageWidth, settings.columnGap)}px)`;
+    const flow = flowEl();
+    if (!flow) return;
+    flow.style.transform = `translateX(${offsetForPage(page, layout().pageStep)}px)`;
   };
 
   const measure = () => {
-    const body = bodyEl();
-    if (!body) return;
-    spinePageCount = pageCountFor(body.scrollWidth, styleOptions().pageWidth + settings.columnGap);
+    const flow = flowEl();
+    if (!flow) return;
+    spinePageCount = pageCountFor(flow.scrollWidth, layout().pageStep);
     spinePages[spineIndex] = spinePageCount;
     page = Math.min(page, spinePageCount - 1);
     applyPage();
@@ -177,7 +182,17 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       el.id = 'pore-base-style';
       cdoc.head?.appendChild(el);
     }
-    el.textContent = buildBaseStylesheet(styleOptions());
+    const theme = THEME_COLORS[settings.theme];
+    el.textContent = buildBaseStylesheet(layout(), {
+      fontSizePct: settings.fontSizePct,
+      lineHeight: settings.lineHeight,
+      textAlign: settings.textAlign,
+      fontFamily: settings.fontFamily,
+      color: theme.color,
+      background: theme.background,
+      direction: book?.metadata.direction ?? 'ltr',
+      publisherStyles: settings.publisherStyles,
+    });
   };
 
   const resolvePendingAnchor = () => {
@@ -185,12 +200,11 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     if (!cdoc || !pendingAnchor || pendingAnchor.spine !== spineIndex) return;
     const anchor = pendingAnchor;
     pendingAnchor = null;
-    const body = bodyEl();
-    if (body) body.style.transform = 'translateX(0)';
+    const flow = flowEl();
+    if (flow) flow.style.transform = 'translateX(0)';
     const { page: resolved } = resolveAnchor(cdoc, anchor, {
       spinePages: spinePageCount,
-      pageWidth: styleOptions().pageWidth,
-      columnGap: settings.columnGap,
+      pageStep: layout().pageStep,
     });
     page = Math.min(Math.max(resolved, 0), spinePageCount - 1);
   };
@@ -213,6 +227,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       const finish = () => {
         if (settled || destroyed) return;
         settled = true;
+        wrapContent();
         injectStyle();
         measure();
         page = atLastPage ? Math.max(0, spinePageCount - 1) : 0;
@@ -226,7 +241,10 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       // jsdom / edge cases where `load` never fires for srcdoc
       setTimeout(finish, 60);
       frame.srcdoc = html;
-    }).then(() => wireLinks());
+    }).then(() => {
+      wireLinks();
+      wireInput();
+    });
   };
 
   /** Intercept footnote / same-doc links inside the iframe. */
@@ -248,6 +266,66 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
         gotoHref(href, item()?.href ?? '');
       }
     });
+  };
+
+  let chromeVisible = true;
+  let lastWheel = 0;
+
+  const toggleChrome = () => {
+    chromeVisible = !chromeVisible;
+    emitter.emit('reader:chrometoggle', { visible: chromeVisible });
+  };
+
+  const onKey = (ev: KeyboardEvent) => {
+    if (ev.defaultPrevented || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    const k = ev.key;
+    const fwd =
+      ['ArrowRight', 'ArrowDown', 'PageDown', 'd', 'D', 'l', ' '].includes(k) && !ev.shiftKey;
+    const back =
+      ['ArrowLeft', 'ArrowUp', 'PageUp', 'a', 'A', 'h'].includes(k) || (k === ' ' && ev.shiftKey);
+    if (fwd) {
+      ev.preventDefault();
+      turn('forward');
+    } else if (back) {
+      ev.preventDefault();
+      turn('back');
+    } else if (k === 'Home') {
+      ev.preventDefault();
+      goto(0);
+    } else if (k === 'End') {
+      ev.preventDefault();
+      goto(totalPages() - 1);
+    } else if (k === 'm' || k === 'M') {
+      ev.preventDefault();
+      toggleChrome();
+    }
+  };
+
+  const onWheel = (ev: WheelEvent) => {
+    if (ev.ctrlKey) return;
+    const now = Date.now();
+    if (Math.abs(ev.deltaY) < 4 || now - lastWheel < 320) return;
+    lastWheel = now;
+    ev.preventDefault();
+    turn(ev.deltaY > 0 ? 'forward' : 'back');
+  };
+
+  const onClick = (ev: MouseEvent) => {
+    if ((ev.target as Element | null)?.closest?.('a')) return;
+    const rect = root.getBoundingClientRect();
+    const r = rect.width > 0 ? (ev.clientX - rect.left) / rect.width : 0.5;
+    if (r < 1 / 3) turn(book?.metadata.direction === 'rtl' ? 'forward' : 'back');
+    else if (r > 2 / 3) turn(book?.metadata.direction === 'rtl' ? 'back' : 'forward');
+    else toggleChrome();
+  };
+
+  /** Wire keyboard/wheel/click on the iframe doc (events don't bubble to the parent). */
+  const wireInput = () => {
+    const cdoc = frame.contentDocument;
+    if (!cdoc) return;
+    cdoc.addEventListener('keydown', onKey);
+    cdoc.addEventListener('wheel', onWheel, { passive: false });
+    cdoc.addEventListener('click', onClick);
   };
 
   const item = () => book?.spine[spineIndex];
@@ -279,11 +357,9 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       const cdoc = frame.contentDocument;
       const el = frag && cdoc ? cdoc.getElementById(frag) : null;
       if (el && cdoc) {
-        (cdoc.body as HTMLElement).style.transform = 'translateX(0)';
-        page = Math.min(
-          pageForElement(el, styleOptions().pageWidth, settings.columnGap),
-          Math.max(0, spinePageCount - 1),
-        );
+        const flow = flowEl();
+        if (flow) flow.style.transform = 'translateX(0)';
+        page = Math.min(pageForElement(el, layout().pageStep), Math.max(0, spinePageCount - 1));
       } else {
         page = 0;
       }
@@ -393,6 +469,9 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     spinePages = new Array(book.spine.length).fill(undefined);
 
     container.replaceChildren(root);
+    root.addEventListener('keydown', onKey);
+    root.addEventListener('wheel', onWheel, { passive: false });
+    root.addEventListener('click', onClick);
     if (typeof ResizeObserver !== 'undefined') {
       let raf = 0;
       resizeObserver = new ResizeObserver(() => {
@@ -428,6 +507,9 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   function destroy(): void {
     flushSave();
     destroyed = true;
+    root.removeEventListener('keydown', onKey);
+    root.removeEventListener('wheel', onWheel);
+    root.removeEventListener('click', onClick);
     resizeObserver?.disconnect();
     revokeUrls();
     emitter.clear();

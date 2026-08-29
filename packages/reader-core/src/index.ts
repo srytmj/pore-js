@@ -73,7 +73,13 @@ export type { CreateTextEngineOptions } from './text/create-text-engine.js';
 export { DEFAULT_TEXT_SETTINGS } from './text/types.js';
 export type { TextEngine, TextEngineEvents, TextEngineSettings } from './text/types.js';
 export { rewriteResources } from './text/rewrite.js';
-export { buildBaseStylesheet, pageCountFor, offsetForPage } from './text/paginate.js';
+export {
+  buildBaseStylesheet,
+  computeTextLayout,
+  pageCountFor,
+  offsetForPage,
+} from './text/paginate.js';
+export type { TextLayout } from './text/paginate.js';
 export { generateAnchor, resolveAnchor, blockElements, pageForElement } from './text/anchor.js';
 export { openKvStore } from './offline/idb.js';
 export type { KvStore } from './offline/idb.js';
