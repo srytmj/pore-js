@@ -58,6 +58,16 @@ export { CachedSource } from './source/cached-source.js';
 export type { CachedSourceOptions } from './source/cached-source.js';
 export { LocalFileSource } from './source/local-file-source.js';
 export type { LocalFileSourceOptions } from './source/local-file-source.js';
+
+export { parseEpub } from './text/epub/parse.js';
+export type {
+  EpubBook,
+  EpubMetadata,
+  EpubResource,
+  SpineItem,
+  TocEntry,
+} from './text/epub/types.js';
+export { resolvePath, resolveHref, dirOf, stripHash, fragmentOf } from './text/epub/path.js';
 export { openKvStore } from './offline/idb.js';
 export type { KvStore } from './offline/idb.js';
 export { parseImageManifestFile, naturalCompare } from './source/manifest-file.js';

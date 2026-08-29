@@ -12,20 +12,17 @@ variant; `TextManifest` already exists.
 
 ---
 
-## E1 — EPUB container parsing · M
+## E1 — EPUB container parsing · M ✅
 
-- [ ] `packages/reader-core/src/text/epub/` — parse with `fflate.unzipSync`
-- [ ] `META-INF/container.xml` → OPF path
-- [ ] OPF → `metadata` (title, language, `page-progression-direction`),
-      `manifest` (id → { href, mediaType, properties }), `spine` (ordered idrefs)
-- [ ] Nav: EPUB3 `nav.xhtml` (`epub:type="toc"`) → tree; fallback EPUB2 `toc.ncx`
-- [ ] `EpubBook` object: `spine: SpineItem[]`, `toc: TocEntry[]`, `metadata`,
-      `resource(href) → Blob` (lazy inflate + MIME)
-- [ ] `DomParser` via the platform (`new DOMParser()`); no XML lib
-- [ ] Vitest: a hand-built minimal EPUB (zipSync) → spine order, TOC tree,
-      resource lookup, ncx fallback
+- [x] `packages/reader-core/src/text/epub/` — `parseEpub(bytes, {domParser?})` via `fflate.unzipSync` + `DOMParser`
+- [x] `META-INF/container.xml` → `rootfile` → OPF
+- [x] OPF → metadata (title/language/creator, `rendition:layout` → `fixedLayout`), namespace-agnostic manifest (`localName` filtering), spine (`idref`, `linear`, `page-progression-direction`)
+- [x] TOC: EPUB3 `nav[epub:type=toc] > ol` nested tree; fallback EPUB2 `toc.ncx` `navMap`; fragments preserved (`resolveHref`)
+- [x] `path.ts`: `dirOf` / `stripHash` / `fragmentOf` / `resolvePath` / `resolveHref`
+- [x] `EpubBook.resource(href)` → `{ bytes, mediaType }`; `entries[]`
+- [x] Vitest (6, jsdom): metadata + spine order + linear, nested nav tree w/ fragments, ncx fallback, resource + ppd + fixed-layout, missing container
 
-**Done when:** a fixture EPUB parses to spine + TOC + resources.
+**Done when:** a fixture EPUB parses to spine + TOC + resources. ✅ done 2026-08-29
 
 ---
 
@@ -38,7 +35,7 @@ variant; `TextManifest` already exists.
 - [ ] Resource resolver: rewrite `href`/`src`/CSS `url()` → `blob:` URLs before
       injecting the doc
 - [ ] Inject the base stylesheet: `column-width: <vw>; column-gap; height: <vh>;
-    overflow: hidden` on `html`; `img,svg,table { max-width:100%; break-inside:avoid }`
+  overflow: hidden` on `html`; `img,svg,table { max-width:100%; break-inside:avoid }`
 - [ ] Page count for the spine item = `scrollWidth / pageWidth`; page turn =
       translate the scroll by `pageWidth`
 - [ ] Recompute on resize (debounced)
