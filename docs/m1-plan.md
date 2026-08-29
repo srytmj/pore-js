@@ -26,25 +26,18 @@ variant; `TextManifest` already exists.
 
 ---
 
-## E2 — Text engine skeleton: one spine doc, multicol pagination · L
+## E2 — Text engine skeleton: one spine doc, multicol pagination · L ✅
 
-- [ ] `createTextEngine({ container, source, bookId, settings })` → `TextEngine`
-      (mirrors `ImageEngine`: `mount`/`goto`/`turn`/`setSettings`/`on`/`destroy`)
-- [ ] Render the current spine item in a **sandboxed `<iframe>`**
-      (`sandbox="allow-same-origin"`, no `allow-scripts`)
-- [ ] Resource resolver: rewrite `href`/`src`/CSS `url()` → `blob:` URLs before
-      injecting the doc
-- [ ] Inject the base stylesheet: `column-width: <vw>; column-gap; height: <vh>;
-  overflow: hidden` on `html`; `img,svg,table { max-width:100%; break-inside:avoid }`
-- [ ] Page count for the spine item = `scrollWidth / pageWidth`; page turn =
-      translate the scroll by `pageWidth`
-- [ ] Recompute on resize (debounced)
-- [ ] Emits `reader:ready`, `reader:locationchange` (page within spine for now),
-      `reader:loadingstate`
-- [ ] Vitest (jsdom): mount → ready; `turn` advances the column offset; page
-      count math (stub `scrollWidth`)
+- [x] `createTextEngine({ container, source, bookId, settings?, domParser? })` → `TextEngine` (`mount`/`goto(page|Position)`/`turn`/`setSettings`/`on`/`destroy`)
+- [x] Sandboxed `<iframe sandbox="allow-same-origin">`, `srcdoc` (scripts stripped)
+- [x] `rewrite.ts`: `src` / `link[href]` / `<style>` `url()` / CSS `@import`-style refs → `blob:` URLs; nested CSS `url()`; data/absolute left alone; URLs tracked for revocation
+- [x] `paginate.ts`: `buildBaseStylesheet` (multicol on `body`, low-specificity typography), `pageCountFor`, `offsetForPage` (translateX)
+- [x] Page turn translates `body`; `measure()` = `scrollWidth / (pageWidth+gap)`; resize + settings recompute (`ResizeObserver`)
+- [x] `TextEngineSettings` + `DEFAULT_TEXT_SETTINGS`; `reader:ready`/`resumed`/`toc`/`locationchange`/`loadingstate`/`settingschange`/`end`/`start`/`error`
+- [x] Fixed-layout EPUB → `reader:error` (not a crash)
+- [x] Vitest (10): paginate math, resource rewrite + script strip + nested url(), engine mount/ready/toc/reject-non-epub/settingschange
 
-**Done when:** one chapter paginates and turns page-by-page.
+**Done when:** one chapter paginates and turns page-by-page. ✅ engine done 2026-08-29 (browser pagination verified in E8)
 
 ---
 

@@ -68,6 +68,12 @@ export type {
   TocEntry,
 } from './text/epub/types.js';
 export { resolvePath, resolveHref, dirOf, stripHash, fragmentOf } from './text/epub/path.js';
+export { createTextEngine } from './text/create-text-engine.js';
+export type { CreateTextEngineOptions } from './text/create-text-engine.js';
+export { DEFAULT_TEXT_SETTINGS } from './text/types.js';
+export type { TextEngine, TextEngineEvents, TextEngineSettings } from './text/types.js';
+export { rewriteResources } from './text/rewrite.js';
+export { buildBaseStylesheet, pageCountFor, offsetForPage } from './text/paginate.js';
 export { openKvStore } from './offline/idb.js';
 export type { KvStore } from './offline/idb.js';
 export { parseImageManifestFile, naturalCompare } from './source/manifest-file.js';
