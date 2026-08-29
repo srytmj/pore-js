@@ -23,6 +23,7 @@ import {
   type TurnDirection,
 } from '@pore/reader-core';
 import { useReaderSource } from './provider.js';
+import { createSettingsPersistence, type SettingsPersistence } from './settings-store.js';
 
 export type ReaderKind = 'image' | 'text';
 export type AnySettings = ImageEngineSettings | TextEngineSettings;
@@ -88,6 +89,11 @@ export interface ReaderProps {
   className?: string;
   children?: ReactNode;
   ref?: Ref<ReaderHandle>;
+  /**
+   * Persist settings between sessions (global prefs + a per-book layout layer).
+   * `true` (default) uses localStorage; `false` disables; or pass your own.
+   */
+  persistSettings?: boolean | SettingsPersistence;
 }
 
 export function Reader({
@@ -97,12 +103,22 @@ export function Reader({
   className,
   children,
   ref,
+  persistSettings = true,
 }: ReaderProps) {
   const source = useReaderSource();
   const hostRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<EngineLike | null>(null);
   const onPosRef = useRef(onPositionChange);
   onPosRef.current = onPositionChange;
+  const persistence = useMemo<SettingsPersistence>(
+    () =>
+      persistSettings === false
+        ? { initial: () => ({}), save: () => {} }
+        : persistSettings === true
+          ? createSettingsPersistence()
+          : persistSettings,
+    [persistSettings],
+  );
 
   const [kind, setKind] = useState<ReaderKind | null>(null);
   const [location, setLocation] = useState<ReaderLocation | null>(null);
@@ -127,29 +143,26 @@ export function Reader({
       const manifest = await source.getManifest(bookId);
       if (disposed) return;
       const isText = manifest.type !== 'image';
-      setKind(isText ? 'text' : 'image');
-      setSettings(
-        isText
-          ? { ...DEFAULT_TEXT_SETTINGS, ...initialSettings }
-          : { ...DEFAULT_IMAGE_SETTINGS, ...initialSettings },
-      );
+      const rk: ReaderKind = isText ? 'text' : 'image';
+      setKind(rk);
+      const seeded = { ...persistence.initial(bookId, rk), ...initialSettings };
+      setSettings({
+        ...(isText ? DEFAULT_TEXT_SETTINGS : DEFAULT_IMAGE_SETTINGS),
+        ...seeded,
+      });
 
       const engine = (isText
         ? createTextEngine({
             container: host,
             source,
             bookId,
-            ...(initialSettings
-              ? { settings: initialSettings as Partial<TextEngineSettings> }
-              : {}),
+            settings: seeded as Partial<TextEngineSettings>,
           })
         : createImageEngine({
             container: host,
             source,
             bookId,
-            ...(initialSettings
-              ? { settings: initialSettings as Partial<ImageEngineSettings> }
-              : {}),
+            settings: seeded as Partial<ImageEngineSettings>,
           })) as unknown as EngineLike;
       engineRef.current = engine;
 
@@ -180,6 +193,7 @@ export function Reader({
           const q = p as { settings: AnySettings; keymap?: Keymap };
           setSettings(q.settings);
           if (q.keymap) setKeymap(q.keymap);
+          persistence.save(bookId, rk, q.settings);
         }),
         engine.on('reader:toc', (p: never) => setToc((p as { toc: TocEntry[] }).toc)),
         engine.on('reader:footnote', (p: never) => setFootnote(p as Footnote)),

@@ -8,6 +8,9 @@
 export { ReaderProvider, useReaderSource } from './provider.js';
 export type { ReaderProviderProps } from './provider.js';
 
+export { createSettingsPersistence } from './settings-store.js';
+export type { SettingsPersistence, SettingsStorage } from './settings-store.js';
+
 export type {
   ImageEngineSettings,
   TextEngineSettings,
