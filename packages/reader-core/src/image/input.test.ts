@@ -34,9 +34,10 @@ describe('swipeTurn', () => {
   it('ignores short swipes', () => {
     expect(swipeTurn(20, 'ltr')).toBeNull();
   });
-  it('swiping left advances in LTR, goes back in RTL', () => {
+  it('swiping left advances in LTR, goes back in RTL/vertical', () => {
     expect(swipeTurn(-80, 'ltr')).toBe('forward');
     expect(swipeTurn(-80, 'rtl')).toBe('back');
+    expect(swipeTurn(-80, 'vertical')).toBe('back');
     expect(swipeTurn(80, 'ltr')).toBe('back');
     expect(swipeTurn(80, 'rtl')).toBe('forward');
   });

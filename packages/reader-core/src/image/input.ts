@@ -1,5 +1,10 @@
 import type { Direction } from '../types.js';
 
+/** rtl and vertical both advance leftward (reverse of the LTR default). */
+function reverse(direction: Direction): boolean {
+  return direction === 'rtl' || direction === 'vertical';
+}
+
 export type TapZone = 'left' | 'center' | 'right';
 export type TapToTurn = 'directional' | 'always-forward' | 'never';
 export type TapResult = 'forward' | 'back' | 'toggle-chrome' | null;
@@ -21,8 +26,8 @@ export function resolveTap(zone: TapZone, tapToTurn: TapToTurn, direction: Direc
   if (zone === 'center') return 'toggle-chrome';
   if (tapToTurn === 'never') return null;
   if (tapToTurn === 'always-forward') return 'forward';
-  // directional: right zone = forward in LTR, back in RTL
-  const rightIsForward = direction !== 'rtl';
+  // directional: right zone = forward in LTR, back in RTL/vertical
+  const rightIsForward = !reverse(direction);
   const isRight = zone === 'right';
   return isRight === rightIsForward ? 'forward' : 'back';
 }
@@ -35,8 +40,8 @@ export function swipeTurn(
 ): 'forward' | 'back' | null {
   if (Math.abs(dx) < threshold) return null;
   const swipedLeft = dx < 0;
-  // swiping left advances in LTR, goes back in RTL
-  const leftIsForward = direction !== 'rtl';
+  // swiping left advances in LTR, goes back in RTL/vertical
+  const leftIsForward = !reverse(direction);
   return swipedLeft === leftIsForward ? 'forward' : 'back';
 }
 

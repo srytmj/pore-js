@@ -34,12 +34,17 @@ const TAP_SLOP = 10;
 const TAP_MS = 350;
 const SAVE_DEBOUNCE_MS = 800;
 
+/** Directions where "forward" advances leftward / upward (reverse of LTR). */
+export function isReverseDirection(direction: Direction): boolean {
+  return direction === 'rtl' || direction === 'vertical';
+}
+
 /** Translate a physical page-turn (screen direction) to a logical one. */
 export function physicalToLogical(
   physical: 'page-right' | 'page-left',
   direction: Direction,
 ): TurnDirection {
-  const forwardIsRight = direction !== 'rtl';
+  const forwardIsRight = !isReverseDirection(direction);
   const wantRight = physical === 'page-right';
   return wantRight === forwardIsRight ? 'forward' : 'back';
 }

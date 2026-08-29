@@ -51,6 +51,10 @@ describe('physicalToLogical', () => {
     expect(physicalToLogical('page-right', 'rtl')).toBe('back');
     expect(physicalToLogical('page-left', 'rtl')).toBe('forward');
   });
+  it('vertical reads like RTL', () => {
+    expect(physicalToLogical('page-right', 'vertical')).toBe('back');
+    expect(physicalToLogical('page-left', 'vertical')).toBe('forward');
+  });
 });
 
 describe('createImageEngine (paged-single)', () => {

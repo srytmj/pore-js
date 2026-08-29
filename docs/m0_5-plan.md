@@ -22,14 +22,17 @@ Sequential, one commit per task. All type/event/setting slots already exist from
 
 ---
 
-## P2 — vertical direction (vertical-JP) · M
+## P2 — vertical direction · S ✅
 
-- [ ] `direction: 'vertical'` in paged: `writing-mode: vertical-rl` on the viewport, pages flow right→left, page-turn maps to that
-- [ ] Fit math swaps to height-based
-- [ ] Gestures: swipe-left = forward (same as RTL horizontal)
-- [ ] Vitest: `physicalToLogical('page-right','vertical')`, spread order
+For the **image** engine, `direction: 'vertical'` only affects page progression —
+it reads right→left / bottom→up, i.e. the reverse of LTR, same as RTL. (Genuine
+vertical-rl text flow is a Text-engine concern, M1.)
 
-**Done when:** the manga fixture in `vertical` mode turns the right way.
+- [x] `isReverseDirection(d)` = `rtl || vertical`; `physicalToLogical`, `resolveTap`, `swipeTurn`, spread visual order all use it
+- [x] Vitest: `physicalToLogical`/`swipeTurn` under `vertical`
+
+**Done when:** `vertical` turns the same way as RTL. ✅ done 2026-08-29
+_(vertical-rl writing mode for light novels lands with the Text engine, M1)_
 
 ---
 

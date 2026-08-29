@@ -50,8 +50,9 @@ export function buildSpreads(pages: ImagePage[], opts: SpreadOptions): Spread[] 
   const out: Spread[] = [];
   let i = 0;
 
+  const reverse = opts.direction === 'rtl' || opts.direction === 'vertical';
   const push = (ids: number[], leading: number) => {
-    const visual = opts.direction === 'rtl' && ids.length === 2 ? [ids[1]!, ids[0]!] : ids;
+    const visual = reverse && ids.length === 2 ? [ids[1]!, ids[0]!] : ids;
     out.push({ index: out.length, pages: visual, leading });
   };
 
