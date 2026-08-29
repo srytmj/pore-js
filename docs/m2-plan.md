@@ -53,19 +53,19 @@ shell — no separate `toLocator`/`fromLocator` needed)_
 
 ---
 
-## D2 — PDF parsing + page metadata · M
+## D2 — PDF parsing + page metadata · M ✅
 
-- [ ] `packages/reader-core/src/pdf/` — lazy `import('pdfjs-dist')`, worker
-      configured (bundled worker URL)
-- [ ] `loadPdf(bytes) → PdfDoc`: `pageCount`, `getPage(n)` (viewport, render to
-      canvas at devicePixelRatio), `getOutline() → TocEntry[]`, `getTextContent(n)`
-- [ ] `PdfDoc.getPageBlob(n, scale)` → renders to an `OffscreenCanvas`/`<canvas>`
-      → `convertToBlob` so the **image engine** can consume it as a normal page
-- [ ] Big-PDF safety: render window only, low-res thumbnails for the scrubber
-- [ ] Vitest: a tiny generated PDF (pdf-lib or a hand-written minimal PDF) →
-      pageCount, text extraction, outline
+- [x] `packages/reader-core/src/pdf/parse.ts` — lazy
+      `import('pdfjs-dist/legacy/build/pdf.mjs')` (legacy build runs in Node +
+      browsers); `pdfjs-dist` external in tsup
+- [x] `loadPdf(bytes) → PdfDoc`: `pageCount`, `pageSize(n)`, `outline` (bookmarks
+      resolved to `#page=N`), `textContent(n)`, `destroy()`
+- [x] `renderToBlob(n, {scale, maxDim})` → `OffscreenCanvas` → webp `Blob` for
+      the image engine (browser only; `maxDim` caps big-page memory)
+- [x] Vitest (3, pdf-lib fixture): page count + size, per-page text, empty outline
 
-**Done when:** a PDF parses to pages + outline + text.
+**Done when:** a PDF parses to pages + outline + text. ✅ done 2026-08-29
+_(scrubber thumbnail strip → D5/UI)_
 
 ---
 

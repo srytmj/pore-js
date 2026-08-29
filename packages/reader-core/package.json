@@ -23,6 +23,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "fflate": "^0.8.2"
+    "fflate": "^0.8.2",
+    "pdfjs-dist": "^6.2.108"
   }
 }
