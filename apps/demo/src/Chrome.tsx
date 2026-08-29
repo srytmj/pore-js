@@ -6,6 +6,7 @@ import {
   useReader,
   useReaderHistory,
   useReaderKind,
+  useDownload,
   useReaderLocation,
   useReaderProgress,
   useReaderSettings,
@@ -42,6 +43,7 @@ export function Chrome({
 }) {
   const loc = useReaderLocation();
   const progress = useReaderProgress();
+  const download = useDownload(bookId);
   const reader = useReader();
   const kind = useReaderKind();
   const [imgSettings, setImgSettings] = useReaderSettings<ImageEngineSettings>();
@@ -128,6 +130,35 @@ export function Chrome({
       >
         ⚙
       </button>
+
+      {download.status !== undefined && (
+        <button
+          className={download.status?.state === 'complete' ? 'active' : ''}
+          onClick={() =>
+            download.downloading
+              ? download.cancel()
+              : download.status?.state === 'complete'
+                ? download.remove()
+                : download.start()
+          }
+          aria-label="Download for offline"
+          title={
+            download.error
+              ? `Download failed: ${download.error.message}`
+              : download.downloading
+                ? `Downloading ${download.status?.cached ?? 0}/${download.status?.total ?? '?'}`
+                : download.status?.state === 'complete'
+                  ? 'Saved offline — click to remove'
+                  : 'Download for offline'
+          }
+        >
+          {download.downloading
+            ? `⬇ ${download.status?.cached ?? 0}/${download.status?.total ?? '?'}`
+            : download.status?.state === 'complete'
+              ? '✓ offline'
+              : '⬇'}
+        </button>
+      )}
 
       <span className="loc" role="status" aria-live="polite">
         {loc?.label ?? '…'}

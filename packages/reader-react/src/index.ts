@@ -50,3 +50,6 @@ export type { SettingsPanelProps } from './settings-panel.js';
 
 export { useReaderHistory } from './history.js';
 export type { HistoryMode, UseReaderHistoryOptions } from './history.js';
+
+export { useDownload } from './use-download.js';
+export type { UseDownload } from './use-download.js';

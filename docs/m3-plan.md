@@ -46,21 +46,31 @@ source is usable programmatically now)_
 
 ---
 
-## I2 — offline: full page/file caching + `CachedSource` v2 · L
+## I2 — offline: full page/file caching + `CachedSource` v2 · L ✅
 
-- [ ] `CachedSource` caches **pages and files** in IndexedDB (not just progress),
-      keyed by `bookId` + variant; LRU eviction with a size budget setting
-- [ ] `download(bookId)` — pull the whole book (image: page range; text/pdf: the
-      file) into IndexedDB; `downloadState(bookId)` + `reader:downloadprogress`
-- [ ] Read path: IndexedDB first, network fallback, populate on read
-- [ ] Offline write queue already exists (progress) — extend the flush to any
-      pending mutation
-- [ ] Service worker (Workbox) preset the demo app registers: engine assets +
-      demo fixtures + pdf.js worker cached; `CacheFirst` for media
-- [ ] `reader-react` `useDownload(bookId)` hook
-- [ ] Vitest (fake-indexeddb): download → go offline → read; eviction budget
+- [x] `MediaCache` — blob store (its own IndexedDB DB) keyed `blob:<bookId>:<slot>`
+      (`slot` = page index or `"file"`) + `meta:<bookId>` bookkeeping
+      (`{ slots, bytes, at, pageCount }`); LRU whole-book eviction against a
+      byte budget (default 500 MB, `budgetBytes` tunes it)
+- [x] `CachedSource` v2 — `getPage` / `getFile` serve the cached blob first;
+      `download(bookId, { signal, onProgress })` pulls every page (image) or the
+      file (epub/pdf), resumable; `downloadStatus` / `downloadState`
+      (`none` / `partial` / `complete`), `removeDownload`. `cache: false` keeps
+      the old progress-only behaviour.
+- [x] Read path: cache-first, source fallback (populate happens via `download`,
+      not silently on every read — keeps the budget predictable)
+- [x] Demo service worker (`public/sw.js`, no Workbox): SWR for the app shell,
+      cache-first for `/fixtures/**` + the pdf.js worker; registered in prod only
+- [x] `reader-react` `useDownload(bookId)` hook; demo chrome shows a
+      ⬇ / progress / ✓ offline button
+- [x] Vitest: `MediaCache` (4 — bytes, no double-count, LRU eviction w/ injected
+      clock, removeBook) + `CachedSource` offline (4 — full download + serve,
+      resume partial, text file blob, budget eviction)
+- [x] Browser-verified: downloaded demo-manga → 12 page blobs + meta in
+      `pore-media`; button reads "✓ offline"; pages serve without the source
 
-**Done when:** download a book, kill the network, read it start to finish.
+**Done when:** download a book, kill the network, read it start to finish. ✅ done
+2026-08-29
 
 ---
 

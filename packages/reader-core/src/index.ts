@@ -63,7 +63,14 @@ export { resolveSettings, resolveKeymap, mergeSettings, mergeKeymap } from './se
 export { DemoSource } from './source/demo-source.js';
 export type { DemoSourceOptions } from './source/demo-source.js';
 export { CachedSource } from './source/cached-source.js';
-export type { CachedSourceOptions } from './source/cached-source.js';
+export type {
+  CachedSourceOptions,
+  DownloadState,
+  DownloadStatus,
+  DownloadOptions,
+} from './source/cached-source.js';
+export { MediaCache } from './offline/media-cache.js';
+export type { BookCacheMeta } from './offline/media-cache.js';
 export { LocalFileSource } from './source/local-file-source.js';
 export type { LocalFileSourceOptions } from './source/local-file-source.js';
 export {

@@ -34,4 +34,16 @@ export default tseslint.config(
       },
     },
   },
+  {
+    files: ['apps/demo/public/*.js'],
+    languageOptions: {
+      globals: {
+        self: 'readonly',
+        caches: 'readonly',
+        fetch: 'readonly',
+        URL: 'readonly',
+        Promise: 'readonly',
+      },
+    },
+  },
 );
