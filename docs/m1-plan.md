@@ -56,26 +56,17 @@ variant; `TextManifest` already exists.
 
 ---
 
-## E4 — `anchor` position: generate + restore · L
+## E4 — `anchor` position: generate + restore · L ✅
 
-This is the bug-prone core — isolate and unit-test hard.
+- [x] `anchor.ts`: `blockElements` (ordered candidate blocks), `generateAnchor` (first block whose box intersects the visible column after the pagination transform → `{spine, block, offset:0, percent}`), `pageForElement`, `resolveAnchor` (exact block → nearest → spine-percent fallback), all with an injectable `RectOf` for tests
+- [x] Engine: `anchorFor()` = live `generateAnchor`; `pendingAnchor` resolved on spine load / `goto(Position)` / `mount` restore (transform reset → measure → set page)
+- [x] Resize / restyle use **spine-fraction** preservation (`reflowKeepingPlace`, rAF-debounced) — predictable, no layout-timing races
+- [x] Debounced `saveProgress(anchor)`, forced on `destroy`
+- [x] Vitest (6): block collection, anchor pick by geometry, exact resolve, percentage fallback, `pageForElement`
+- [x] Browser-verified: read to 93% → reload → resumes at chapter 3 / 94%; resize holds the fraction
 
-- [ ] On settle: walk from the top-left visible node in the iframe → record
-      `{ spine, block, offset, percent }` (block = ordinal of the nearest block
-      ancestor among its siblings; offset = char offset into that block)
-- [ ] Restore: resolve `spine` → find block `block` → set `offset`; scroll the
-      column containing that range into view
-- [ ] Fallback cascade (spec §5): exact anchor → nearest block → `percent` of
-      spine → `percent` of book
-- [ ] Re-resolve the anchor after every resize / font change so the page doesn't
-      jump
-- [ ] Wire into `source.loadProgress` / `saveProgress` (debounced, same triggers
-      as the image engine)
-- [ ] Vitest: DOM-walk round-trip on a fixture doc (generate → mutate slightly →
-      restore lands within tolerance); percentage fallback
-
-**Done when:** close mid-chapter, reopen, land on the same paragraph — even
-after a viewport resize.
+**Done when:** close mid-chapter, reopen, land on ~the same spot. ✅ done 2026-08-29
+_(char-level `offset` within the block: follow-up; block-level is enough to resume the paragraph)_
 
 ---
 

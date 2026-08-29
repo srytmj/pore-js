@@ -5,6 +5,7 @@ import { parseEpub } from './epub/parse.js';
 import type { EpubBook } from './epub/types.js';
 import { stripHash } from './epub/path.js';
 import { rewriteResources } from './rewrite.js';
+import { generateAnchor, resolveAnchor } from './anchor.js';
 import {
   buildBaseStylesheet,
   offsetForPage,
@@ -52,6 +53,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   /** page count per spine item, undefined until measured */
   let spinePages: (number | undefined)[] = [];
   let destroyed = false;
+  let pendingAnchor: Extract<Position, { type: 'anchor' }> | null = null;
   let objectUrls: string[] = [];
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   let resizeObserver: ResizeObserver | null = null;
@@ -107,13 +109,21 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     return Math.max(1, Math.round(res.bytes.length / 1800));
   };
 
-  const anchorFor = (): Position => ({
-    type: 'anchor',
-    spine: spineIndex,
-    block: 0,
-    offset: 0,
-    percent: totalPages() > 0 ? (bookPageBefore(spineIndex) + page) / totalPages() : 0,
-  });
+  const anchorFor = (): Position => {
+    const total = totalPages();
+    const bookPercent = total > 0 ? (bookPageBefore(spineIndex) + page) / total : 0;
+    const cdoc = frame.contentDocument;
+    if (!cdoc) {
+      return { type: 'anchor', spine: spineIndex, block: 0, offset: 0, percent: bookPercent };
+    }
+    return generateAnchor(cdoc, {
+      spine: spineIndex,
+      page,
+      spinePages: spinePageCount,
+      bookPercent,
+      pageWidth: styleOptions().pageWidth,
+    });
+  };
 
   const emitLocation = () => {
     if (!book) return;
@@ -170,6 +180,21 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     el.textContent = buildBaseStylesheet(styleOptions());
   };
 
+  const resolvePendingAnchor = () => {
+    const cdoc = frame.contentDocument;
+    if (!cdoc || !pendingAnchor || pendingAnchor.spine !== spineIndex) return;
+    const anchor = pendingAnchor;
+    pendingAnchor = null;
+    const body = bodyEl();
+    if (body) body.style.transform = 'translateX(0)';
+    const { page: resolved } = resolveAnchor(cdoc, anchor, {
+      spinePages: spinePageCount,
+      pageWidth: styleOptions().pageWidth,
+      columnGap: settings.columnGap,
+    });
+    page = Math.min(Math.max(resolved, 0), spinePageCount - 1);
+  };
+
   const renderSpine = (idx: number, atLastPage = false): Promise<void> => {
     if (!book) return Promise.resolve();
     const item = book.spine[idx];
@@ -191,6 +216,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
         injectStyle();
         measure();
         page = atLastPage ? Math.max(0, spinePageCount - 1) : 0;
+        resolvePendingAnchor();
         applyPage();
         emitter.emit('reader:loadingstate', { spine: idx, state: 'loaded' });
         emitLocation();
@@ -233,7 +259,15 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     if (!book) return;
     if (typeof target === 'object') {
       if (target.type === 'anchor') {
-        void renderSpine(Math.min(target.spine, book.spine.length - 1));
+        const idx = Math.min(target.spine, book.spine.length - 1);
+        pendingAnchor = target;
+        if (idx === spineIndex) {
+          resolvePendingAnchor();
+          applyPage();
+          emitLocation();
+        } else {
+          void renderSpine(idx);
+        }
       }
       return;
     }
@@ -260,12 +294,23 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     }
   }
 
-  function setSettings(patch: Partial<TextEngineSettings>): void {
-    settings = { ...settings, ...patch };
+  /** Reflow (resize / restyle) keeping the reader at the same fraction of the spine. */
+  const reflowKeepingPlace = () => {
+    const frac = spinePageCount > 0 ? page / spinePageCount : 0;
     injectStyle();
     measure();
-    emitter.emit('reader:settingschange', { settings });
+    page = Math.min(
+      Math.max(Math.round(frac * spinePageCount), 0),
+      Math.max(0, spinePageCount - 1),
+    );
+    applyPage();
     emitLocation();
+  };
+
+  function setSettings(patch: Partial<TextEngineSettings>): void {
+    settings = { ...settings, ...patch };
+    reflowKeepingPlace();
+    emitter.emit('reader:settingschange', { settings });
   }
 
   async function mount(): Promise<void> {
@@ -284,10 +329,10 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
 
     container.replaceChildren(root);
     if (typeof ResizeObserver !== 'undefined') {
+      let raf = 0;
       resizeObserver = new ResizeObserver(() => {
-        injectStyle();
-        measure();
-        emitLocation();
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(reflowKeepingPlace);
       });
       resizeObserver.observe(root);
     }
@@ -303,6 +348,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
 
     const startSpine =
       restore?.type === 'anchor' ? Math.min(restore.spine, book.spine.length - 1) : 0;
+    if (restore?.type === 'anchor') pendingAnchor = restore;
     await renderSpine(startSpine);
     emitter.emit('reader:ready', { metadata: book.metadata, spineCount: book.spine.length });
   }
