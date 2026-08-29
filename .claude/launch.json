@@ -5,7 +5,7 @@
       "name": "demo",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@pore/demo", "dev"],
-      "port": 5173
+      "autoPort": true
     }
   ]
 }
