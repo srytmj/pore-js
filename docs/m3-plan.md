@@ -1,31 +1,48 @@
 # Pore.js — M3 Plan (integration, offline, search)
 
-**Goal:** the reader talks to the White Archive platform, works fully offline,
-searches inside books, handles vertical-JP text, and has a screen-reader flow
-mode. This is the last "fundamentals" milestone before UI polish.
+**Goal:** the reader talks to a real library server (Kavita), works fully
+offline, searches inside books, handles vertical-JP text, and has a screen-reader
+flow mode. This is the last "fundamentals" milestone before UI polish.
+
+**Why Kavita:** the maintainer runs Kavita on a homelab, so `KavitaSource` is a
+source Pore.js can be dogfooded against for real — it replaces the never-built
+`WhiteArchiveSource` mock. Kavita has a stable REST API + OPDS; we still test
+against recorded response shapes (no live server in CI).
 
 **Design:** [`reader-engine-design.md`](reader-engine-design.md) §4, §7, §9, §10,
 §14 · builds on `v0.4.0-m2`. Target tag: `v0.5.0-m3`.
 
 ---
 
-## I1 — `WhiteArchiveSource` · M
+## I1 — `KavitaSource` · M ✅
 
-- [ ] `WhiteArchiveSource(baseUrl, auth)` implementing `ReaderSource` against
-      libs `/api/v1` (shape from `srytmj/whitearchive` §10)
-- [ ] Endpoints: connection-scoped library/series browse (cursor pagination),
-      book metadata → `Manifest`, signed media URLs for `getPage` / `getFile`,
-      `read_progress` GET/PUT for `loadProgress` / `saveProgress`
-      (last-writer-wins)
-- [ ] HMAC media-URL handling; token in `Authorization`, never in query strings
-- [ ] Retry/backoff, `AbortSignal` passthrough, 401 → `reader:autherror`
-- [ ] Vitest against a mock server (msw or a fake fetch): manifest adaptation,
-      pagination, progress round-trip, signed-URL expiry refresh
-- [ ] **No live integration** — libs isn't running here; tests use the documented
-      response shapes
+- [x] `KavitaSource(baseUrl, { apiKey, pluginName?, fetch? })` implements
+      `ReaderSource`. `bookId` = Kavita `chapterId` (the unit Kavita's reader
+      addresses — a book chapter or a manga chapter).
+- [x] Auth: `POST /api/Plugin/authenticate?apiKey=&pluginName=pore-js` → JWT;
+      `Authorization: Bearer` on every call; one transparent re-auth on 401 then
+      `KavitaAuthError`. Key stays out of query strings **except** the image
+      endpoint, which requires `apiKey=` (documented Kavita contract).
+- [x] Manifest: `GET /api/Reader/chapter-info` → `seriesFormat`
+      (Image/Archive → `image` with `pages` synthetic page list; Epub → `epub`;
+      Pdf → `pdf`); title from chapter-info; ids cached for progress
+- [x] `getPage(id, n)` → `GET /api/Reader/image?chapterId=&page=&apiKey=`
+- [x] `getFile(id)` → `GET /api/Download/chapter?chapterId=`; 403 →
+      `KavitaDownloadForbiddenError` (account needs the Download role)
+- [x] Progress: `GET /api/Reader/progress` → `{ type:'page' }` `Position`;
+      `POST /api/Reader/progress` `{ pageNum, chapterId, seriesId, volumeId,
+      libraryId }` — `pageNum` derived from page / scroll / anchor positions
+- [x] Retry/backoff on 429 + 5xx, `AbortSignal` passthrough
+- [x] Vitest (10, fake `fetch` with recorded shapes): manifest per format, image
+      fetch (key + bearer), progress round-trip, scroll→pageNum, 401 refresh,
+      403 download, bad-key `KavitaAuthError`
+- [x] **No live integration** in CI — homelab server isn't reachable there
 
-**Done when:** `<Reader source={new WhiteArchiveSource(...)} bookId>` works
-against a mock of the platform API.
+**Done when:** `new KavitaSource(url, { apiKey })` opens a manga chapter and a
+book against a mock of Kavita's API; the maintainer points it at the real
+homelab instance. ✅ done 2026-08-29
+_(demo "Connect to Kavita" input field → deferred to the UI milestone; the
+source is usable programmatically now)_
 
 ---
 
@@ -96,7 +113,7 @@ against a mock of the platform API.
 
 ## I6 — hardening + release · S
 
-- [ ] Playwright: platform-source mock flow, offline download+read, search,
+- [ ] Playwright: Kavita-source mock flow, offline download+read, search,
       vertical-JP, flow mode
 - [ ] Perf: worker lifecycle, index memory, cache budget honoured
 - [ ] CHANGELOG `v0.5.0-m3`; README; docs; **fundamentals complete** note

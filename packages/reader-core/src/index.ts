@@ -66,6 +66,12 @@ export { CachedSource } from './source/cached-source.js';
 export type { CachedSourceOptions } from './source/cached-source.js';
 export { LocalFileSource } from './source/local-file-source.js';
 export type { LocalFileSourceOptions } from './source/local-file-source.js';
+export {
+  KavitaSource,
+  KavitaAuthError,
+  KavitaDownloadForbiddenError,
+} from './source/kavita-source.js';
+export type { KavitaSourceOptions } from './source/kavita-source.js';
 
 export { loadPdf } from './pdf/parse.js';
 export type { PdfDoc } from './pdf/parse.js';
