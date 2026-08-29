@@ -40,6 +40,41 @@ describe('LocalFileSource — CBZ', () => {
   });
 });
 
+describe('LocalFileSource — dropped document', () => {
+  it('serves a .pdf whole as a pdf manifest', async () => {
+    const file = new File([new Uint8Array([37, 80, 68, 70])], 'thesis.pdf');
+    const src = new LocalFileSource([file]);
+    const m = await src.getManifest('x');
+    expect(m.type).toBe('pdf');
+    expect(m.title).toBe('thesis');
+    const blob = await src.getFile('x');
+    expect(new Uint8Array(await blob.arrayBuffer())).toEqual(new Uint8Array([37, 80, 68, 70]));
+  });
+
+  it('serves an .epub and flags a pre-paginated rendition', async () => {
+    const opf = `<?xml version="1.0"?><package xmlns:rendition="http://www.idpf.org/vocab/rendition/#">
+      <metadata><meta property="rendition:layout">pre-paginated</meta></metadata></package>`;
+    const zipped = zipSync({
+      'mimetype': new TextEncoder().encode('application/epub+zip'),
+      'OEBPS/content.opf': new TextEncoder().encode(opf),
+    });
+    const file = new File([zipped], 'comic.epub');
+    const src = new LocalFileSource([file]);
+    const m = await src.getManifest('x');
+    expect(m.type).toBe('epub');
+    expect(src.fixedLayout).toBe(true);
+  });
+
+  it('does not flag a normal reflowable .epub', async () => {
+    const zipped = zipSync({
+      'OEBPS/content.opf': new TextEncoder().encode('<package><metadata/></package>'),
+    });
+    const src = new LocalFileSource([new File([zipped], 'novel.epub')]);
+    await src.getManifest('x');
+    expect(src.fixedLayout).toBe(false);
+  });
+});
+
 describe('LocalFileSource — loose images', () => {
   it('sorts dropped image files and serves them directly', async () => {
     const files = [

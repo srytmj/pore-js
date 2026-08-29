@@ -32,13 +32,19 @@ export function App() {
     history.replaceState(null, '', url);
   }, [bookId, dropped]);
 
+  const [notice, setNotice] = useState<string | null>(null);
+
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragging(false);
     const files = e.dataTransfer.files;
     if (!files.length) return;
+    setNotice(null);
     const local = new LocalFileSource(files);
     setDropped({ source: new CachedSource(local), bookId: local.bookId });
+    void local.getManifest(local.bookId).then(() => {
+      if (local.fixedLayout) setNotice('Fixed-layout EPUB — reflow view (beta)');
+    });
   };
 
   const source = dropped?.source ?? demoSource;
@@ -70,7 +76,12 @@ export function App() {
             droppedName={dropped?.bookId ?? null}
           />
         </Reader>
-        {dragging && <div className="dropzone">Drop a .cbz or images to read</div>}
+        {dragging && <div className="dropzone">Drop a .cbz, .epub, .pdf, or images to read</div>}
+        {notice && (
+          <div className="notice" role="status" onClick={() => setNotice(null)}>
+            {notice}
+          </div>
+        )}
       </main>
     </ReaderProvider>
   );

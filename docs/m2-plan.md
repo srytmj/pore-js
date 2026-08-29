@@ -90,17 +90,20 @@ _(pdf.js text layer for selection/search → D5 / M3)_
 
 ---
 
-## D4 — `LocalFileSource` any-file + fixed-layout EPUB · S
+## D4 — `LocalFileSource` any-file + fixed-layout EPUB · S ✅
 
-- [ ] `LocalFileSource` detects `.pdf` → `type: 'pdf'` manifest + `getFile`
-- [ ] `.epub` → `type: 'epub'` (currently only `.cbz` / images handled)
-- [ ] Fixed-layout EPUB (`rendition:layout="pre-paginated"`): render each spine
-      doc to a page image and feed the image engine (design doc §12) — or, if
-      that's heavy, a clear "opened as fixed-layout (beta)" path
-- [ ] Demo drop zone copy + accepted types updated
-- [ ] Vitest: dropped `.pdf` / `.epub` → right manifest type
+- [x] `LocalFileSource` detects `.pdf` → `type: 'pdf'` manifest, `.epub` →
+      `type: 'epub'`; both served whole through `getFile` (previously only
+      `.cbz` / loose images)
+- [x] Fixed-layout EPUB: OPF `rendition:layout="pre-paginated"` sniffed → public
+      `fixedLayout` flag; demo shows a "reflow view (beta)" notice. Full
+      spine-to-image rendering stays deferred (design doc §12) — low demand,
+      folds into a later pass.
+- [x] Demo drop zone copy + `.notice` toast
+- [x] Vitest (4): dropped `.pdf` → pdf manifest + `getFile` bytes; `.epub` →
+      epub manifest; pre-paginated flagged; reflowable not flagged
 
-**Done when:** drop any supported file and it opens.
+**Done when:** drop any supported file and it opens. ✅ done 2026-08-29
 
 ---
 
