@@ -20,6 +20,33 @@ export interface Locator {
   chapter?: string;
 }
 
+/** A chapter/section boundary, normalised across image, text and PDF. */
+export interface Chapter {
+  id: string;
+  label: string;
+  /** 0-based book-level page where this chapter starts. */
+  startPage: number;
+  /** 0..1 through the whole book where this chapter starts. */
+  startPercent: number;
+}
+
+/**
+ * The shell's "Ch 4 of 12 · 18 min left" line — derived from a {@link Locator}
+ * plus the engine's chapter list and reading pace. Emitted as `reader:progress`.
+ */
+export interface ReaderProgress {
+  locator: Locator;
+  /** 0..1 through the whole book (mirrors `locator.percent`). */
+  percent: number;
+  chapterLabel: string;
+  /** 0-based index into `chapters()`. */
+  chapterIndex: number;
+  chapterCount: number;
+  pagesLeftInChapter: number;
+  /** Estimate from a rolling seconds-per-page average; 0 when at the end. */
+  minutesLeft: number;
+}
+
 /**
  * The surface every engine exposes. `S` is the engine's settings type.
  * See docs/reader-engine-design.md §9 and docs/image-engine-spec.md §10.
@@ -38,6 +65,7 @@ export interface CommonEngineEvents {
   'reader:ready': unknown;
   'reader:resumed': { position: Position | null; page: number };
   'reader:locationchange': Locator;
+  'reader:progress': ReaderProgress;
   'reader:loadingstate': { index: number; state: 'idle' | 'loading' | 'loaded' | 'error' };
   'reader:chrometoggle': { visible: boolean };
   'reader:toc': { toc: unknown[] };

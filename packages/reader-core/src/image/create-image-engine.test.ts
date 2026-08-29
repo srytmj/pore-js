@@ -72,6 +72,21 @@ describe('createImageEngine (paged-single)', () => {
     engine.destroy();
   });
 
+  it('emits reader:progress with chapter + minutes-left data', async () => {
+    const container = document.createElement('div');
+    const engine = createImageEngine({ container, source: source(5), bookId: 'b' });
+    const prog = collect(engine, 'reader:progress');
+    await engine.mount();
+    expect(prog.at(-1)).toMatchObject({
+      chapterIndex: 0,
+      chapterCount: 0,
+      pagesLeftInChapter: 4,
+    });
+    expect(prog.at(-1)!.minutesLeft).toBeGreaterThanOrEqual(0);
+    expect(engine.chapters()).toEqual([]);
+    engine.destroy();
+  });
+
   it('turn(forward/back) moves by one page and clamps at the ends', async () => {
     const container = document.createElement('div');
     const engine = createImageEngine({ container, source: source(3), bookId: 'b' });

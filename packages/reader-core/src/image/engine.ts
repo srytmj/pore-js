@@ -2,6 +2,7 @@ import type { ReaderSource } from '../source/types.js';
 import type { ImageEngineSettings } from '../settings/types.js';
 import type { Keymap } from '../settings/keymap.js';
 import type { TurnDirection } from '../types.js';
+import type { Chapter } from '../reader-engine.js';
 import type { ImageEngineEvents } from './types.js';
 
 export interface ImageEngineOptions {
@@ -32,6 +33,8 @@ export interface ImageEngine {
   setSettings(patch: Partial<ImageEngineSettings>): void;
   /** Merge a keymap patch. */
   setKeymap(patch: Partial<Keymap>): void;
+  /** Book-level chapter list (empty when the book has no chapters). */
+  chapters(): Chapter[];
   /** Subscribe to an engine event. Returns an unsubscribe fn. */
   on<E extends keyof ImageEngineEvents>(
     event: E,

@@ -3,6 +3,23 @@
   "title": "Demo Manga (synthetic)",
   "direction": "rtl",
   "preferredLayout": "paged-double",
+  "chapters": [
+    {
+      "id": "ch1",
+      "label": "Chapter 1 — Arrival",
+      "startIndex": 0
+    },
+    {
+      "id": "ch2",
+      "label": "Chapter 2 — The Spread",
+      "startIndex": 5
+    },
+    {
+      "id": "ch3",
+      "label": "Chapter 3 — Aftermath",
+      "startIndex": 9
+    }
+  ],
   "pages": [
     {
       "src": "p01.svg",

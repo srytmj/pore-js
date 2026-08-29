@@ -36,6 +36,9 @@ body {
   font-variant-numeric: tabular-nums;
   font-size: 0.85rem;
 }
+.loc__sub {
+  opacity: 0.75;
+}
 
 .bar button,
 .bar select {

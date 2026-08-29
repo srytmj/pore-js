@@ -18,8 +18,10 @@ import {
   DEFAULT_TEXT_SETTINGS,
   type ImageEngineSettings,
   type Keymap,
+  type Chapter,
   type Locator,
   type Position,
+  type ReaderProgress,
   type TextEngineSettings,
   type TocEntry,
   type TurnDirection,
@@ -31,6 +33,7 @@ export type ReaderKind = 'image' | 'text';
 export type AnySettings = ImageEngineSettings | TextEngineSettings;
 
 export type ReaderLocation = Locator;
+export type { ReaderProgress, Chapter } from '@pore/reader-core';
 
 export interface Footnote {
   html: string;
@@ -49,6 +52,7 @@ export interface ReaderHandle {
   goToHref(href: string): void;
   setSettings(patch: Partial<AnySettings>): void;
   setKeymap(patch: Partial<Keymap>): void;
+  chapters(): Chapter[];
 }
 
 interface EngineLike {
@@ -58,6 +62,7 @@ interface EngineLike {
   goToHref?(href: string): void;
   setSettings(patch: never): void;
   setKeymap?(patch: Partial<Keymap>): void;
+  chapters?(): Chapter[];
   on(event: string, handler: (payload: never) => void): () => void;
   destroy(): void;
 }
@@ -65,6 +70,7 @@ interface EngineLike {
 interface ReaderCtx {
   kind: ReaderKind | null;
   location: ReaderLocation | null;
+  progress: ReaderProgress | null;
   settings: AnySettings;
   keymap: Keymap;
   toc: TocEntry[];
@@ -118,6 +124,7 @@ export function Reader({
 
   const [kind, setKind] = useState<ReaderKind | null>(null);
   const [location, setLocation] = useState<ReaderLocation | null>(null);
+  const [progress, setProgress] = useState<ReaderProgress | null>(null);
   const [settings, setSettings] = useState<AnySettings>(() => ({
     ...DEFAULT_IMAGE_SETTINGS,
     ...initialSettings,
@@ -177,6 +184,7 @@ export function Reader({
           setLocation(loc);
           onPosRef.current?.(loc);
         }),
+        engine.on('reader:progress', (p: never) => setProgress(p as ReaderProgress)),
         engine.on('reader:resumed', (p: never) => {
           const q = p as { position: Position | null; page?: number };
           setResumedFromPage(q.position ? (q.page ?? 1) : null);
@@ -216,6 +224,7 @@ export function Reader({
       goToHref: (href) => engineRef.current?.goToHref?.(href),
       setSettings: (patch) => engineRef.current?.setSettings(patch as never),
       setKeymap: (patch) => engineRef.current?.setKeymap?.(patch),
+      chapters: () => engineRef.current?.chapters?.() ?? [],
     }),
     [],
   );
@@ -227,6 +236,7 @@ export function Reader({
     () => ({
       kind,
       location,
+      progress,
       settings,
       keymap,
       toc,
@@ -240,6 +250,7 @@ export function Reader({
     [
       kind,
       location,
+      progress,
       settings,
       keymap,
       toc,
@@ -272,6 +283,11 @@ export function useReaderKind(): ReaderKind | null {
 
 export function useReaderLocation(): ReaderLocation | null {
   return useRuntime().location;
+}
+
+/** The shell's "Ch 4 of 12 · 18 min left" data. `null` until the first paint. */
+export function useReaderProgress(): ReaderProgress | null {
+  return useRuntime().progress;
 }
 
 export function useReaderSettings<T extends AnySettings = AnySettings>(): [

@@ -1,6 +1,8 @@
 import type { ReaderSource } from '../source/types.js';
 import type { Position } from '../position/types.js';
 import { createEmitter } from '../internal/emitter.js';
+import type { Chapter } from '../reader-engine.js';
+import { PaceEstimator, chapterProgress } from '../progress.js';
 import { parseEpub } from './epub/parse.js';
 import type { EpubBook, TocEntry } from './epub/types.js';
 import { dirOf, resolveHref, stripHash } from './epub/path.js';
@@ -50,6 +52,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
 
   let settings: TextEngineSettings = { ...DEFAULT_TEXT_SETTINGS, ...options.settings };
   let book: EpubBook | null = null;
+  const pace = new PaceEstimator(30);
   let spineIndex = 0;
   let page = 0; // page within the current spine
   let spinePageCount = 1;
@@ -141,13 +144,26 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     const atBookEnd = onEndSlot() && spineIndex === lastSpine();
     const percent = atBookEnd ? 1 : total > 0 ? bookPage / total : 0;
     const ch = chapterLabel(spineIndex);
-    emitter.emit('reader:locationchange', {
+    const loc = {
       position: anchorFor(),
       page: bookPage,
       total,
       percent,
       label: `${ch} · ${Math.round(percent * 100)}%`,
       chapter: book.spine[spineIndex]?.idref ?? String(spineIndex),
+    };
+    emitter.emit('reader:locationchange', loc);
+    pace.mark();
+    const chs = engineChapters();
+    const cp = chapterProgress(chs, bookPage, total);
+    emitter.emit('reader:progress', {
+      locator: loc,
+      percent,
+      chapterLabel: cp.label || ch,
+      chapterIndex: cp.index,
+      chapterCount: chs.length,
+      pagesLeftInChapter: cp.pagesLeftInChapter,
+      minutesLeft: pace.minutesLeft(Math.max(0, total - 1 - bookPage)),
     });
     scheduleSave();
   };
@@ -186,6 +202,20 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       entries.flatMap((e) => [e, ...flat(e.children)]);
     const hit = flat(book.toc).find((e) => stripHash(e.href) === href);
     return hit?.label ?? `Chapter ${i + 1}`;
+  };
+
+  const engineChapters = (): Chapter[] => {
+    if (!book) return [];
+    const total = totalPages();
+    return book.spine.map((s, i) => {
+      const startPage = bookPageBefore(i);
+      return {
+        id: s.idref ?? String(i),
+        label: chapterLabel(i),
+        startPage,
+        startPercent: total > 0 ? startPage / total : 0,
+      };
+    });
   };
 
   const renderEndCard = () => {
@@ -641,5 +671,6 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     setSettings,
     on,
     destroy,
+    chapters: engineChapters,
   };
 }

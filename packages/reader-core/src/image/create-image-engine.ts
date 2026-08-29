@@ -7,6 +7,8 @@ import { resolveKeymap, resolveSettings } from '../settings/merge.js';
 import { clampPagePosition } from '../position/position.js';
 import type { Direction, TurnDirection } from '../types.js';
 import { createEmitter } from '../internal/emitter.js';
+import type { Chapter } from '../reader-engine.js';
+import { PaceEstimator, chapterProgress } from '../progress.js';
 import type { ImageEngine, ImageEngineOptions } from './engine.js';
 import type { ImageEngineEvents } from './types.js';
 import {
@@ -58,6 +60,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   let keymap: Keymap = resolveKeymap(options.keymap);
   let manifest: ImageManifest | null = null;
   let destroyed = false;
+  const pace = new PaceEstimator(8);
   let loader: PageLoader | null = null;
   let prefetch: PrefetchScheduler | null = null;
   let cappedNotified = false;
@@ -128,6 +131,16 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     return ch ? { id: ch.id, label: ch.label } : { label: manifest?.title ?? '' };
   };
 
+  const engineChapters = (): Chapter[] => {
+    const total = manifest?.pageCount ?? 0;
+    return (manifest?.chapters ?? []).map((c) => ({
+      id: c.id,
+      label: c.label,
+      startPage: c.startIndex,
+      startPercent: total > 1 ? c.startIndex / (total - 1) : 0,
+    }));
+  };
+
   const currentPage = (): number => {
     if (!isContinuous()) return spreads[currentSpread]?.leading ?? 0;
     const slot = pageAtOffset(clayout, scrollMain());
@@ -153,13 +166,26 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     const page = currentPage();
     const total = manifest.pageCount;
     const ch = chapterFor(page);
-    emitter.emit('reader:locationchange', {
+    const loc = {
       position: positionFor(),
       page,
       total,
       percent: total > 1 ? page / (total - 1) : 0,
       ...(ch.id ? { chapter: ch.id } : {}),
       label: `${ch.label} · ${page + 1}/${total}`,
+    };
+    emitter.emit('reader:locationchange', loc);
+    pace.mark();
+    const chs = engineChapters();
+    const cp = chapterProgress(chs, page, total);
+    emitter.emit('reader:progress', {
+      locator: loc,
+      percent: loc.percent,
+      chapterLabel: cp.label || ch.label,
+      chapterIndex: cp.index,
+      chapterCount: chs.length,
+      pagesLeftInChapter: cp.pagesLeftInChapter,
+      minutesLeft: pace.minutesLeft(Math.max(0, total - 1 - page)),
     });
     scheduleSave();
   };
@@ -854,5 +880,5 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     root.remove();
   }
 
-  return { mount, goto, turn, setSettings, setKeymap, on, destroy };
+  return { mount, goto, turn, setSettings, setKeymap, on, destroy, chapters: engineChapters };
 }

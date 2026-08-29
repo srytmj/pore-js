@@ -3,7 +3,7 @@ import type { Position } from '../position/types.js';
 import type { LayoutMode } from '../types.js';
 import type { ImageEngineSettings } from '../settings/types.js';
 import type { Keymap } from '../settings/keymap.js';
-import type { Locator } from '../reader-engine.js';
+import type { Locator, ReaderProgress } from '../reader-engine.js';
 
 /** Per-page load state, surfaced so the shell can render skeletons / retry. */
 export type PageLoadState = 'idle' | 'loading' | 'loaded' | 'error';
@@ -13,6 +13,7 @@ export interface ImageEngineEvents {
   'reader:ready': { manifest: ImageManifest };
   'reader:resumed': { position: Position | null; page: number };
   'reader:locationchange': Locator;
+  'reader:progress': ReaderProgress;
   'reader:layoutchange': { layout: LayoutMode; spreads: number };
   'reader:settingschange': { settings: ImageEngineSettings; keymap: Keymap };
   'reader:loadingstate': { index: number; state: PageLoadState };

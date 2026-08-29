@@ -1,7 +1,7 @@
 import type { Position } from '../position/types.js';
 import type { TocEntry, EpubMetadata } from './epub/types.js';
 import type { PageLoadState } from '../image/types.js';
-import type { Locator } from '../reader-engine.js';
+import type { Chapter, Locator, ReaderProgress } from '../reader-engine.js';
 
 export interface TextEngineSettings {
   fontSizePct: number; // 100 = author default
@@ -49,6 +49,7 @@ export interface TextEngineEvents {
   'reader:ready': { metadata: EpubMetadata; spineCount: number };
   'reader:resumed': { position: Position | null };
   'reader:locationchange': Locator;
+  'reader:progress': ReaderProgress;
   'reader:loadingstate': { spine: number; state: PageLoadState };
   'reader:toc': { toc: TocEntry[] };
   'reader:footnote': { html: string; href: string };
@@ -74,6 +75,8 @@ export interface TextEngine {
   goToHref(href: string): void;
   turn(dir: 'forward' | 'back'): void;
   setSettings(patch: Partial<TextEngineSettings>): void;
+  /** Book-level chapter list (one entry per spine item). */
+  chapters(): Chapter[];
   on<E extends keyof TextEngineEvents>(
     event: E,
     handler: (payload: TextEngineEvents[E]) => void,

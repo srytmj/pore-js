@@ -7,6 +7,7 @@ import {
   useReaderHistory,
   useReaderKind,
   useReaderLocation,
+  useReaderProgress,
   useReaderSettings,
   useResumedFromPage,
   useTableOfContents,
@@ -40,6 +41,7 @@ export function Chrome({
   droppedName?: string | null;
 }) {
   const loc = useReaderLocation();
+  const progress = useReaderProgress();
   const reader = useReader();
   const kind = useReaderKind();
   const [imgSettings, setImgSettings] = useReaderSettings<ImageEngineSettings>();
@@ -129,6 +131,12 @@ export function Chrome({
 
       <span className="loc" role="status" aria-live="polite">
         {loc?.label ?? '…'}
+        {progress && progress.chapterCount > 1 && (
+          <span className="loc__sub">
+            {' · '}Ch {progress.chapterIndex + 1}/{progress.chapterCount}
+            {progress.minutesLeft > 0 && ` · ${progress.minutesLeft} min left`}
+          </span>
+        )}
       </span>
     </>
   );

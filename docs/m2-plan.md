@@ -107,18 +107,26 @@ _(pdf.js text layer for selection/search → D5 / M3)_
 
 ---
 
-## D5 — shared chrome data (design doc §9) · M
+## D5 — shared chrome data (design doc §9) · M ✅
 
-- [ ] Engines emit a uniform `reader:progress { locator, percent, chapterLabel,
-pagesLeftInChapter, minutesLeft? }` derived from the `Locator`
-- [ ] `minutesLeft`: image = pages left × per-page seconds (rolling avg);
-      text = chars left ÷ reading speed (wpm setting)
-- [ ] Chapter model unified: image `chapters[]`, text spine+TOC, PDF outline →
-      `{ id, label, startLocator }[]` via one `chapters()` accessor
-- [ ] `reader-react` `useReaderProgress()` hook
-- [ ] Vitest: minutesLeft math, chapter mapping per engine
+- [x] Every engine emits `reader:progress { locator, percent, chapterLabel,
+      chapterIndex, chapterCount, pagesLeftInChapter, minutesLeft }` alongside
+      `reader:locationchange`
+- [x] `minutesLeft`: shared `PaceEstimator` — an EMA of wall-clock seconds per
+      page, seeded per format (image 8s, text 30s), eased toward the reader's
+      real pace; `pagesLeft × spp / 60`
+- [x] Chapter model unified: `chapters(): Chapter[]` on every engine —
+      `{ id, label, startPage, startPercent }`. Image ← `manifest.chapters`;
+      text ← one entry per spine item (label from the TOC); PDF ← outline
+      (through the image path). `chapterProgress()` maps a page → current chapter
+      + pages remaining.
+- [x] `reader-react` `useReaderProgress()` hook + `handle.chapters()`
+- [x] Vitest (9): `chapterProgress` boundaries, `PaceEstimator` EMA + clamps +
+      rounding, image engine emits `reader:progress`
+- [x] Demo chrome renders "· Ch 2/3 · N min left"; demo-manga fixture gains
+      three chapters to exercise it
 
-**Done when:** the shell can render "Ch 4 of 12 · 18 min left" for any book.
+**Done when:** the shell can render "Ch 4 of 12 · 18 min left" for any book. ✅ done 2026-08-29
 
 ---
 
