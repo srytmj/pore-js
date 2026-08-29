@@ -1,0 +1,132 @@
+# Pore.js — M0.5 Plan (complete the image reader)
+
+**Goal:** everything the manga/comic reader needs before the engine moves on to
+EPUB (M1). Builds on `v0.1.0-m0`. Target tag: `v0.2.0-m0.5`.
+
+**Spec:** [`image-engine-spec.md`](image-engine-spec.md) · **M0:** [`m0-plan.md`](m0-plan.md)
+
+Sequential, one commit per task. All type/event/setting slots already exist from M0.
+
+---
+
+## P1 — continuous-horizontal · M
+
+- [ ] Engine horizontal virtualization (reuse `continuous.ts` math on the X axis; `estimateHorizontalLayout` or generalise to an axis param)
+- [ ] `overflow-x:auto`; RTL flips scroll origin (start at `scrollWidth`)
+- [ ] `Position` `scroll` fraction over `scrollLeft/scrollWidth` + page anchor
+- [ ] Keyboard `page-right`/`page-left` scroll a screen; wheel → horizontal
+- [ ] Vitest: axis-generalised layout math; RTL origin
+
+**Done when:** a comic reads left↔right continuously, RTL included.
+
+---
+
+## P2 — vertical direction (vertical-JP) · M
+
+- [ ] `direction: 'vertical'` in paged: `writing-mode: vertical-rl` on the viewport, pages flow right→left, page-turn maps to that
+- [ ] Fit math swaps to height-based
+- [ ] Gestures: swipe-left = forward (same as RTL horizontal)
+- [ ] Vitest: `physicalToLogical('page-right','vertical')`, spread order
+
+**Done when:** the manga fixture in `vertical` mode turns the right way.
+
+---
+
+## P3 — autoscroll + paged auto-advance + next-chapter countdown · M
+
+- [ ] Continuous autoscroll: `requestAnimationFrame` translate at `autoscrollSpeed` px/s; `autoscrollSmooth:false` = one screen per `viewport/speed` s
+- [ ] Pause on: user scroll/drag, chrome open, `visibilityState==='hidden'`, zoom>1; resume after 2 s idle
+- [ ] Paged: `pagedAutoAdvanceSeconds` timer → `turn('forward')`, same pause rules
+- [ ] `nextChapterAfterLastPage`: on `reader:end`, if chapters exist, emit a countdown the shell renders; `instant` skips; auto-advance via `goto(nextChapterStart)`
+- [ ] `toggle-autoscroll` keybind
+- [ ] `prefers-reduced-motion` disables autoscroll + smooth
+- [ ] Vitest (fake timers): step cadence, pause/resume, paged timer, chapter advance
+
+**Done when:** webtoon autoscrolls hands-free and stops at chapter end.
+
+---
+
+## P4 — `bitmap` loading path · M
+
+- [ ] `PageLoader` `bitmap` branch: `fetch` → `createImageBitmap` → keep the `ImageBitmap`
+- [ ] Renderer: draw the active page to a `<canvas>` sized to devicePixelRatio; fit/zoom/pan math ported to canvas transform
+- [ ] Only the active (or zoomed) page uses canvas; neighbours stay `<img>`
+- [ ] `bitmap` + `preloadStrategy:'all'` still forced to `blob` (memory)
+- [ ] Close/`ImageBitmap.close()` on eviction
+- [ ] Vitest: loader returns a bitmap handle; canvas fit math
+
+**Done when:** high-zoom pages stay crisp with `loadingMethod:'bitmap'`.
+
+---
+
+## P5 — image filters in the UI · S
+
+- [ ] Engine already applies `brightness`/`greyscale`/`dim` — expose in the settings panel (P7) and a quick control
+- [ ] `dim` overlay element above pages, below chrome
+- [ ] Vitest/browser: filter string composes
+
+**Done when:** brightness slider + greyscale + dim toggles work live.
+
+---
+
+## P6 — `LocalFileSource` (drop a file) · L
+
+- [ ] `LocalFileSource(files: File[] | FileList)` implementing `ReaderSource`
+- [ ] `.cbz` / `.zip` → `fflate` unzip, natural-sort image entries, per-entry lazy inflate (keep the central directory, inflate on `getPage`)
+- [ ] Folder / multi-file image drop → sort → manifest
+- [ ] Dimensions probed lazily (first decode) → feeds `isWide` + webtoon layout
+- [ ] Progress: in-memory (wrap in `CachedSource` for persistence)
+- [ ] Demo: drag-and-drop zone → opens the dropped book
+- [ ] Vitest: CBZ fixture (tiny generated zip) → manifest + `getPage` inflate + abort
+
+**Done when:** drop a `.cbz` onto the demo and read it.
+
+---
+
+## P7 — full tabbed settings panel · L
+
+- [ ] `reader-react`: `<SettingsPanel>` — tabs Layout / Image fit / Behavior / Keybinds (MangaDex-style)
+- [ ] Layout: mode, direction, spread offset, page gap, progress-bar style/position/thickness, background
+- [ ] Image fit: fit mode, stretch small, max width/height, filters
+- [ ] Behavior: tapToTurn, scrollToTurn, autoscroll speed/smooth, paged timer, next-chapter, doubleClickFullscreen
+- [ ] Keybinds: per-action key capture, multi-key, per-action + global reset (`setKeymap`)
+- [ ] Persist per-book (Layout/Fit/direction) vs global (Behavior/keymap/filters) — spec §11.3; a `useReaderSettings` that reads engine-internal changes back (engine emits a `reader:settingschange` event — add it)
+- [ ] Demo swaps the inline bar for a "⚙" that opens the panel
+
+**Done when:** every setting in spec §2.3 is reachable from the UI and sticks.
+
+---
+
+## P8 — `url-and-title` history mode · S
+
+- [ ] `reader-react`: `useReaderHistory({ mode })` helper — `none` / `title` / `url-and-title`
+- [ ] `url-and-title`: `history.replaceState` page into the URL (`?p=`); browser back/forward → `goto`
+- [ ] Demo uses it; `historyMode` setting drives it
+
+**Done when:** back/forward navigates pages when the setting is on.
+
+---
+
+## P9 — hardening + release · S
+
+- [ ] Playwright: autoscroll, vertical mode, CBZ drop, settings panel round-trip, history back/forward
+- [ ] `prefers-reduced-motion` audit across new motion
+- [ ] Perf: `ImageBitmap` close on evict; autoscroll rAF cancelled on destroy
+- [ ] CHANGELOG `v0.2.0-m0.5`; docs links; demo GIF
+- [ ] Tag `v0.2.0-m0.5`
+
+---
+
+## Dependency graph
+
+```
+P1 ─┐
+P2 ─┼─→ P3 ─→ P9
+P4 ─┘        ↑
+P5 ─→ P7 ────┤
+P6 ─────────┤
+P8 ─────────┘
+```
+
+P1/P2/P4/P6 are independent after M0. P7 pulls in P5. P3 wants P1+P2 done so
+autoscroll covers every continuous axis. P9 last.
