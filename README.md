@@ -36,9 +36,13 @@ pnpm --filter @pore/demo e2e           # end-to-end demo tests
 
 Requires Node >= 20.
 
-## Status — image reader complete (`v0.2.0-m0.5`)
+## Status — image + EPUB readers (`v0.3.0-m1`)
 
-The manga/comic reader is feature-complete:
+**EPUB (M1):** `parseEpub` (OPF / spine / TOC), `createTextEngine` — sandboxed
+iframe + CSS-multicol pagination, `anchor` resume, live typography + themes, TOC
+navigation, footnote popovers. `<Reader>` opens an EPUB or a manga transparently.
+
+**Image reader (M0 / M0.5):** feature-complete —
 
 - **Layout**: paged single/double (spread pairing, `spreadOffset`, late
   wide-page discovery), continuous vertical + horizontal (virtualized), LTR /

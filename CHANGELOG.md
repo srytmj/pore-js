@@ -1,5 +1,37 @@
 # Changelog
 
+## v0.3.0-m1 — 2026-08-29
+
+EPUB reflowable text engine.
+
+### Added
+
+- **`@pore/reader-core` — `text/`**
+  - `parseEpub` — `container.xml` → OPF (metadata / namespace-agnostic manifest /
+    spine) → EPUB3 nav or EPUB2 ncx TOC; `EpubBook.resource()`; path helpers
+  - `createTextEngine` — sandboxed `<iframe srcdoc>` (scripts stripped),
+    `body` CSS-multicol pagination via `translateX`, `ResizeObserver` reflow
+  - `rewrite.ts` — `src` / `href` / CSS `url()` → `blob:` URLs, revoked on teardown
+  - `paginate.ts` — `buildBaseStylesheet` (low-specificity typography), page math
+  - `anchor.ts` — `generateAnchor` / `resolveAnchor` (exact block → nearest →
+    spine-percent); resume lands on the paragraph, resize holds the fraction
+  - `TextEngineSettings` — font family/size, line-height, justify, margins,
+    columns (1–2), theme (light/sepia/dark/oled), publisher-styles toggle
+  - `goToHref` (TOC), footnote / same-doc link interception → `reader:footnote`
+  - fixed-layout EPUB detected → `reader:error`, not a crash
+- **`@pore/reader-react`**
+  - `<Reader>` mounts the image **or** text engine by `manifest.type`;
+    `useReaderKind`, `useTableOfContents`, `useFootnote`, generic
+    `useReaderSettings<T>`, normalized `location.percent`
+  - `<SettingsPanel>` → `<TextSettingsPanel>` (Text / Theme) for EPUBs
+- **`apps/demo`** — `demo-book/book.epub` fixture (generated), book picker,
+  "Contents…" dropdown, footnote popover; `DemoSource` serves EPUB fixtures
+
+### Cut for M1
+
+CFI, highlights/notes, TTS, fixed-layout EPUB, OPDS, in-book search, vertical-JP
+text, RTL column flow, char-level anchor offset, selection/bookmark bridge.
+
 ## v0.2.0-m0.5 — 2026-08-29
 
 Completes the image reader.

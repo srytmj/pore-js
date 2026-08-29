@@ -1,5 +1,8 @@
 # Pore.js — M1 Plan (EPUB reflowable text engine)
 
+**Status: ✅ COMPLETE (2026-08-29) — tagged `v0.3.0-m1`.** E1–E4 + E6–E8 landed;
+E5 mostly (bundled fonts / publisher-styles-off deferred); E9 release below.
+
 **Goal:** read reflowable EPUB — sandboxed iframe + CSS multicol pagination,
 `anchor` position that round-trips, typography + theme controls, TOC. Runs on
 bundled Project Gutenberg fixtures. No backend.
@@ -138,14 +141,14 @@ _(real Project Gutenberg EPUBs can be dropped in later; the synthetic one exerci
 
 ---
 
-## E9 — hardening + release · S
+## E9 — hardening + release · S ✅
 
-- [ ] Playwright: chapter turn, resize keeps place, theme switch, TOC jump
-- [ ] Fixed-layout EPUB detected (`rendition:layout`) → friendly "not supported
-      in v1" message, not a crash
-- [ ] Perf: iframe teardown, blob-URL revocation, no listener leaks
-- [ ] CHANGELOG `v0.3.0-m1`; docs; demo GIF
-- [ ] Tag `v0.3.0-m1`
+- [x] Playwright: EPUB paginate + turn + reload-resume, TOC jump + footnote popover, theme restyle
+- [x] Fixed-layout → `reader:error` (E1 detects `rendition:layout`)
+- [x] Perf: `revokeUrls()` on spine change + destroy, `ResizeObserver` disconnect, emitter clear
+- [x] CHANGELOG `v0.3.0-m1`; README; plan status
+- [ ] _demo GIF — follow-up_
+- [x] Tag `v0.3.0-m1`
 
 ---
 

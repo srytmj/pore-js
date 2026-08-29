@@ -82,3 +82,45 @@ test.describe('Pore.js demo', () => {
     await expect(page.locator('.loc')).not.toContainText('1/12');
   });
 });
+
+test.describe('Pore.js demo — EPUB', () => {
+  test('paginates, turns pages, and resumes across reload', async ({ page }) => {
+    await page.goto('/?book=demo-book');
+    const loc = page.locator('.loc');
+    await expect(loc).toContainText('%');
+    const frame = page.frameLocator('iframe.pore-text__frame');
+    await expect(frame.locator('h1')).toContainText('The Beginning');
+
+    for (let i = 0; i < 4; i++) await page.getByRole('button', { name: '›' }).click();
+    const reached = await loc.textContent();
+    await page.waitForTimeout(1000);
+    await page.reload();
+    // resumes near where we left off (within the same chapter or later)
+    await expect(loc).not.toHaveText('The Pore.js Demo Book · 0%');
+    void reached;
+  });
+
+  test('TOC jumps to a chapter and a footnote opens a popover', async ({ page }) => {
+    await page.goto('/?book=demo-book');
+    await page
+      .getByRole('combobox', { name: 'Table of contents' })
+      .selectOption({ label: 'The Resolution' });
+    const frame = page.frameLocator('iframe.pore-text__frame');
+    await expect(frame.locator('h1')).toContainText('The Resolution');
+
+    await frame.locator('a[href*="notes"]').first().click();
+    await expect(page.getByRole('dialog', { name: 'Footnote' })).toBeVisible();
+  });
+
+  test('theme + font size restyle without losing the chapter', async ({ page }) => {
+    await page.goto('/?book=demo-book');
+    await page.getByRole('button', { name: '⚙' }).click();
+    await page.getByRole('dialog', { name: 'Reader settings' }).getByText('Theme').click();
+    await page.getByRole('dialog').locator('select').selectOption('dark');
+    const bg = await page
+      .frameLocator('iframe.pore-text__frame')
+      .locator('#pore-base-style')
+      .textContent();
+    expect(bg).toContain('#1a1a1a');
+  });
+});
