@@ -29,7 +29,9 @@ self.addEventListener('activate', (event) => {
 });
 
 const isMedia = (url) =>
-  url.pathname.startsWith('/fixtures/') || url.pathname.includes('pdf.worker');
+  url.pathname.startsWith('/fixtures/') ||
+  url.pathname.includes('pdf.worker') ||
+  url.pathname.includes('search-worker');
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;

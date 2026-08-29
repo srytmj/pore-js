@@ -7,7 +7,9 @@ import { parseEpub } from './epub/parse.js';
 import type { EpubBook, TocEntry } from './epub/types.js';
 import { dirOf, resolveHref, stripHash } from './epub/path.js';
 import { rewriteResources } from './rewrite.js';
-import { generateAnchor, pageForElement, resolveAnchor } from './anchor.js';
+import { blockElements, generateAnchor, pageForElement, resolveAnchor } from './anchor.js';
+import { SearchController } from '../search/search-controller.js';
+import type { SearchHit, SearchSection } from '../search/search-index.js';
 import {
   buildBaseStylesheet,
   computeTextLayout,
@@ -42,6 +44,8 @@ export interface CreateTextEngineOptions {
   bookId: string;
   settings?: Partial<TextEngineSettings>;
   domParser?: DOMParser;
+  /** Passed to the in-book `SearchController`. `false` forces synchronous search. */
+  searchWorkerFactory?: (() => Worker) | false;
 }
 
 export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
@@ -202,6 +206,72 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       entries.flatMap((e) => [e, ...flat(e.children)]);
     const hit = flat(book.toc).find((e) => stripHash(e.href) === href);
     return hit?.label ?? `Chapter ${i + 1}`;
+  };
+
+  // ---- in-book search -----------------------------------------------------
+
+  const search = new SearchController(
+    options.searchWorkerFactory !== undefined
+      ? { workerFactory: options.searchWorkerFactory }
+      : {},
+  );
+  let searchBuilt: Promise<void> | null = null;
+
+  const sectionId = (i: number): string => book?.spine[i]?.idref ?? String(i);
+
+  const searchSections = (): SearchSection[] => {
+    const b = book;
+    if (!b) return [];
+    return b.spine.map((item, index) => {
+      const res = b.resource(item.href);
+      const doc = parser.parseFromString(
+        res ? new TextDecoder().decode(res.bytes) : '',
+        'text/html',
+      );
+      doc.querySelectorAll('script, style').forEach((el) => el.remove());
+      return { id: sectionId(index), index, text: doc.body?.textContent ?? '' };
+    });
+  };
+
+  const runSearch = async (query: string): Promise<SearchHit[]> => {
+    if (!book) return [];
+    searchBuilt ??= search.build(searchSections());
+    await searchBuilt;
+    const hits = await search.query(query, { limit: 300 });
+    emitter.emit('reader:searchresults', { query, hits });
+    return hits;
+  };
+
+  /** Block element whose accumulated collapsed text spans `offset`. */
+  const blockForOffset = (doc: Document, offset: number): Element | null => {
+    const blocks = blockElements(doc);
+    let seen = 0;
+    for (const el of blocks) {
+      const len = (el.textContent ?? '').replace(/\s+/g, ' ').trim().length + 1;
+      if (seen + len > offset) return el;
+      seen += len;
+    }
+    return blocks.at(-1) ?? null;
+  };
+
+  const gotoHit = (hit: SearchHit): void => {
+    if (!book) return;
+    const idx = book.spine.findIndex((_, i) => sectionId(i) === hit.sectionId);
+    if (idx < 0) return;
+    const land = () => {
+      const cdoc = frame.contentDocument;
+      if (!cdoc) return;
+      const flow = flowEl();
+      if (flow) flow.style.transform = 'translateX(0)';
+      const el = blockForOffset(cdoc, hit.start);
+      if (el) {
+        page = Math.min(pageForElement(el, layout().pageStep), Math.max(0, spinePageCount - 1));
+      }
+      renderView();
+      emitLocation();
+    };
+    if (idx === spineIndex) land();
+    else void renderSpine(idx).then(land);
   };
 
   const engineChapters = (): Chapter[] => {
@@ -659,6 +729,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     root.removeEventListener('dblclick', onDblClick);
     resizeObserver?.disconnect();
     revokeUrls();
+    search.destroy();
     emitter.clear();
     root.remove();
   }
@@ -672,5 +743,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     on,
     destroy,
     chapters: engineChapters,
+    search: runSearch,
+    gotoHit,
   };
 }

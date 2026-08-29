@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useImperativeHandle,
@@ -22,6 +23,7 @@ import {
   type Locator,
   type Position,
   type ReaderProgress,
+  type SearchHit,
   type TextEngineSettings,
   type TocEntry,
   type TurnDirection,
@@ -53,6 +55,9 @@ export interface ReaderHandle {
   setSettings(patch: Partial<AnySettings>): void;
   setKeymap(patch: Partial<Keymap>): void;
   chapters(): Chapter[];
+  /** Full-text search — resolves `[]` on engines without it (image/PDF). */
+  search(query: string): Promise<SearchHit[]>;
+  gotoHit(hit: SearchHit): void;
 }
 
 interface EngineLike {
@@ -63,6 +68,8 @@ interface EngineLike {
   setSettings(patch: never): void;
   setKeymap?(patch: Partial<Keymap>): void;
   chapters?(): Chapter[];
+  search?(query: string): Promise<SearchHit[]>;
+  gotoHit?(hit: SearchHit): void;
   on(event: string, handler: (payload: never) => void): () => void;
   destroy(): void;
 }
@@ -222,6 +229,8 @@ export function Reader({
       turn: (d) => engineRef.current?.turn(d),
       goto: (t) => engineRef.current?.goto(t as never),
       goToHref: (href) => engineRef.current?.goToHref?.(href),
+      search: (q) => engineRef.current?.search?.(q) ?? Promise.resolve([]),
+      gotoHit: (hit) => engineRef.current?.gotoHit?.(hit),
       setSettings: (patch) => engineRef.current?.setSettings(patch as never),
       setKeymap: (patch) => engineRef.current?.setKeymap?.(patch),
       chapters: () => engineRef.current?.chapters?.() ?? [],
@@ -326,4 +335,76 @@ export function useReader(): ReaderHandle {
 
 export function useResumedFromPage(): number | null {
   return useRuntime().resumedFromPage;
+}
+
+export interface ReaderSearch {
+  query: string;
+  setQuery(q: string): void;
+  hits: SearchHit[];
+  /** Index into `hits` of the last-jumped hit, or -1. */
+  activeIndex: number;
+  busy: boolean;
+  go(index: number): void;
+  next(): void;
+  prev(): void;
+  clear(): void;
+}
+
+/** Debounced in-book search wired to the active engine (text only today). */
+export function useReaderSearch(opts?: { debounceMs?: number }): ReaderSearch {
+  const { handle, kind } = useRuntime();
+  const debounceMs = opts?.debounceMs ?? 200;
+  const [query, setQuery] = useState('');
+  const [hits, setHits] = useState<SearchHit[]>([]);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [busy, setBusy] = useState(false);
+  const runId = useRef(0);
+
+  useEffect(() => {
+    setQuery('');
+    setHits([]);
+    setActiveIndex(-1);
+  }, [kind]);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setHits([]);
+      setActiveIndex(-1);
+      return;
+    }
+    const id = ++runId.current;
+    setBusy(true);
+    const t = setTimeout(() => {
+      void handle.search(q).then((res) => {
+        if (id !== runId.current) return;
+        setHits(res);
+        setActiveIndex(-1);
+        setBusy(false);
+      });
+    }, debounceMs);
+    return () => clearTimeout(t);
+  }, [query, handle, debounceMs]);
+
+  const go = useCallback(
+    (index: number) => {
+      const hit = hits[index];
+      if (!hit) return;
+      setActiveIndex(index);
+      handle.gotoHit(hit);
+    },
+    [hits, handle],
+  );
+
+  return {
+    query,
+    setQuery,
+    hits,
+    activeIndex,
+    busy,
+    go,
+    next: () => go(activeIndex + 1 < hits.length ? activeIndex + 1 : 0),
+    prev: () => go(activeIndex > 0 ? activeIndex - 1 : hits.length - 1),
+    clear: () => setQuery(''),
+  };
 }

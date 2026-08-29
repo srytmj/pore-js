@@ -26,8 +26,12 @@ function epubBlob() {
       'META-INF/container.xml': strToU8(CONTAINER),
       'OEBPS/content.opf': strToU8(OPF),
       'OEBPS/nav.xhtml': strToU8(NAV),
-      'OEBPS/ch01.xhtml': strToU8('<html><body><p>Chapter one text.</p></body></html>'),
-      'OEBPS/ch02.xhtml': strToU8('<html><body><p>Chapter two text.</p></body></html>'),
+      'OEBPS/ch01.xhtml': strToU8(
+        '<html><body><p>Chapter one text about a peculiar lighthouse.</p></body></html>',
+      ),
+      'OEBPS/ch02.xhtml': strToU8(
+        '<html><body><p>Chapter two returns to the lighthouse once more.</p></body></html>',
+      ),
     }),
   ]);
 }
@@ -102,6 +106,32 @@ describe('createTextEngine', () => {
     expect(ends.at(-1)).toMatchObject({ visible: true, kind: 'book' });
     expect(container.querySelector('.pore-text__end')?.textContent).toContain('The End');
     expect(lastPct).toBe(1);
+    engine.destroy();
+  });
+
+  it('searches the whole book and emits reader:searchresults', async () => {
+    const container = document.createElement('div');
+    const engine = createTextEngine({
+      container,
+      source: source(),
+      bookId: 'b',
+      searchWorkerFactory: false, // synchronous in jsdom
+    });
+    const events: Array<{ query: string; hits: unknown[] }> = [];
+    engine.on('reader:searchresults', (p) => events.push(p));
+    await engine.mount();
+
+    const hits = await engine.search('lighthouse');
+    expect(hits.map((h) => h.sectionId)).toEqual(['c1', 'c2']);
+    expect(hits[0]!.snippet.toLowerCase()).toContain('lighthouse');
+    expect(events.at(-1)).toMatchObject({ query: 'lighthouse' });
+
+    // jump to the second hit → lands on that spine item
+    const locs: Array<{ chapter?: string }> = [];
+    engine.on('reader:locationchange', (p) => locs.push(p));
+    engine.gotoHit(hits[1]!);
+    await new Promise((r) => setTimeout(r, 90));
+    expect(locs.at(-1)?.chapter).toBe('c2');
     engine.destroy();
   });
 

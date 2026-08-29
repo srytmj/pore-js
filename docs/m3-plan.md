@@ -74,20 +74,31 @@ source is usable programmatically now)_
 
 ---
 
-## I3 — in-book search · L
+## I3 — in-book search · L ✅
 
-- [ ] EPUB: on load, extract plain text per spine (Range/`textContent`), build a
-      lightweight inverted index **in a Worker**; hits map to `anchor`s
-- [ ] PDF: `getTextContent(n)` per page, same index; hits map to page + rect
-- [ ] Image: no text search (skip); CBZ same
-- [ ] `engine.search(query) → SearchHit[]`; `engine.gotoHit(hit)`; highlight via
-      CSS Custom Highlight API (fallback: wrap in `<mark>`)
-- [ ] `reader:searchresults` event; `reader-react` `useReaderSearch()`
-- [ ] Debounced incremental search, cancellable
-- [ ] Vitest: index build + query on a fixture; anchor/page mapping; worker
-      message contract (worker stubbed)
+- [x] `search/` module: `buildSearchIndex` / `querySearchIndex` — normalised
+      (lowercase, whitespace-collapsed) substring scan with snippet + match
+      range. Book-sized text is small enough that a scan beats a hand-rolled
+      inverted index on correctness; revisit only if a title is huge.
+- [x] `SearchController` — owns the index, runs queries in a Worker
+      (`new Worker(new URL('./search-worker.js', import.meta.url))`, its own
+      tsup entry) with a synchronous fallback; latest-query-wins
+- [x] Text engine: builds sections from each spine doc's `textContent` (lazily,
+      on first `search()`); `engine.search(query)` + `engine.gotoHit(hit)`
+      (maps `hit.start` → block element → page); `reader:searchresults` event
+- [x] `reader-react` `useReaderSearch()` — debounced, cancellable, `next`/`prev`;
+      demo gets a 🔍 panel with highlighted snippets (`<mark>`)
+- [ ] PDF search — _deferred_: needs `PdfImageSource` to surface `textContent`
+      per page and a rect-based `gotoHit`; folds into a later PDF pass. Image /
+      CBZ have no text (correctly skipped).
+- [x] Vitest (13): `querySearchIndex` (5 — order, snippet range, whitespace,
+      min length, limit), `SearchController` (3 — sync, latest-wins, worker
+      plumbing), text-engine `search` + `gotoHit` integration
+- [x] Browser-verified: "consequat" in the demo EPUB → 76 hits, worker chunk
+      loads, clicking hit #41 jumps to "A Complication · 85%"
 
-**Done when:** search "consequat" in the demo EPUB, jump between hits.
+**Done when:** search "consequat" in the demo EPUB, jump between hits. ✅ done
+2026-08-29
 
 ---
 

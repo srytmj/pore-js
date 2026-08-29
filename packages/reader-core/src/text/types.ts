@@ -2,6 +2,7 @@ import type { Position } from '../position/types.js';
 import type { TocEntry, EpubMetadata } from './epub/types.js';
 import type { PageLoadState } from '../image/types.js';
 import type { Chapter, Locator, ReaderProgress } from '../reader-engine.js';
+import type { SearchHit } from '../search/search-index.js';
 
 export interface TextEngineSettings {
   fontSizePct: number; // 100 = author default
@@ -61,6 +62,7 @@ export interface TextEngineEvents {
     /** true when there is a next chapter to continue to */
     hasNext: boolean;
   };
+  'reader:searchresults': { query: string; hits: SearchHit[] };
   'reader:settingschange': { settings: TextEngineSettings };
   'reader:end': Record<string, never>;
   'reader:start': Record<string, never>;
@@ -77,6 +79,10 @@ export interface TextEngine {
   setSettings(patch: Partial<TextEngineSettings>): void;
   /** Book-level chapter list (one entry per spine item). */
   chapters(): Chapter[];
+  /** Full-text search across the book; also emits `reader:searchresults`. */
+  search(query: string): Promise<SearchHit[]>;
+  /** Jump to a hit from {@link search}. */
+  gotoHit(hit: SearchHit): void;
   on<E extends keyof TextEngineEvents>(
     event: E,
     handler: (payload: TextEngineEvents[E]) => void,

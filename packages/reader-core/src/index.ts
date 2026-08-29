@@ -111,6 +111,19 @@ export type { TextLayout } from './text/paginate.js';
 export { generateAnchor, resolveAnchor, blockElements, pageForElement } from './text/anchor.js';
 export { openKvStore } from './offline/idb.js';
 export type { KvStore } from './offline/idb.js';
+
+export {
+  buildSearchIndex,
+  querySearchIndex,
+} from './search/search-index.js';
+export type {
+  SearchSection,
+  SearchHit,
+  SearchIndex,
+  QueryOptions,
+} from './search/search-index.js';
+export { SearchController } from './search/search-controller.js';
+export type { SearchControllerOptions } from './search/search-controller.js';
 export { parseImageManifestFile, naturalCompare } from './source/manifest-file.js';
 export type { ImageManifestFile, ParsedFixtureManifest } from './source/manifest-file.js';
 

@@ -7,6 +7,7 @@ import {
   useReaderHistory,
   useReaderKind,
   useDownload,
+  useReaderSearch,
   useReaderLocation,
   useReaderProgress,
   useReaderSettings,
@@ -44,6 +45,8 @@ export function Chrome({
   const loc = useReaderLocation();
   const progress = useReaderProgress();
   const download = useDownload(bookId);
+  const search = useReaderSearch();
+  const [searchOpen, setSearchOpen] = useState(false);
   const reader = useReader();
   const kind = useReaderKind();
   const [imgSettings, setImgSettings] = useReaderSettings<ImageEngineSettings>();
@@ -123,6 +126,15 @@ export function Chrome({
           {imgSettings.autoscroll ? '⏸' : '▶'}
         </button>
       )}
+      {isText && (
+        <button
+          className={searchOpen ? 'active' : ''}
+          onClick={() => setSearchOpen((v) => !v)}
+          aria-label="Search in book"
+        >
+          🔍
+        </button>
+      )}
       <button
         className={panelOpen ? 'active' : ''}
         onClick={() => setPanelOpen((v) => !v)}
@@ -195,6 +207,47 @@ export function Chrome({
       {panelOpen && (
         <div className="panel-wrap">
           <SettingsPanel onClose={() => setPanelOpen(false)} />
+        </div>
+      )}
+
+      {searchOpen && isText && (
+        <div className="search" role="search">
+          <div className="search__row">
+            <input
+              autoFocus
+              type="search"
+              placeholder="Search in book…"
+              value={search.query}
+              onChange={(e) => search.setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && (e.shiftKey ? search.prev() : search.next())}
+            />
+            <span className="search__count">
+              {search.busy
+                ? '…'
+                : search.hits.length
+                  ? `${search.activeIndex + 1 || '–'}/${search.hits.length}`
+                  : search.query.trim().length >= 2
+                    ? '0'
+                    : ''}
+            </span>
+            <button onClick={() => setSearchOpen(false)} aria-label="Close search">
+              ×
+            </button>
+          </div>
+          <ol className="search__hits">
+            {search.hits.slice(0, 50).map((hit, i) => (
+              <li key={`${hit.sectionId}-${hit.start}`}>
+                <button
+                  className={i === search.activeIndex ? 'active' : ''}
+                  onClick={() => search.go(i)}
+                >
+                  <span className="search__pre">{hit.snippet.slice(0, hit.snippetRange[0])}</span>
+                  <mark>{hit.snippet.slice(hit.snippetRange[0], hit.snippetRange[1])}</mark>
+                  <span>{hit.snippet.slice(hit.snippetRange[1])}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
         </div>
       )}
 

@@ -235,6 +235,71 @@ body {
   pointer-events: none;
 }
 
+.search {
+  position: fixed;
+  top: 52px;
+  right: 12px;
+  width: min(360px, calc(100vw - 24px));
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  background: Canvas;
+  color: CanvasText;
+  border: 1px solid rgb(128 128 128 / 0.4);
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.25);
+  z-index: 55;
+  overflow: hidden;
+}
+.search__row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid rgb(128 128 128 / 0.25);
+}
+.search__row input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  font: inherit;
+}
+.search__count {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+.search__hits {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+.search__hits button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px;
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgb(128 128 128 / 0.15);
+  cursor: pointer;
+}
+.search__hits button:hover,
+.search__hits button.active {
+  background: rgb(128 128 128 / 0.15);
+}
+.search__hits mark {
+  background: #ffd54a;
+  color: #000;
+}
+.search__pre {
+  opacity: 0.65;
+}
+
 .notice {
   position: fixed;
   bottom: 16px;

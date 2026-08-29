@@ -19,17 +19,26 @@ function promisify<T>(req: IDBRequest<T>): Promise<T> {
 export function openKvStore(dbName = 'pore', storeName = 'kv'): KvStore {
   let dbPromise: Promise<IDBDatabase> | null = null;
 
+  const openAt = (version?: number): Promise<IDBDatabase> =>
+    new Promise((resolve, reject) => {
+      const req = version ? indexedDB.open(dbName, version) : indexedDB.open(dbName);
+      req.onupgradeneeded = () => {
+        if (!req.result.objectStoreNames.contains(storeName)) {
+          req.result.createObjectStore(storeName);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error ?? new Error('IndexedDB open failed'));
+    });
+
   const db = (): Promise<IDBDatabase> => {
     if (!dbPromise) {
-      dbPromise = new Promise((resolve, reject) => {
-        const req = indexedDB.open(dbName, 1);
-        req.onupgradeneeded = () => {
-          if (!req.result.objectStoreNames.contains(storeName)) {
-            req.result.createObjectStore(storeName);
-          }
-        };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error ?? new Error('IndexedDB open failed'));
+      dbPromise = openAt().then((conn) => {
+        // An older DB may predate this store name — bump the version to add it.
+        if (conn.objectStoreNames.contains(storeName)) return conn;
+        const next = conn.version + 1;
+        conn.close();
+        return openAt(next);
       });
     }
     return dbPromise;

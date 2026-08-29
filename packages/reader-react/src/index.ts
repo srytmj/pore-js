@@ -17,6 +17,7 @@ export type {
   Position,
   Locator,
   TocEntry,
+  SearchHit,
 } from '@pore/reader-core';
 
 export {
@@ -25,6 +26,7 @@ export {
   useReaderKind,
   useReaderLocation,
   useReaderProgress,
+  useReaderSearch,
   useReaderSettings,
   useReaderKeymap,
   useTableOfContents,
@@ -38,6 +40,7 @@ export type {
   ReaderHandle,
   ReaderLocation,
   ReaderProgress,
+  ReaderSearch,
   Chapter,
   ReaderKind,
   AnySettings,
