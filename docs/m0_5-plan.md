@@ -75,17 +75,17 @@ _(vertical-rl writing mode for light novels lands with the Text engine, M1)_
 
 ---
 
-## P6 — `LocalFileSource` (drop a file) · L
+## P6 — `LocalFileSource` (drop a file) · L ✅
 
-- [ ] `LocalFileSource(files: File[] | FileList)` implementing `ReaderSource`
-- [ ] `.cbz` / `.zip` → `fflate` unzip, natural-sort image entries, per-entry lazy inflate (keep the central directory, inflate on `getPage`)
-- [ ] Folder / multi-file image drop → sort → manifest
-- [ ] Dimensions probed lazily (first decode) → feeds `isWide` + webtoon layout
-- [ ] Progress: in-memory (wrap in `CachedSource` for persistence)
-- [ ] Demo: drag-and-drop zone → opens the dropped book
-- [ ] Vitest: CBZ fixture (tiny generated zip) → manifest + `getPage` inflate + abort
+- [x] `LocalFileSource(files: File[] | FileList, opts?)` implementing `ReaderSource`
+- [x] `.cbz` / `.zip` → `fflate.unzipSync` with a filter; entry list built once (filter rejects all, collects names), then one entry inflated per `getPage`; `__MACOSX/` skipped, natural sort
+- [x] Loose image drop → filter to images, natural sort, served as the `File` blobs directly
+- [x] Dimensions left to the engine's decode-time discovery (`isNaturallyWide`, webtoon `measurePage`)
+- [x] Progress in-memory; demo wraps it in `CachedSource`
+- [x] Demo: full-window drop zone → `LocalFileSource` swap; book `<select>` shows "(dropped)"; browser-verified with a generated CBZ
+- [x] Vitest (3): CBZ natural order + per-entry inflate + range + abort; loose images + direction
 
-**Done when:** drop a `.cbz` onto the demo and read it.
+**Done when:** drop a `.cbz` onto the demo and read it. ✅ done 2026-08-29
 
 ---
 

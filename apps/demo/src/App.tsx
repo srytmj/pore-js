@@ -1,4 +1,4 @@
-import { CachedSource, DemoSource } from '@pore/reader-core';
+import { CachedSource, DemoSource, LocalFileSource, type ReaderSource } from '@pore/reader-core';
 import { Reader, ReaderProvider } from '@pore/reader-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Chrome } from './Chrome.js';
@@ -16,8 +16,15 @@ const BOOKS = [
   },
 ];
 
+interface Dropped {
+  source: ReaderSource;
+  bookId: string;
+}
+
 export function App() {
-  const source = useMemo(() => new CachedSource(new DemoSource()), []);
+  const demoSource = useMemo(() => new CachedSource(new DemoSource()), []);
+  const [dropped, setDropped] = useState<Dropped | null>(null);
+  const [dragging, setDragging] = useState(false);
   const [bookId, setBookId] = useState(() => {
     const fromUrl = new URLSearchParams(location.search).get('book');
     return BOOKS.some((b) => b.id === fromUrl) ? fromUrl! : BOOKS[0]!.id;
@@ -25,17 +32,51 @@ export function App() {
   const book = BOOKS.find((b) => b.id === bookId)!;
 
   useEffect(() => {
+    if (dropped) return;
     const url = new URL(location.href);
     url.searchParams.set('book', bookId);
     history.replaceState(null, '', url);
-  }, [bookId]);
+  }, [bookId, dropped]);
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const files = e.dataTransfer.files;
+    if (!files.length) return;
+    const local = new LocalFileSource(files);
+    setDropped({ source: new CachedSource(local), bookId: local.bookId });
+  };
+
+  const source = dropped?.source ?? demoSource;
+  const activeBook = dropped?.bookId ?? bookId;
 
   return (
     <ReaderProvider source={source}>
-      <main className="shell">
-        <Reader key={bookId} bookId={bookId} initialSettings={book.settings}>
-          <Chrome books={BOOKS} bookId={bookId} onBook={setBookId} />
+      <main
+        className="shell"
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+      >
+        <Reader
+          key={activeBook}
+          bookId={activeBook}
+          {...(dropped ? {} : { initialSettings: book.settings })}
+        >
+          <Chrome
+            books={BOOKS}
+            bookId={bookId}
+            onBook={(id) => {
+              setDropped(null);
+              setBookId(id);
+            }}
+            droppedName={dropped?.bookId ?? null}
+          />
         </Reader>
+        {dragging && <div className="dropzone">Drop a .cbz or images to read</div>}
       </main>
     </ReaderProvider>
   );

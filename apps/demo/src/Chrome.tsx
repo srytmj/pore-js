@@ -17,10 +17,12 @@ export function Chrome({
   books,
   bookId,
   onBook,
+  droppedName,
 }: {
   books: BookOpt[];
   bookId: string;
   onBook: (id: string) => void;
+  droppedName?: string | null;
 }) {
   const loc = useReaderLocation();
   const reader = useReader();
@@ -40,7 +42,12 @@ export function Chrome({
     <>
       <header className="bar">
         <strong>Pore.js</strong>
-        <select aria-label="Book" value={bookId} onChange={(e) => onBook(e.target.value)}>
+        <select
+          aria-label="Book"
+          value={droppedName ? '' : bookId}
+          onChange={(e) => onBook(e.target.value)}
+        >
+          {droppedName && <option value="">{droppedName} (dropped)</option>}
           {books.map((b) => (
             <option key={b.id} value={b.id}>
               {b.label}

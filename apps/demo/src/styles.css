@@ -94,6 +94,20 @@ body {
   padding: 0.1rem 0.4rem;
 }
 
+.dropzone {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-size: 1.25rem;
+  border: 4px dashed rgb(255 255 255 / 0.6);
+  z-index: 50;
+  pointer-events: none;
+}
+
 .pore-image {
   background: #111;
 }

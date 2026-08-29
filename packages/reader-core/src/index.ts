@@ -56,6 +56,8 @@ export { DemoSource } from './source/demo-source.js';
 export type { DemoSourceOptions } from './source/demo-source.js';
 export { CachedSource } from './source/cached-source.js';
 export type { CachedSourceOptions } from './source/cached-source.js';
+export { LocalFileSource } from './source/local-file-source.js';
+export type { LocalFileSourceOptions } from './source/local-file-source.js';
 export { openKvStore } from './offline/idb.js';
 export type { KvStore } from './offline/idb.js';
 export { parseImageManifestFile, naturalCompare } from './source/manifest-file.js';
