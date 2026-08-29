@@ -69,19 +69,24 @@ _(scrubber thumbnail strip → D5/UI)_
 
 ---
 
-## D3 — PDF engine = image engine shell + pdf.js renderer · M
+## D3 — PDF engine = image engine + pdf.js renderer · M ✅
 
-- [ ] `createPdfEngine(options)` reuses the image engine internals (paged /
-      continuous, zoom/pan, fit modes, gestures, preload ring) but swaps the
-      page loader for the pdf.js canvas renderer
-- [ ] Refactor: extract the image engine's view/nav/input core so both
-      `createImageEngine` and `createPdfEngine` compose it (no copy-paste)
-- [ ] `Locator` is `page`; outline → `reader:toc`; text layer rendered over the
-      canvas for selection + (later) search
-- [ ] `<Reader>` mounts it for `manifest.type === 'pdf'`
-- [ ] Vitest (jsdom + stub pdf.js): mount, turn, goto, toc
+- [x] `PdfImageSource` — adapts a PDF (via `inner.getFile`) into an
+      `ImageManifest` + `renderToBlob` page images; outline → `chapters[]`;
+      progress proxied. **The image engine reads it unchanged** — composition,
+      not a fork.
+- [x] `createPdfEngine(options)` = `createImageEngine` over a `PdfImageSource`,
+      wrapping `on` to add `reader:toc` from the outline; `destroy` disposes the
+      `PdfDoc`
+- [x] `<Reader>` mounts it for `manifest.type === 'pdf'`; demo wires the pdf.js
+      worker (`GlobalWorkerOptions.workerSrc`) and a `demo-pdf` fixture
+- [x] Vitest (4, jsdom, mocked `loadPdf`): manifest + chapters, page render,
+      progress proxy, engine mount + `reader:toc`
+- [x] Browser-verified: 9-page A4 PDF renders crisply, paged nav / fit / zoom
+      all work
 
-**Done when:** `<Reader bookId>` opens a PDF and navigates like manga.
+**Done when:** `<Reader bookId>` opens a PDF and navigates like manga. ✅ done 2026-08-29
+_(pdf.js text layer for selection/search → D5 / M3)_
 
 ---
 

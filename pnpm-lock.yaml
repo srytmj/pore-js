@@ -56,6 +56,9 @@ importers:
       '@pore/reader-react':
         specifier: workspace:*
         version: link:../../packages/reader-react
+      pdfjs-dist:
+        specifier: ^6.2.108
+        version: 6.2.108
       react:
         specifier: ^19.0.0
         version: 19.2.8

@@ -62,6 +62,10 @@ export type { LocalFileSourceOptions } from './source/local-file-source.js';
 
 export { loadPdf } from './pdf/parse.js';
 export type { PdfDoc } from './pdf/parse.js';
+export { PdfImageSource } from './pdf/pdf-source.js';
+export type { PdfSourceOptions } from './pdf/pdf-source.js';
+export { createPdfEngine } from './pdf/create-pdf-engine.js';
+export type { CreatePdfEngineOptions, PdfEngineEvents } from './pdf/create-pdf-engine.js';
 
 export { parseEpub } from './text/epub/parse.js';
 export type {

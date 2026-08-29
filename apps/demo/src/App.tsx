@@ -7,6 +7,7 @@ const BOOKS: { id: string; label: string; settings?: Record<string, unknown> }[]
   { id: 'demo-manga', label: 'Demo Manga', settings: { layout: 'paged-double', direction: 'rtl' } },
   { id: 'demo-webtoon', label: 'Demo Webtoon', settings: { layout: 'continuous-vertical' } },
   { id: 'demo-book', label: 'Demo Book (EPUB)' },
+  { id: 'demo-pdf', label: 'Demo PDF' },
 ];
 
 interface Dropped {

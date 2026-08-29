@@ -98,10 +98,10 @@ export class DemoSource implements ReaderSource {
     const raw = (await res.json()) as { type?: string; file?: string; title?: string };
 
     let loaded: Loaded;
-    if (raw.type === 'epub' && raw.file) {
+    if ((raw.type === 'epub' || raw.type === 'pdf') && raw.file) {
       loaded = {
         kind: 'text',
-        manifest: { bookId, type: 'epub', title: raw.title ?? bookId },
+        manifest: { bookId, type: raw.type, title: raw.title ?? bookId },
         fileUrl: `${dir}/${raw.file}`,
       };
     } else {

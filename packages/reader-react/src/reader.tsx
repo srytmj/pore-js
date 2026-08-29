@@ -11,6 +11,7 @@ import {
 } from 'react';
 import {
   createImageEngine,
+  createPdfEngine,
   createTextEngine,
   DEFAULT_IMAGE_SETTINGS,
   DEFAULT_KEYMAP,
@@ -137,7 +138,9 @@ export function Reader({
     void (async () => {
       const manifest = await source.getManifest(bookId);
       if (disposed) return;
-      const isText = manifest.type !== 'image';
+      const isText = manifest.type === 'epub';
+      const isPdf = manifest.type === 'pdf';
+      // pdf uses the image settings shape (it's the image engine underneath)
       const rk: ReaderKind = isText ? 'text' : 'image';
       setKind(rk);
       const seeded = { ...persistence.initial(bookId, rk), ...initialSettings };
@@ -152,6 +155,13 @@ export function Reader({
             source,
             bookId,
             settings: seeded as Partial<TextEngineSettings>,
+          })
+        : isPdf
+        ? createPdfEngine({
+            container: host,
+            source,
+            bookId,
+            settings: seeded as Partial<ImageEngineSettings>,
           })
         : createImageEngine({
             container: host,
