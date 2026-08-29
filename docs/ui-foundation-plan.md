@@ -7,8 +7,11 @@ slide). GSAP is fully free as of 2025, plugins included.
 **Goal:** a polished, portfolio-grade reading shell without compromising the
 framework-agnostic core.
 
-Builds on the current tree (`v0.3.0-m1` + text UX fixes). Target tag:
-`v0.4.0-ui`. Sequential, one commit per task.
+**Not started yet** — per the plan, all engine fundamentals ship first
+([`m2-plan.md`](m2-plan.md), [`m3-plan.md`](m3-plan.md)); UI/animation begins
+only once those are mature. Target tag: `v0.6.0-ui`.
+
+Sequential, one commit per task.
 
 ---
 
