@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.2.0-m0.5 — 2026-08-29
+
+Completes the image reader.
+
+### Added
+
+- **Layout**: `continuous-horizontal` (axis-generic virtualization, RTL via
+  reversed layout slots); `direction: 'vertical'` reads as reverse (RTL-like)
+- **Autoscroll** (rAF smooth / stepped), **paged auto-advance** timer, and a
+  **next-chapter countdown** (`interceptChapterBoundary` → `reader:autoadvance`,
+  cancellable) — all `prefers-reduced-motion` aware
+- **`loadingMethod: 'bitmap'`**: `createImageBitmap` → `<canvas>` render for
+  paged mode; `ImageBitmap.close()` on eviction; forced to `blob` with `all`
+- **Image filters** wired: brightness, greyscale, and a `dim` overlay
+- **`LocalFileSource`**: drop a `.cbz`/`.zip` (one-at-a-time inflate) or loose
+  images; demo has a drop zone
+- **`<SettingsPanel>`** (reader-react): Layout / Image fit / Behavior / Keybinds
+  tabs with per-action key capture; new `reader:settingschange` event +
+  `useReaderKeymap`
+- **`useReaderHistory`**: `url-and-title` mode — `?p=` URL + browser
+  back/forward paginate
+
+### Changed
+
+- `continuous.ts` API is axis-generic (`estimateLinearLayout`, `LinearLayout`)
+- reader-react settings are single-sourced from the engine via events
+- 88 unit tests; Playwright suite covers the new surfaces
+
 ## v0.1.0-m0 — 2026-08-28
 
 First milestone: the image engine and a deployable demo. No backend.

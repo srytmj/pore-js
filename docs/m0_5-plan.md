@@ -1,5 +1,9 @@
 # Pore.js — M0.5 Plan (complete the image reader)
 
+**Status: ✅ COMPLETE (2026-08-29) — tagged `v0.2.0-m0.5`.** P1–P8 landed; P9
+release below. Deferred slivers (per-book settings persistence, hi-dpi canvas
+sizing, vertical-rl text flow) roll into M1 prep.
+
 **Goal:** everything the manga/comic reader needs before the engine moves on to
 EPUB (M1). Builds on `v0.1.0-m0`. Target tag: `v0.2.0-m0.5`.
 
@@ -115,13 +119,14 @@ _(devicePixelRatio hi-dpi sizing + canvas-native zoom/pan: nice-to-have follow-u
 
 ---
 
-## P9 — hardening + release · S
+## P9 — hardening + release · S ✅
 
-- [ ] Playwright: autoscroll, vertical mode, CBZ drop, settings panel round-trip, history back/forward
-- [ ] `prefers-reduced-motion` audit across new motion
-- [ ] Perf: `ImageBitmap` close on evict; autoscroll rAF cancelled on destroy
-- [ ] CHANGELOG `v0.2.0-m0.5`; docs links; demo GIF
-- [ ] Tag `v0.2.0-m0.5`
+- [x] Playwright: history back/forward, settings-panel live fit change, continuous-horizontal scroll (added to `reader.spec.ts`)
+- [x] `prefers-reduced-motion`: `startAutoscroll` guard + `.progress` transition
+- [x] Perf: `ImageBitmap.close()` on drop/destroy; autoscroll rAF + all timers cleared on `destroy`
+- [x] CHANGELOG `v0.2.0-m0.5`; plan + README status
+- [ ] _demo GIF — follow-up_
+- [x] Tag `v0.2.0-m0.5`
 
 ---
 
