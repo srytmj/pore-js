@@ -17,11 +17,12 @@ import {
   type Spread,
 } from './spreads.js';
 import {
-  estimateVerticalLayout,
+  estimateLinearLayout,
   pageAtOffset,
   scrollForPage,
   visibleRange,
-  type VerticalLayout,
+  type ContinuousAxis,
+  type LinearLayout,
 } from './continuous.js';
 import { clampZoom, resolveTap, swipeTurn, zoneForPoint } from './input.js';
 import { PageLoader } from './page-loader.js';
@@ -61,7 +62,9 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   let spreads: Spread[] = [];
   let currentSpread = 0;
   // continuous state
-  let vlayout: VerticalLayout = { heights: [], offsets: [], total: 0 };
+  let clayout: LinearLayout = { sizes: [], offsets: [], total: 0 };
+  /** layout slot -> real page index (identity unless RTL horizontal, which reverses) */
+  let slotToPage: number[] = [];
   const measured = new Map<number, number>();
   const mountedImgs = new Map<number, HTMLImageElement>();
   // input state
@@ -73,7 +76,21 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   let wakeLock: WakeLockSentinel | null = null;
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const isContinuous = () => settings.layout === 'continuous-vertical';
+  const isContinuous = () =>
+    settings.layout === 'continuous-vertical' || settings.layout === 'continuous-horizontal';
+  const axis = (): ContinuousAxis => (settings.layout === 'continuous-horizontal' ? 'x' : 'y');
+  /** RTL horizontal reads right→left; we reverse the layout so scroll stays positive. */
+  const rtlHorizontal = () => axis() === 'x' && settings.direction === 'rtl';
+  const scrollMain = (): number => (axis() === 'x' ? root.scrollLeft : root.scrollTop);
+  const setScrollMain = (v: number) => {
+    if (axis() === 'x') root.scrollLeft = v;
+    else root.scrollTop = v;
+  };
+  const viewportMain = (): number => (axis() === 'x' ? root.clientWidth : root.clientHeight) || 1;
+  const slotForPage = (page: number): number => {
+    const s = slotToPage.indexOf(page);
+    return s === -1 ? 0 : s;
+  };
 
   const root = doc.createElement('div');
   root.className = 'pore-image';
@@ -90,8 +107,11 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     return ch ? { id: ch.id, label: ch.label } : { label: manifest?.title ?? '' };
   };
 
-  const currentPage = (): number =>
-    isContinuous() ? pageAtOffset(vlayout, root.scrollTop) : (spreads[currentSpread]?.leading ?? 0);
+  const currentPage = (): number => {
+    if (!isContinuous()) return spreads[currentSpread]?.leading ?? 0;
+    const slot = pageAtOffset(clayout, scrollMain());
+    return slotToPage[slot] ?? 0;
+  };
 
   const positionFor = (): Position => {
     const total = manifest?.pageCount ?? 0;
@@ -99,7 +119,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       const page = currentPage();
       return {
         type: 'scroll',
-        value: vlayout.total > 0 ? root.scrollTop / vlayout.total : 0,
+        value: clayout.total > 0 ? scrollMain() / clayout.total : 0,
         total,
         page,
       };
@@ -136,8 +156,8 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
 
   const applyContainerStyle = () => {
     root.style.setProperty('--pore-page-gap', `${settings.pageGap}px`);
-    root.style.overflowY = isContinuous() ? 'auto' : 'hidden';
-    root.style.overflowX = 'hidden';
+    root.style.overflowY = isContinuous() && axis() === 'y' ? 'auto' : 'hidden';
+    root.style.overflowX = isContinuous() && axis() === 'x' ? 'auto' : 'hidden';
     root.style.background =
       settings.background === 'white' ? '#fff' : settings.background === 'black' ? '#000' : '';
     const filters: string[] = [];
@@ -181,8 +201,11 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       if (i >= 0 && i < (manifest?.pageCount ?? 0)) keep.add(i);
     }
     if (isContinuous()) {
-      const { first, last } = visibleRange(vlayout, root.scrollTop, root.clientHeight, OVERSCAN_PX);
-      for (let i = first; i <= last; i++) keep.add(i);
+      const { first, last } = visibleRange(clayout, scrollMain(), viewportMain(), OVERSCAN_PX);
+      for (let s = first; s <= last; s++) {
+        const p = slotToPage[s];
+        if (p !== undefined) keep.add(p);
+      }
     }
     loader.retain(keep);
     prefetch?.update(page);
@@ -217,54 +240,79 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     render();
   };
 
-  // ---- continuous rendering ---------------------------------------------------
+  // ---- continuous rendering (axis-generic) -----------------------------------
 
-  const recomputeVLayout = () => {
+  const recomputeLayout = () => {
     if (!manifest) return;
-    const width = root.clientWidth || 800;
-    const fallback = root.clientHeight || 1000;
-    vlayout = estimateVerticalLayout(manifest.pages, width, fallback, settings.pageGap, measured);
-    viewport.style.height = `${vlayout.total}px`;
+    const n = manifest.pages.length;
+    slotToPage = rtlHorizontal()
+      ? Array.from({ length: n }, (_, s) => n - 1 - s)
+      : Array.from({ length: n }, (_, s) => s);
+    const slotPages = slotToPage.map((p) => manifest!.pages[p]!);
+    const slotMeasured = new Map<number, number>();
+    slotToPage.forEach((p, s) => {
+      const m = measured.get(p);
+      if (m !== undefined) slotMeasured.set(s, m);
+    });
+    const cross = axis() === 'x' ? root.clientHeight || 1000 : root.clientWidth || 800;
+    clayout = estimateLinearLayout(slotPages, {
+      axis: axis(),
+      crossSize: cross,
+      fallbackMain: viewportMain(),
+      gap: settings.pageGap,
+      measured: slotMeasured,
+    });
   };
 
   const renderContinuous = () => {
     if (!manifest) return;
-    viewport.style.cssText = `position:relative;width:100%;height:${vlayout.total}px;`;
-    const { first, last } = visibleRange(vlayout, root.scrollTop, root.clientHeight, OVERSCAN_PX);
+    const horiz = axis() === 'x';
+    viewport.style.cssText = horiz
+      ? `position:relative;height:100%;width:${clayout.total}px;`
+      : `position:relative;width:100%;height:${clayout.total}px;`;
+    const { first, last } = visibleRange(clayout, scrollMain(), viewportMain(), OVERSCAN_PX);
+    const wanted = new Set<number>();
+    for (let s = first; s <= last; s++) wanted.add(slotToPage[s]!);
 
-    for (const [i, img] of mountedImgs) {
-      if (i < first || i > last) {
+    for (const [p, img] of mountedImgs) {
+      if (!wanted.has(p)) {
         img.remove();
-        mountedImgs.delete(i);
+        mountedImgs.delete(p);
       }
     }
-    for (let i = first; i <= last; i++) {
-      let img = mountedImgs.get(i);
+    for (let s = first; s <= last; s++) {
+      const p = slotToPage[s]!;
+      let img = mountedImgs.get(p);
       if (!img) {
         img = doc.createElement('img');
         img.decoding = 'async';
-        img.alt = `page ${i + 1}`;
-        img.style.cssText = 'position:absolute;left:0;width:100%;height:auto;';
-        img.addEventListener('load', () => measurePage(i, img!), { once: true });
+        img.alt = `page ${p + 1}`;
+        img.style.cssText = horiz
+          ? 'position:absolute;top:0;height:100%;width:auto;'
+          : 'position:absolute;left:0;width:100%;height:auto;';
+        const el = img;
+        img.addEventListener('load', () => measurePage(p, s, el), { once: true });
         viewport.appendChild(img);
-        mountedImgs.set(i, img);
-        loadInto(img, i);
+        mountedImgs.set(p, img);
+        loadInto(img, p);
       }
-      img.style.top = `${vlayout.offsets[i]}px`;
+      img.style[horiz ? 'left' : 'top'] = `${clayout.offsets[s]}px`;
     }
   };
 
-  const measurePage = (i: number, img: HTMLImageElement) => {
+  const measurePage = (page: number, slot: number, img: HTMLImageElement) => {
     if (destroyed || !img.naturalWidth) return;
-    const width = root.clientWidth || 800;
-    const h = (img.naturalHeight / img.naturalWidth) * width;
-    if (Math.abs((measured.get(i) ?? 0) - h) < 1) return;
-    const before = vlayout.offsets[i] ?? 0;
-    measured.set(i, h);
-    recomputeVLayout();
-    // compensate scroll if the change was above the fold
-    if ((vlayout.offsets[i] ?? 0) !== before && before < root.scrollTop) {
-      root.scrollTop += (vlayout.offsets[i] ?? 0) - before;
+    const horiz = axis() === 'x';
+    const cross = horiz ? root.clientHeight || 1000 : root.clientWidth || 800;
+    const size = horiz
+      ? (img.naturalWidth / img.naturalHeight) * cross
+      : (img.naturalHeight / img.naturalWidth) * cross;
+    if (Math.abs((measured.get(page) ?? 0) - size) < 1) return;
+    const before = clayout.offsets[slot] ?? 0;
+    measured.set(page, size);
+    recomputeLayout();
+    if ((clayout.offsets[slot] ?? 0) !== before && before < scrollMain()) {
+      setScrollMain(scrollMain() + ((clayout.offsets[slot] ?? 0) - before));
     }
     renderContinuous();
   };
@@ -275,7 +323,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     if (!manifest || destroyed) return;
     applyContainerStyle();
     if (isContinuous()) {
-      recomputeVLayout();
+      recomputeLayout();
       renderContinuous();
     } else {
       renderPaged();
@@ -326,7 +374,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       case 'scroll-down':
         if (isContinuous()) {
           ev.preventDefault();
-          root.scrollTop += (action === 'scroll-down' ? 1 : -1) * root.clientHeight * 0.9;
+          setScrollMain(scrollMain() + (action === 'scroll-down' ? 1 : -1) * viewportMain() * 0.9);
         }
         break;
       case 'first-page':
@@ -473,13 +521,13 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   function turn(dir: TurnDirection): void {
     if (!manifest) return;
     if (isContinuous()) {
-      const atTop = root.scrollTop <= 0;
-      const atBottom = root.scrollTop + root.clientHeight >= vlayout.total - 1;
-      if (dir === 'back' && atTop) return emitter.emit('reader:start', {});
-      if (dir === 'forward' && atBottom) {
+      const atStart = scrollMain() <= 0;
+      const atEnd = scrollMain() + viewportMain() >= clayout.total - 1;
+      if (dir === 'back' && atStart) return emitter.emit('reader:start', {});
+      if (dir === 'forward' && atEnd) {
         return emitter.emit('reader:end', { auto: settings.nextChapterAfterLastPage });
       }
-      root.scrollTop += (dir === 'forward' ? 1 : -1) * root.clientHeight * 0.9;
+      setScrollMain(scrollMain() + (dir === 'forward' ? 1 : -1) * viewportMain() * 0.9);
       return;
     }
     const target = currentSpread + (dir === 'forward' ? 1 : -1);
@@ -494,7 +542,8 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     if (!manifest) return;
     const p = Math.round(pageIndex);
     if (isContinuous()) {
-      root.scrollTop = scrollForPage(vlayout, p);
+      recomputeLayout();
+      setScrollMain(scrollForPage(clayout, slotForPage(p)));
       onScroll();
     } else {
       goToSpread(spreadIndexForPage(spreads, p));

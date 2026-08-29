@@ -9,15 +9,16 @@ Sequential, one commit per task. All type/event/setting slots already exist from
 
 ---
 
-## P1 — continuous-horizontal · M
+## P1 — continuous-horizontal · M ✅
 
-- [ ] Engine horizontal virtualization (reuse `continuous.ts` math on the X axis; `estimateHorizontalLayout` or generalise to an axis param)
-- [ ] `overflow-x:auto`; RTL flips scroll origin (start at `scrollWidth`)
-- [ ] `Position` `scroll` fraction over `scrollLeft/scrollWidth` + page anchor
-- [ ] Keyboard `page-right`/`page-left` scroll a screen; wheel → horizontal
-- [ ] Vitest: axis-generalised layout math; RTL origin
+- [x] `continuous.ts` generalised to an axis param (`estimateLinearLayout`, `LinearLayout {sizes,offsets,total}`); vertical wrapper kept
+- [x] Engine: `axis()`, `scrollMain`/`setScrollMain`/`viewportMain`, `overflow-x:auto` for `x`
+- [x] RTL horizontal: layout slots reversed (`slotToPage`) so `scrollLeft` stays positive; `pageAtOffset`/`scrollForPage` go through the slot map
+- [x] `Position` `scroll` fraction over the main axis + page anchor
+- [x] Keyboard `scroll-*` + wheel + turn use the main axis
+- [x] Vitest: x-axis layout math; browser-verified RTL comic reads right→left, virtualised, `loc` tracks
 
-**Done when:** a comic reads left↔right continuously, RTL included.
+**Done when:** a comic reads left↔right continuously, RTL included. ✅ done 2026-08-29
 
 ---
 

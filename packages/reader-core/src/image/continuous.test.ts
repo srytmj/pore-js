@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { estimateVerticalLayout, pageAtOffset, scrollForPage, visibleRange } from './continuous.js';
+import {
+  estimateLinearLayout,
+  estimateVerticalLayout,
+  pageAtOffset,
+  scrollForPage,
+  visibleRange,
+} from './continuous.js';
 import type { ImagePage } from '../source/types.js';
 
 const dimPages = (n: number, w = 800, h = 1200): ImagePage[] =>
@@ -8,19 +14,19 @@ const dimPages = (n: number, w = 800, h = 1200): ImagePage[] =>
 describe('estimateVerticalLayout', () => {
   it('scales known dimensions to content width and stacks with gaps', () => {
     const layout = estimateVerticalLayout(dimPages(3, 800, 1200), 400, 999, 10);
-    expect(layout.heights).toEqual([600, 600, 600]); // 1200/800 * 400
+    expect(layout.sizes).toEqual([600, 600, 600]); // 1200/800 * 400
     expect(layout.offsets).toEqual([0, 610, 1220]);
     expect(layout.total).toBe(1820); // 3*600 + 2*10
   });
 
   it('uses the fallback height for pages without dimensions', () => {
     const layout = estimateVerticalLayout([{ index: 0 }, { index: 1 }], 400, 500, 0);
-    expect(layout.heights).toEqual([500, 500]);
+    expect(layout.sizes).toEqual([500, 500]);
   });
 
   it('prefers measured heights when supplied', () => {
     const layout = estimateVerticalLayout(dimPages(3), 800, 999, 0, new Map([[1, 742]]));
-    expect(layout.heights[1]).toBe(742);
+    expect(layout.sizes[1]).toBe(742);
     expect(layout.offsets[2]).toBe(1200 + 742);
   });
 });
@@ -42,6 +48,22 @@ describe('visibleRange', () => {
   it('clamps at the end', () => {
     const r = visibleRange(layout, 100000, 1000, 0);
     expect(r.last).toBe(9);
+  });
+});
+
+describe('estimateLinearLayout — horizontal axis', () => {
+  it('scales known dimensions to content height on the x axis', () => {
+    const layout = estimateLinearLayout(
+      [
+        { index: 0, width: 800, height: 400 },
+        { index: 1, width: 1200, height: 400 },
+      ],
+      { axis: 'x', crossSize: 200, fallbackMain: 999, gap: 0 },
+    );
+    // width/height * crossSize
+    expect(layout.sizes).toEqual([400, 600]);
+    expect(layout.offsets).toEqual([0, 400]);
+    expect(layout.total).toBe(1000);
   });
 });
 

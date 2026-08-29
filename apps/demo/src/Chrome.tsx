@@ -52,6 +52,7 @@ export function Chrome({
           <option value="paged-single">Single</option>
           <option value="paged-double">Double</option>
           <option value="continuous-vertical">Long strip</option>
+          <option value="continuous-horizontal">Wide strip</option>
         </select>
 
         <select

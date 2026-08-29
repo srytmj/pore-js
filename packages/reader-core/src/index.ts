@@ -36,12 +36,13 @@ export { zoneForPoint, resolveTap, swipeTurn, clampZoom } from './image/input.js
 export type { TapZone, TapResult, TapToTurn } from './image/input.js';
 export type { Spread } from './image/spreads.js';
 export {
+  estimateLinearLayout,
   estimateVerticalLayout,
   visibleRange,
   pageAtOffset,
   scrollForPage,
 } from './image/continuous.js';
-export type { VerticalLayout } from './image/continuous.js';
+export type { LinearLayout, ContinuousAxis } from './image/continuous.js';
 export { PageLoader } from './image/page-loader.js';
 export { PrefetchScheduler } from './image/prefetch.js';
 export type { PreloadSettings } from './image/prefetch.js';
