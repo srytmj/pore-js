@@ -20,6 +20,9 @@ export interface ImageEngineEvents {
   'reader:chrometoggle': { visible: boolean };
   'reader:end': { auto: 'off' | 'instant' | number };
   'reader:start': Record<string, never>;
+  'reader:autoscroll': { running: boolean };
+  /** Fired at book/chapter end when auto-advance is armed; `inMs` counts down, -1 = cancelled. */
+  'reader:autoadvance': { toChapter: string | null; inMs: number };
   'reader:zoomchange': { scale: number };
   'reader:error': { index?: number; error: unknown };
 }

@@ -83,6 +83,14 @@ export function Chrome({
           Offset
         </button>
 
+        <button
+          className={settings.autoscroll ? 'active' : ''}
+          onClick={() => setSettings({ autoscroll: !settings.autoscroll })}
+          title="Autoscroll"
+        >
+          {settings.autoscroll ? '⏸' : '▶'}
+        </button>
+
         <button aria-label="Previous page" onClick={() => reader.turn('back')}>
           ‹
         </button>

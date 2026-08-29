@@ -80,6 +80,17 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   let pointer: { x: number; y: number; t: number; id: number } | null = null;
   let wakeLock: WakeLockSentinel | null = null;
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
+  // auto-advance state
+  let autoOn = false;
+  let autoRaf = 0;
+  let autoLastT = 0;
+  let autoStepTimer: ReturnType<typeof setInterval> | null = null;
+  let autoPagedTimer: ReturnType<typeof setInterval> | null = null;
+  let autoResumeTimer: ReturnType<typeof setTimeout> | null = null;
+  let advanceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const prefersReducedMotion = () =>
+    typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const isContinuous = () =>
     settings.layout === 'continuous-vertical' || settings.layout === 'continuous-horizontal';
@@ -407,8 +418,15 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
         ev.preventDefault();
         toggleChrome();
         break;
+      case 'toggle-autoscroll':
+        ev.preventDefault();
+        setSettings({ autoscroll: !settings.autoscroll });
+        break;
       default:
         break;
+    }
+    if (action === 'page-right' || action === 'page-left' || action === 'first-page') {
+      cancelAutoAdvance();
     }
   };
 
@@ -434,6 +452,104 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     emitter.emit('reader:zoomchange', { scale: zoom });
   };
 
+  // ---- auto-advance -------------------------------------------------------------
+
+  const autoStep = (t: number) => {
+    if (!autoOn || destroyed) return;
+    const dt = autoLastT ? (t - autoLastT) / 1000 : 0;
+    autoLastT = t;
+    const before = scrollMain();
+    setScrollMain(before + settings.autoscrollSpeed * dt);
+    if (scrollMain() === before) {
+      // hit the end
+      stopAutoscroll();
+      turn('forward');
+      return;
+    }
+    onScroll();
+    autoRaf = requestAnimationFrame(autoStep);
+  };
+
+  const startAutoscroll = () => {
+    if (autoOn || !isContinuous() || prefersReducedMotion()) return;
+    autoOn = true;
+    autoLastT = 0;
+    emitter.emit('reader:autoscroll', { running: true });
+    if (settings.autoscrollSmooth) {
+      autoRaf = requestAnimationFrame(autoStep);
+    } else {
+      const stepMs = (viewportMain() / Math.max(settings.autoscrollSpeed, 1)) * 1000;
+      autoStepTimer = setInterval(() => turn('forward'), stepMs);
+    }
+  };
+
+  const stopAutoscroll = (silent = false) => {
+    if (!autoOn) return;
+    autoOn = false;
+    if (autoRaf) cancelAnimationFrame(autoRaf);
+    autoRaf = 0;
+    if (autoStepTimer) clearInterval(autoStepTimer);
+    autoStepTimer = null;
+    if (!silent) emitter.emit('reader:autoscroll', { running: false });
+  };
+
+  const pauseAutoscroll = () => {
+    if (!autoOn) return;
+    stopAutoscroll(true);
+    if (autoResumeTimer) clearTimeout(autoResumeTimer);
+    autoResumeTimer = setTimeout(() => {
+      if (!destroyed && settings.autoscroll) startAutoscroll();
+    }, 2000);
+  };
+
+  const startPagedAutoAdvance = () => {
+    if (autoPagedTimer || settings.pagedAutoAdvanceSeconds <= 0 || isContinuous()) return;
+    autoPagedTimer = setInterval(() => turn('forward'), settings.pagedAutoAdvanceSeconds * 1000);
+  };
+
+  const chapterIndexOf = (page: number): number => {
+    const chs = manifest?.chapters;
+    if (!chs?.length) return 0;
+    let idx = 0;
+    for (let i = 0; i < chs.length; i++) if (chs[i]!.startIndex <= page) idx = i;
+    return idx;
+  };
+
+  const cancelAutoAdvance = () => {
+    if (advanceTimer) {
+      clearTimeout(advanceTimer);
+      advanceTimer = null;
+      emitter.emit('reader:autoadvance', { toChapter: null, inMs: -1 });
+    }
+  };
+
+  /** Arm a countdown to `targetChapter`; `instant`/0 s advances synchronously-ish. */
+  const armChapterAdvance = (target: { id: string; startIndex: number }) => {
+    if (settings.nextChapterAfterLastPage === 'off') {
+      goto(target.startIndex);
+      return;
+    }
+    const secs =
+      settings.nextChapterAfterLastPage === 'instant' ? 0 : settings.nextChapterAfterLastPage;
+    emitter.emit('reader:autoadvance', { toChapter: target.id, inMs: secs * 1000 });
+    advanceTimer = setTimeout(() => {
+      advanceTimer = null;
+      goto(target.startIndex);
+    }, secs * 1000);
+  };
+
+  /** If turning forward would enter a later chapter, intercept for the countdown. */
+  const interceptChapterBoundary = (nextPage: number): boolean => {
+    if (!manifest?.chapters?.length) return false;
+    const ci = chapterIndexOf(currentPage());
+    const ni = chapterIndexOf(nextPage);
+    if (ni <= ci) return false;
+    const target = manifest.chapters[ni]!;
+    emitter.emit('reader:end', { auto: settings.nextChapterAfterLastPage });
+    armChapterAdvance(target);
+    return true;
+  };
+
   const toggleChrome = () => {
     chromeVisible = !chromeVisible;
     emitter.emit('reader:chrometoggle', { visible: chromeVisible });
@@ -441,6 +557,8 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
 
   const onPointerDown = (ev: PointerEvent) => {
     pointer = { x: ev.clientX, y: ev.clientY, t: Date.now(), id: ev.pointerId };
+    cancelAutoAdvance();
+    pauseAutoscroll();
   };
 
   const onPointerMove = (ev: PointerEvent) => {
@@ -517,8 +635,10 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   }
 
   const onVisibility = () => {
-    if (doc.visibilityState === 'hidden') flushSave();
-    else if (!wakeLock) void acquireWakeLock();
+    if (doc.visibilityState === 'hidden') {
+      flushSave();
+      pauseAutoscroll();
+    } else if (!wakeLock) void acquireWakeLock();
   };
 
   // ---- public API ---------------------------------------------------------------
@@ -530,7 +650,10 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       const atEnd = scrollMain() + viewportMain() >= clayout.total - 1;
       if (dir === 'back' && atStart) return emitter.emit('reader:start', {});
       if (dir === 'forward' && atEnd) {
-        return emitter.emit('reader:end', { auto: settings.nextChapterAfterLastPage });
+        emitter.emit('reader:end', { auto: settings.nextChapterAfterLastPage });
+        const nextCh = manifest.chapters?.[chapterIndexOf(currentPage()) + 1];
+        if (nextCh) armChapterAdvance(nextCh);
+        return;
       }
       setScrollMain(scrollMain() + (dir === 'forward' ? 1 : -1) * viewportMain() * 0.9);
       return;
@@ -538,8 +661,10 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     const target = currentSpread + (dir === 'forward' ? 1 : -1);
     if (target < 0) return emitter.emit('reader:start', {});
     if (target >= spreads.length) {
-      return emitter.emit('reader:end', { auto: settings.nextChapterAfterLastPage });
+      emitter.emit('reader:end', { auto: settings.nextChapterAfterLastPage });
+      return;
     }
+    if (dir === 'forward' && interceptChapterBoundary(spreads[target]!.leading)) return;
     goToSpread(target);
   }
 
@@ -575,6 +700,16 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     prefetch?.setSettings(settings);
     render();
     if (structural && isContinuous()) goto(page);
+
+    if (settings.autoscroll !== prev.autoscroll) {
+      if (settings.autoscroll) startAutoscroll();
+      else stopAutoscroll();
+    }
+    if (settings.pagedAutoAdvanceSeconds !== prev.pagedAutoAdvanceSeconds || structural) {
+      if (autoPagedTimer) clearInterval(autoPagedTimer);
+      autoPagedTimer = null;
+      startPagedAutoAdvance();
+    }
   }
 
   function setKeymap(patch: Partial<Keymap>): void {
@@ -640,6 +775,8 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     emitter.emit('reader:ready', { manifest: m });
     render();
     if (isContinuous() && restoredPage > 0) goto(restoredPage);
+    if (settings.autoscroll) startAutoscroll();
+    startPagedAutoAdvance();
   }
 
   function on<E extends keyof ImageEngineEvents>(
@@ -652,6 +789,10 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   function destroy(): void {
     flushSave();
     destroyed = true;
+    stopAutoscroll(true);
+    if (autoPagedTimer) clearInterval(autoPagedTimer);
+    if (autoResumeTimer) clearTimeout(autoResumeTimer);
+    if (advanceTimer) clearTimeout(advanceTimer);
     root.removeEventListener('keydown', onKeyDown);
     root.removeEventListener('scroll', onScroll);
     root.removeEventListener('pointerdown', onPointerDown);

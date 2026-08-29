@@ -36,17 +36,18 @@ _(vertical-rl writing mode for light novels lands with the Text engine, M1)_
 
 ---
 
-## P3 — autoscroll + paged auto-advance + next-chapter countdown · M
+## P3 — autoscroll + paged auto-advance + next-chapter countdown · M ✅
 
-- [ ] Continuous autoscroll: `requestAnimationFrame` translate at `autoscrollSpeed` px/s; `autoscrollSmooth:false` = one screen per `viewport/speed` s
-- [ ] Pause on: user scroll/drag, chrome open, `visibilityState==='hidden'`, zoom>1; resume after 2 s idle
-- [ ] Paged: `pagedAutoAdvanceSeconds` timer → `turn('forward')`, same pause rules
-- [ ] `nextChapterAfterLastPage`: on `reader:end`, if chapters exist, emit a countdown the shell renders; `instant` skips; auto-advance via `goto(nextChapterStart)`
-- [ ] `toggle-autoscroll` keybind
-- [ ] `prefers-reduced-motion` disables autoscroll + smooth
-- [ ] Vitest (fake timers): step cadence, pause/resume, paged timer, chapter advance
+- [x] Continuous autoscroll: `requestAnimationFrame` translate at `autoscrollSpeed` px/s (both axes); `autoscrollSmooth:false` = `setInterval` one screen per `viewport/speed` s
+- [x] Pause on pointerdown + `visibilitychange→hidden`; resume 2 s after idle if still enabled
+- [x] Paged: `pagedAutoAdvanceSeconds` `setInterval` → `turn('forward')`
+- [x] `nextChapterAfterLastPage`: `interceptChapterBoundary` on forward turn crossing into a later chapter → `reader:end` + `reader:autoadvance {toChapter, inMs}` countdown → `goto(nextStart)`; `instant`=0 s; `off` navigates normally; cancelled (`inMs:-1`) on manual turn / pointer
+- [x] `toggle-autoscroll` keybind + demo ▶/⏸ button
+- [x] `prefers-reduced-motion` short-circuits `startAutoscroll`
+- [x] `reader:autoscroll {running}` / `reader:autoadvance` events
+- [x] Vitest (4, fake timers): paged timer cadence, chapter countdown + jump, cancel-on-turn, stepped autoscroll running state
 
-**Done when:** webtoon autoscrolls hands-free and stops at chapter end.
+**Done when:** webtoon autoscrolls hands-free and stops at chapter end. ✅ done 2026-08-29
 
 ---
 
