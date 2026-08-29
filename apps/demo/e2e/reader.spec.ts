@@ -112,6 +112,14 @@ test.describe('Pore.js demo — EPUB', () => {
     await expect(page.getByRole('dialog', { name: 'Footnote' })).toBeVisible();
   });
 
+  test('progress line shows the current chapter for a chaptered book', async ({ page }) => {
+    await page.goto('/?book=demo-manga');
+    await page.getByRole('button', { name: '›' }).click();
+    await page.getByRole('button', { name: '›' }).click();
+    await page.getByRole('button', { name: '›' }).click();
+    await expect(page.locator('.loc')).toContainText('Ch 2/3');
+  });
+
   test('theme + font size restyle without losing the chapter', async ({ page }) => {
     await page.goto('/?book=demo-book');
     await page.getByRole('button', { name: '⚙' }).click();
@@ -122,5 +130,29 @@ test.describe('Pore.js demo — EPUB', () => {
       .locator('#pore-base-style')
       .textContent();
     expect(bg).toContain('#1a1a1a');
+  });
+});
+
+test.describe('Pore.js demo — PDF', () => {
+  test('renders pages, turns, and switches back to another format', async ({ page }) => {
+    await page.goto('/?book=demo-pdf');
+    const loc = page.locator('.loc');
+    await expect(loc).toContainText('1/9');
+    await expect(page.locator('.pore-image img')).toHaveCount(1);
+
+    await page.getByRole('button', { name: '›' }).click();
+    await page.getByRole('button', { name: '›' }).click();
+    await expect(loc).toContainText('3/9');
+
+    // cross-format switch: back to the EPUB
+    await page.getByRole('combobox', { name: 'Book' }).selectOption('demo-book');
+    await expect(loc).toContainText('%');
+  });
+
+  test('pinch/zoom controls work like the image reader', async ({ page }) => {
+    await page.goto('/?book=demo-pdf');
+    await page.getByRole('button', { name: '⚙' }).click();
+    await page.getByRole('dialog').locator('select').first().selectOption('width');
+    await expect(page.locator('.pore-image img').first()).toHaveAttribute('style', /width:\s*100%/);
   });
 });

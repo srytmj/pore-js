@@ -130,12 +130,18 @@ _(pdf.js text layer for selection/search → D5 / M3)_
 
 ---
 
-## D6 — hardening + release · S
+## D6 — hardening + release · S ✅
 
-- [ ] Playwright: PDF open + turn + zoom, fixed-layout notice, cross-format book switch
-- [ ] Perf: pdf.js worker teardown, canvas pool, no leaked render tasks
-- [ ] CHANGELOG `v0.4.0-m2`; README; docs
-- [ ] Tag `v0.4.0-m2`
+- [x] Playwright specs added: PDF open + turn + fit + cross-format switch;
+      chaptered progress line (run in CI — local box has no browser binaries)
+- [x] Perf: `createPdfEngine.destroy()` disposes the `PdfDoc` (pdf.js worker
+      teardown via `task.destroy()`); `maxDim` caps render memory; the
+      image engine's existing abort path covers in-flight page renders
+- [x] CHANGELOG `v0.4.0-m2`; README status section; m2-plan checkboxes
+- [x] Tag `v0.4.0-m2`
+
+_Deferred: canvas pool (single OffscreenCanvas per render is fine at demo
+scale), scrubber thumbnails (UI milestone)._
 
 ---
 

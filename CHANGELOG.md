@@ -1,6 +1,36 @@
 # Changelog
 
-## Unreleased
+## v0.4.0-m2 — 2026-08-29
+
+PDF support and one unified position/chrome model across image, text and PDF.
+
+### Added — PDF
+
+- **`pdf/parse.ts`** — lazy `pdfjs-dist` (legacy build, Node + browser);
+  `loadPdf(bytes) → PdfDoc` with `pageCount`, `pageSize`, `outline`
+  (bookmarks → `#page=N`), `textContent`, `renderToBlob` (`OffscreenCanvas` →
+  webp, `maxDim` memory cap)
+- **`PdfImageSource`** — adapts a PDF into an `ImageManifest` + rendered page
+  blobs (outline → `chapters[]`, progress proxied); the image engine consumes
+  it unchanged
+- **`createPdfEngine`** — `createImageEngine` over a `PdfImageSource`, adding
+  `reader:toc` from the outline; `<Reader>` mounts it for `manifest.type: 'pdf'`
+
+### Added — unified shell
+
+- **`Locator`** `{ position, page, total, percent, label, chapter? }` — the one
+  shape every engine emits in `reader:locationchange`; `ReaderEngine<S,E>`
+  interface + `CommonEngineEvents`
+- **`reader:progress`** `{ locator, percent, chapterLabel, chapterIndex,
+  chapterCount, pagesLeftInChapter, minutesLeft }` from every engine;
+  `PaceEstimator` (EMA of seconds-per-page) drives `minutesLeft`
+- **`chapters(): Chapter[]`** on every engine — `{ id, label, startPage,
+  startPercent }`; `chapterProgress()` maps page → chapter
+- **`LocalFileSource`** opens a dropped `.epub` / `.pdf` (served whole through
+  `getFile`), and sniffs OPF `rendition:layout=pre-paginated` → `fixedLayout`
+- **`reader-react`** — `useReaderProgress()`, `handle.chapters()`
+- Per-book settings persistence (`createSettingsPersistence`, `<Reader
+  persistSettings>`); `publisherStyles: false` strips author CSS; `dimImages`
 
 ### Added — EPUB navigation UX
 
