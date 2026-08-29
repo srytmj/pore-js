@@ -33,14 +33,7 @@ export function App() {
   return (
     <ReaderProvider source={source}>
       <main className="shell">
-        <Reader
-          key={bookId}
-          bookId={bookId}
-          initialSettings={book.settings}
-          onPositionChange={(l) => {
-            document.title = `Pore.js — ${l.label}`;
-          }}
-        >
+        <Reader key={bookId} bookId={bookId} initialSettings={book.settings}>
           <Chrome books={BOOKS} bookId={bookId} onBook={setBookId} />
         </Reader>
       </main>

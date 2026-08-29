@@ -1,5 +1,6 @@
 import {
   useReader,
+  useReaderHistory,
   useReaderLocation,
   useReaderSettings,
   useResumedFromPage,
@@ -26,6 +27,7 @@ export function Chrome({
   const resumed = useResumedFromPage();
   const [dismissed, setDismissed] = useState(false);
 
+  useReaderHistory({ mode: 'url-and-title' });
   useEffect(() => setDismissed(false), [bookId]);
 
   const pos = loc?.position;

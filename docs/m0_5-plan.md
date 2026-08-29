@@ -102,13 +102,13 @@ _(vertical-rl writing mode for light novels lands with the Text engine, M1)_
 
 ---
 
-## P8 — `url-and-title` history mode · S
+## P8 — `url-and-title` history mode · S ✅
 
-- [ ] `reader-react`: `useReaderHistory({ mode })` helper — `none` / `title` / `url-and-title`
-- [ ] `url-and-title`: `history.replaceState` page into the URL (`?p=`); browser back/forward → `goto`
-- [ ] Demo uses it; `historyMode` setting drives it
+- [x] `reader-react`: `useReaderHistory({ mode, title, param })` — `none` / `title` / `url-and-title`
+- [x] `url-and-title`: first change `replaceState`, subsequent `pushState` `?p=`; `popstate` → `reader.goto`
+- [x] Demo `<Chrome>` uses it; browser-verified `?p=` + title update + back/forward paging
 
-**Done when:** back/forward navigates pages when the setting is on.
+**Done when:** back/forward navigates pages when the setting is on. ✅ done 2026-08-29
 
 ---
 

@@ -16,3 +16,6 @@ export {
   useResumedFromPage,
 } from './reader.js';
 export type { ReaderProps, ReaderHandle, ReaderLocation } from './reader.js';
+
+export { useReaderHistory } from './history.js';
+export type { HistoryMode, UseReaderHistoryOptions } from './history.js';
