@@ -24,6 +24,8 @@ export {
   useReaderKeymap,
   useTableOfContents,
   useFootnote,
+  useEndPage,
+  useChromeVisible,
   useResumedFromPage,
 } from './reader.js';
 export type {
@@ -33,6 +35,7 @@ export type {
   ReaderKind,
   AnySettings,
   Footnote,
+  EndPage,
 } from './reader.js';
 
 export { SettingsPanel } from './settings-panel.js';

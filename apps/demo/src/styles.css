@@ -48,6 +48,104 @@ body {
   background: color-mix(in srgb, currentColor 20%, transparent);
 }
 
+/* --- side menu positions --------------------------------------------------- */
+.bar--left,
+.bar--right {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: 25;
+  flex-direction: column;
+  align-items: stretch;
+  width: 12rem;
+  padding: 0.75rem 0.6rem;
+  overflow-y: auto;
+  background: Canvas;
+  border: 0;
+  border-right: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  transition: transform 0.2s;
+}
+.bar--right {
+  right: 0;
+  border-right: 0;
+  border-left: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+}
+.bar--left {
+  left: 0;
+}
+.bar--left .loc,
+.bar--right .loc {
+  margin-left: 0;
+}
+.bar--left button,
+.bar--left select,
+.bar--right button,
+.bar--right select {
+  width: 100%;
+}
+
+/* hidden by default when side-positioned; revealed on hover / toggle */
+.bar--left:not(.bar--shown) {
+  transform: translateX(-100%);
+}
+.bar--right:not(.bar--shown) {
+  transform: translateX(100%);
+}
+.bar--hover:hover {
+  transform: none !important;
+}
+/* a thin always-present hot-zone so hover works even when hidden */
+.bar--hover::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+}
+.bar--left.bar--hover::before {
+  left: 0;
+}
+.bar--right.bar--hover::before {
+  right: 0;
+}
+
+.endpage {
+  position: fixed;
+  inset: 0;
+  z-index: 22;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  background: color-mix(in srgb, Canvas 92%, transparent);
+  backdrop-filter: blur(2px);
+}
+.endpage__title {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+.endpage__menu {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 40rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+}
+.endpage__menu strong {
+  align-self: center;
+}
+.endpage button {
+  font: inherit;
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+}
+
 .bar .slider {
   display: inline-flex;
   align-items: center;

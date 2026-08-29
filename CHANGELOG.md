@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Added — EPUB navigation UX
+
+- **End page**: the last chapter ends on a centred "The End" card (an extra
+  page) so progress reaches a true **100%**; `TextEngineSettings.endBehavior`
+  (`continuous` | `endpage`) makes every chapter pause on an end-of-chapter card
+  with a Continue button. `reader:endpage` event + `useEndPage()`.
+- **Menu placement**: `TextEngineSettings.menuPosition` (`top` | `left` |
+  `right`) and `menuReveal` (`hover` | `click` | `dblclick`) for side menus;
+  engine emits `reader:chrometoggle`, `useChromeVisible()`; demo `Chrome`
+  positions/reveals the bar and shows a centred menu on the end page.
+- Settings panel gains a **Navigation** tab for the above.
+
 ### Fixed — EPUB reader (post-M1 feedback)
 
 - **Book-like layout**: the text engine now centres a capped reading measure

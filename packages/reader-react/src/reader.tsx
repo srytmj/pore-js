@@ -40,6 +40,12 @@ export interface Footnote {
   href: string;
 }
 
+export interface EndPage {
+  kind: 'chapter' | 'book';
+  label: string;
+  hasNext: boolean;
+}
+
 export interface ReaderHandle {
   turn(dir: TurnDirection): void;
   goto(target: number | Position): void;
@@ -67,6 +73,8 @@ interface ReaderCtx {
   toc: TocEntry[];
   footnote: Footnote | null;
   clearFootnote: () => void;
+  endPage: EndPage | null;
+  chromeVisible: boolean;
   resumedFromPage: number | null;
   handle: ReaderHandle;
 }
@@ -105,6 +113,8 @@ export function Reader({
   const [keymap, setKeymap] = useState<Keymap>(DEFAULT_KEYMAP);
   const [toc, setToc] = useState<TocEntry[]>([]);
   const [footnote, setFootnote] = useState<Footnote | null>(null);
+  const [endPage, setEndPage] = useState<EndPage | null>(null);
+  const [chromeVisible, setChromeVisible] = useState(true);
   const [resumedFromPage, setResumedFromPage] = useState<number | null>(null);
 
   useEffect(() => {
@@ -173,6 +183,13 @@ export function Reader({
         }),
         engine.on('reader:toc', (p: never) => setToc((p as { toc: TocEntry[] }).toc)),
         engine.on('reader:footnote', (p: never) => setFootnote(p as Footnote)),
+        engine.on('reader:endpage', (p: never) => {
+          const q = p as EndPage & { visible: boolean };
+          setEndPage(q.visible ? { kind: q.kind, label: q.label, hasNext: q.hasNext } : null);
+        }),
+        engine.on('reader:chrometoggle', (p: never) =>
+          setChromeVisible((p as { visible: boolean }).visible),
+        ),
       );
 
       await engine.mount();
@@ -209,10 +226,24 @@ export function Reader({
       toc,
       footnote,
       clearFootnote,
+      endPage,
+      chromeVisible,
       resumedFromPage,
       handle,
     }),
-    [kind, location, settings, keymap, toc, footnote, clearFootnote, resumedFromPage, handle],
+    [
+      kind,
+      location,
+      settings,
+      keymap,
+      toc,
+      footnote,
+      clearFootnote,
+      endPage,
+      chromeVisible,
+      resumedFromPage,
+      handle,
+    ],
   );
 
   return (
@@ -257,6 +288,14 @@ export function useTableOfContents(): TocEntry[] {
 export function useFootnote(): [Footnote | null, () => void] {
   const { footnote, clearFootnote } = useRuntime();
   return [footnote, clearFootnote];
+}
+
+export function useEndPage(): EndPage | null {
+  return useRuntime().endPage;
+}
+
+export function useChromeVisible(): boolean {
+  return useRuntime().chromeVisible;
 }
 
 export function useReader(): ReaderHandle {

@@ -2,7 +2,7 @@ import type { ReaderSource } from '../source/types.js';
 import type { Position } from '../position/types.js';
 import { createEmitter } from '../internal/emitter.js';
 import { parseEpub } from './epub/parse.js';
-import type { EpubBook } from './epub/types.js';
+import type { EpubBook, TocEntry } from './epub/types.js';
 import { dirOf, resolveHref, stripHash } from './epub/path.js';
 import { rewriteResources } from './rewrite.js';
 import { generateAnchor, pageForElement, resolveAnchor } from './anchor.js';
@@ -70,6 +70,11 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   frame.setAttribute('sandbox', 'allow-same-origin');
   frame.style.cssText = 'width:100%;height:100%;border:0;display:block;background:transparent;';
   root.appendChild(frame);
+  const endEl = doc.createElement('div');
+  endEl.className = 'pore-text__end';
+  endEl.style.cssText =
+    'position:absolute;inset:0;display:none;flex-direction:column;gap:1rem;align-items:center;justify-content:center;text-align:center;padding:2rem;z-index:2;';
+  root.appendChild(endEl);
 
   // ---- helpers -------------------------------------------------------------
 
@@ -83,12 +88,25 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       fontSizePct: settings.fontSizePct,
     });
 
-  const totalPages = (): number =>
-    spinePages.reduce<number>((sum, n, i) => sum + (n ?? estimateSpinePages(i)), 0);
+  const lastSpine = () => (book ? book.spine.length - 1 : 0);
+  const contentPages = (i: number): number => spinePages[i] ?? estimateSpinePages(i);
+  /** The last chapter always ends on a "The End" card; others only in `endpage` mode. */
+  const hasEndSlot = (i: number): boolean =>
+    settings.endBehavior === 'endpage' || i === lastSpine();
+  const effectivePages = (i: number): number => contentPages(i) + (hasEndSlot(i) ? 1 : 0);
+  /** Highest valid `page` for the current spine (the end-slot index, if any). */
+  const maxPage = (): number => spinePageCount - 1 + (hasEndSlot(spineIndex) ? 1 : 0);
+  const onEndSlot = (): boolean => hasEndSlot(spineIndex) && page >= spinePageCount;
+
+  const totalPages = (): number => {
+    let sum = 0;
+    for (let i = 0; i <= lastSpine(); i++) sum += effectivePages(i);
+    return sum;
+  };
 
   const bookPageBefore = (idx: number): number => {
     let sum = 0;
-    for (let i = 0; i < idx; i++) sum += spinePages[i] ?? estimateSpinePages(i);
+    for (let i = 0; i < idx; i++) sum += effectivePages(i);
     return sum;
   };
 
@@ -120,12 +138,14 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     if (!book) return;
     const total = totalPages();
     const bookPage = bookPageBefore(spineIndex) + page;
+    const atBookEnd = onEndSlot() && spineIndex === lastSpine();
+    const percent = atBookEnd ? 1 : total > 0 ? bookPage / total : 0;
     emitter.emit('reader:locationchange', {
       position: anchorFor(),
       page: bookPage,
       totalPages: total,
-      percent: total > 0 ? bookPage / total : 0,
-      label: `${book.metadata.title} · ${Math.round((total > 0 ? bookPage / total : 0) * 100)}%`,
+      percent,
+      label: `${book.metadata.title} · ${Math.round(percent * 100)}%`,
       spine: spineIndex,
     });
     scheduleSave();
@@ -158,6 +178,76 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     cdoc.body.appendChild(viewport);
   };
 
+  const chapterLabel = (i: number): string => {
+    if (!book) return `Chapter ${i + 1}`;
+    const href = book.spine[i]?.href;
+    const flat = (entries: TocEntry[]): TocEntry[] =>
+      entries.flatMap((e) => [e, ...flat(e.children)]);
+    const hit = flat(book.toc).find((e) => stripHash(e.href) === href);
+    return hit?.label ?? `Chapter ${i + 1}`;
+  };
+
+  const renderEndCard = () => {
+    if (!book) return;
+    const bookEnd = spineIndex === lastSpine();
+    const theme = THEME_COLORS[settings.theme];
+    endEl.style.background = theme.background || '#fff';
+    endEl.style.color = theme.color || '#111';
+    endEl.replaceChildren();
+
+    const title = doc.createElement('div');
+    title.style.cssText = 'font-size:1.4rem;font-weight:700;';
+    title.textContent = bookEnd ? 'The End' : `End of ${chapterLabel(spineIndex)}`;
+    const sub = doc.createElement('div');
+    sub.style.cssText = 'opacity:.7;font-size:.95rem;';
+    sub.textContent = bookEnd ? book.metadata.title : 'Next: ' + chapterLabel(spineIndex + 1);
+    const row = doc.createElement('div');
+    row.style.cssText = 'display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;';
+
+    const btn = (text: string, onClick: () => void) => {
+      const b = doc.createElement('button');
+      b.textContent = text;
+      b.style.cssText =
+        'font:inherit;padding:.4rem .9rem;border-radius:8px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;';
+      b.addEventListener('click', onClick);
+      return b;
+    };
+    if (bookEnd) {
+      row.append(
+        btn('Restart', () => goto(0)),
+        btn('Contents', () => emitter.emit('reader:endpage', endPagePayload(true))),
+      );
+    } else {
+      row.append(btn('Continue →', () => turn('forward')));
+    }
+    endEl.append(title, sub, row);
+  };
+
+  const endPagePayload = (visible: boolean) => ({
+    visible,
+    kind: (spineIndex === lastSpine() ? 'book' : 'chapter') as 'book' | 'chapter',
+    label: spineIndex === lastSpine() ? 'The End' : `End of ${chapterLabel(spineIndex)}`,
+    hasNext: spineIndex < lastSpine(),
+  });
+
+  let endVisible = false;
+  const renderView = () => {
+    const showing = onEndSlot();
+    if (showing) {
+      renderEndCard();
+      endEl.style.display = 'flex';
+      frame.style.visibility = 'hidden';
+    } else {
+      endEl.style.display = 'none';
+      frame.style.visibility = 'visible';
+      applyPage();
+    }
+    if (showing !== endVisible) {
+      endVisible = showing;
+      emitter.emit('reader:endpage', endPagePayload(showing));
+    }
+  };
+
   const applyPage = () => {
     const flow = flowEl();
     if (!flow) return;
@@ -169,7 +259,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     if (!flow) return;
     spinePageCount = pageCountFor(flow.scrollWidth, layout().pageStep);
     spinePages[spineIndex] = spinePageCount;
-    page = Math.min(page, spinePageCount - 1);
+    page = Math.min(page, maxPage());
     applyPage();
   };
 
@@ -232,7 +322,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
         measure();
         page = atLastPage ? Math.max(0, spinePageCount - 1) : 0;
         resolvePendingAnchor();
-        applyPage();
+        renderView();
         emitter.emit('reader:loadingstate', { spine: idx, state: 'loaded' });
         emitLocation();
         resolve();
@@ -268,7 +358,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     });
   };
 
-  let chromeVisible = true;
+  let chromeVisible = settings.menuPosition === 'top';
   let lastWheel = 0;
 
   const toggleChrome = () => {
@@ -310,13 +400,25 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     turn(ev.deltaY > 0 ? 'forward' : 'back');
   };
 
+  const centerToggleOnSingleClick = () =>
+    settings.menuPosition === 'top' || settings.menuReveal === 'click';
+
   const onClick = (ev: MouseEvent) => {
-    if ((ev.target as Element | null)?.closest?.('a')) return;
+    if ((ev.target as Element | null)?.closest?.('a, button')) return;
     const rect = root.getBoundingClientRect();
     const r = rect.width > 0 ? (ev.clientX - rect.left) / rect.width : 0.5;
-    if (r < 1 / 3) turn(book?.metadata.direction === 'rtl' ? 'forward' : 'back');
-    else if (r > 2 / 3) turn(book?.metadata.direction === 'rtl' ? 'back' : 'forward');
-    else toggleChrome();
+    const rtl = book?.metadata.direction === 'rtl';
+    if (r < 1 / 3) turn(rtl ? 'forward' : 'back');
+    else if (r > 2 / 3) turn(rtl ? 'back' : 'forward');
+    else if (centerToggleOnSingleClick()) toggleChrome();
+  };
+
+  const onDblClick = (ev: MouseEvent) => {
+    if ((ev.target as Element | null)?.closest?.('a, button')) return;
+    if (centerToggleOnSingleClick()) return;
+    const rect = root.getBoundingClientRect();
+    const r = rect.width > 0 ? (ev.clientX - rect.left) / rect.width : 0.5;
+    if (r >= 1 / 3 && r <= 2 / 3) toggleChrome();
   };
 
   /** Wire keyboard/wheel/click on the iframe doc (events don't bubble to the parent). */
@@ -326,6 +428,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     cdoc.addEventListener('keydown', onKey);
     cdoc.addEventListener('wheel', onWheel, { passive: false });
     cdoc.addEventListener('click', onClick);
+    cdoc.addEventListener('dblclick', onDblClick);
   };
 
   const item = () => book?.spine[spineIndex];
@@ -381,19 +484,20 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     if (!book) return;
     const delta = dir === 'forward' ? 1 : -1;
     const next = page + delta;
-    if (next >= 0 && next < spinePageCount) {
+    if (next >= 0 && next <= maxPage()) {
       page = next;
-      applyPage();
+      renderView();
       emitLocation();
       return;
     }
-    // E3 handles spine-boundary crossing; for now clamp with an edge event
-    if (next < 0 && spineIndex === 0) emitter.emit('reader:start', {});
-    else if (next >= spinePageCount && spineIndex === book.spine.length - 1) {
-      emitter.emit('reader:end', {});
-    } else {
-      void renderSpine(spineIndex + delta, delta < 0);
+    if (next < 0) {
+      if (spineIndex === 0) emitter.emit('reader:start', {});
+      else void renderSpine(spineIndex - 1, true);
+      return;
     }
+    // past the end slot
+    if (spineIndex === lastSpine()) emitter.emit('reader:end', {});
+    else void renderSpine(spineIndex + 1, false);
   }
 
   function goto(target: number | Position): void {
@@ -404,7 +508,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
         pendingAnchor = target;
         if (idx === spineIndex) {
           resolvePendingAnchor();
-          applyPage();
+          renderView();
           emitLocation();
         } else {
           void renderSpine(idx);
@@ -415,41 +519,42 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     // absolute book page
     let acc = 0;
     for (let i = 0; i < book.spine.length; i++) {
-      const count = spinePages[i] ?? estimateSpinePages(i);
-      if (target < acc + count) {
-        const localPage = target - acc;
-        if (i === spineIndex) {
-          page = Math.min(Math.max(localPage, 0), spinePageCount - 1);
-          applyPage();
+      const eff = effectivePages(i);
+      if (target < acc + eff || i === lastSpine()) {
+        const localPage = Math.max(0, target - acc);
+        const land = () => {
+          page = Math.min(localPage, maxPage());
+          renderView();
           emitLocation();
-        } else {
-          void renderSpine(i).then(() => {
-            page = Math.min(Math.max(localPage, 0), spinePageCount - 1);
-            applyPage();
-            emitLocation();
-          });
-        }
+        };
+        if (i === spineIndex) land();
+        else void renderSpine(i).then(land);
         return;
       }
-      acc += count;
+      acc += eff;
     }
   }
 
   /** Reflow (resize / restyle) keeping the reader at the same fraction of the spine. */
   const reflowKeepingPlace = () => {
+    const wasEnd = onEndSlot();
     const frac = spinePageCount > 0 ? page / spinePageCount : 0;
     injectStyle();
     measure();
-    page = Math.min(
-      Math.max(Math.round(frac * spinePageCount), 0),
-      Math.max(0, spinePageCount - 1),
-    );
-    applyPage();
+    page = wasEnd
+      ? spinePageCount
+      : Math.min(Math.max(Math.round(frac * spinePageCount), 0), Math.max(0, spinePageCount - 1));
+    renderView();
     emitLocation();
   };
 
   function setSettings(patch: Partial<TextEngineSettings>): void {
+    const prevPos = settings.menuPosition;
     settings = { ...settings, ...patch };
+    if (settings.menuPosition !== prevPos) {
+      chromeVisible = settings.menuPosition === 'top';
+      emitter.emit('reader:chrometoggle', { visible: chromeVisible });
+    }
     reflowKeepingPlace();
     emitter.emit('reader:settingschange', { settings });
   }
@@ -472,6 +577,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     root.addEventListener('keydown', onKey);
     root.addEventListener('wheel', onWheel, { passive: false });
     root.addEventListener('click', onClick);
+    root.addEventListener('dblclick', onDblClick);
     if (typeof ResizeObserver !== 'undefined') {
       let raf = 0;
       resizeObserver = new ResizeObserver(() => {
@@ -494,6 +600,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       restore?.type === 'anchor' ? Math.min(restore.spine, book.spine.length - 1) : 0;
     if (restore?.type === 'anchor') pendingAnchor = restore;
     await renderSpine(startSpine);
+    emitter.emit('reader:chrometoggle', { visible: chromeVisible });
     emitter.emit('reader:ready', { metadata: book.metadata, spineCount: book.spine.length });
   }
 
@@ -510,6 +617,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     root.removeEventListener('keydown', onKey);
     root.removeEventListener('wheel', onWheel);
     root.removeEventListener('click', onClick);
+    root.removeEventListener('dblclick', onDblClick);
     resizeObserver?.disconnect();
     revokeUrls();
     emitter.clear();

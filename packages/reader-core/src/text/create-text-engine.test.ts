@@ -87,4 +87,40 @@ describe('createTextEngine', () => {
     expect(seen.at(-1)?.fontSizePct).toBe(130);
     engine.destroy();
   });
+
+  it('shows a "The End" card at the end of the book and reports 100%', async () => {
+    const container = document.createElement('div');
+    const engine = createTextEngine({ container, source: source(), bookId: 'b' });
+    const ends: Array<{ visible: boolean; kind: string }> = [];
+    let lastPct = 0;
+    engine.on('reader:endpage', (p) => ends.push(p));
+    engine.on('reader:locationchange', (p) => (lastPct = p.percent));
+    await engine.mount();
+    // jsdom has no layout so each spine is 1 page; last spine also gets the end slot
+    engine.turn('forward'); // ch1 -> ch2 (continuous)
+    engine.turn('forward'); // ch2 last page -> end slot
+    expect(ends.at(-1)).toMatchObject({ visible: true, kind: 'book' });
+    expect(container.querySelector('.pore-text__end')?.textContent).toContain('The End');
+    expect(lastPct).toBe(1);
+    engine.destroy();
+  });
+
+  it('endpage mode pauses between chapters', async () => {
+    const container = document.createElement('div');
+    const engine = createTextEngine({
+      container,
+      source: source(),
+      bookId: 'b',
+      settings: { endBehavior: 'endpage' },
+    });
+    const ends: Array<{ visible: boolean; kind: string }> = [];
+    engine.on('reader:endpage', (p) => ends.push(p));
+    await engine.mount();
+    engine.turn('forward'); // ch1 last page -> ch1 end slot
+    expect(ends.at(-1)).toMatchObject({ visible: true, kind: 'chapter' });
+    engine.turn('forward'); // -> ch2 (async spine render)
+    await new Promise((r) => setTimeout(r, 90));
+    expect(ends.at(-1)?.visible).toBe(false);
+    engine.destroy();
+  });
 });

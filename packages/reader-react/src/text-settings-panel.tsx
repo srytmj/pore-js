@@ -13,7 +13,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export function TextSettingsPanel({ onClose }: { onClose?: () => void }) {
   const [s, set] = useReaderSettings<TextEngineSettings>();
-  const [tab, setTab] = useState<'text' | 'theme'>('text');
+  const [tab, setTab] = useState<'text' | 'theme' | 'nav'>('text');
 
   return (
     <div className="pore-settings" role="dialog" aria-label="Reader settings">
@@ -23,6 +23,9 @@ export function TextSettingsPanel({ onClose }: { onClose?: () => void }) {
         </button>
         <button className={tab === 'theme' ? 'active' : ''} onClick={() => setTab('theme')}>
           Theme
+        </button>
+        <button className={tab === 'nav' ? 'active' : ''} onClick={() => setTab('nav')}>
+          Navigation
         </button>
         {onClose && (
           <button className="pore-settings__close" onClick={onClose} aria-label="Close">
@@ -115,6 +118,47 @@ export function TextSettingsPanel({ onClose }: { onClose?: () => void }) {
               <option value="oled">OLED black</option>
             </select>
           </Row>
+        )}
+
+        {tab === 'nav' && (
+          <>
+            <Row label="At chapter end">
+              <select
+                value={s.endBehavior}
+                onChange={(e) =>
+                  set({ endBehavior: e.target.value as TextEngineSettings['endBehavior'] })
+                }
+              >
+                <option value="continuous">Continue to next</option>
+                <option value="endpage">Show end page</option>
+              </select>
+            </Row>
+            <Row label="Menu position">
+              <select
+                value={s.menuPosition}
+                onChange={(e) =>
+                  set({ menuPosition: e.target.value as TextEngineSettings['menuPosition'] })
+                }
+              >
+                <option value="top">Top bar</option>
+                <option value="left">Left side</option>
+                <option value="right">Right side</option>
+              </select>
+            </Row>
+            <Row label="Reveal side menu">
+              <select
+                value={s.menuReveal}
+                disabled={s.menuPosition === 'top'}
+                onChange={(e) =>
+                  set({ menuReveal: e.target.value as TextEngineSettings['menuReveal'] })
+                }
+              >
+                <option value="hover">On hover</option>
+                <option value="click">Tap centre</option>
+                <option value="dblclick">Double-tap centre</option>
+              </select>
+            </Row>
+          </>
         )}
       </div>
     </div>

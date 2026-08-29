@@ -13,6 +13,17 @@ export interface TextEngineSettings {
   /** Raise user-stylesheet specificity to override stubborn publisher CSS. */
   publisherStyles: boolean;
   fontFamily: 'serif' | 'sans' | 'slab' | 'dyslexic' | 'original';
+  /**
+   * What happens when you page past the end of a chapter:
+   * - `continuous`: flow straight into the next chapter
+   * - `endpage`: show a centred end-of-chapter card first (an extra page)
+   * The last chapter always shows a "The End" card so progress reaches 100%.
+   */
+  endBehavior: 'continuous' | 'endpage';
+  /** Where the chrome/menu bar sits. */
+  menuPosition: 'top' | 'left' | 'right';
+  /** How a side menu is revealed (ignored when `menuPosition: 'top'`). */
+  menuReveal: 'hover' | 'click' | 'dblclick';
 }
 
 export const DEFAULT_TEXT_SETTINGS: TextEngineSettings = {
@@ -25,6 +36,9 @@ export const DEFAULT_TEXT_SETTINGS: TextEngineSettings = {
   theme: 'light',
   publisherStyles: true,
   fontFamily: 'original',
+  endBehavior: 'continuous',
+  menuPosition: 'top',
+  menuReveal: 'click',
 };
 
 export interface TextEngineEvents {
@@ -42,6 +56,13 @@ export interface TextEngineEvents {
   'reader:toc': { toc: TocEntry[] };
   'reader:footnote': { html: string; href: string };
   'reader:chrometoggle': { visible: boolean };
+  'reader:endpage': {
+    visible: boolean;
+    kind: 'chapter' | 'book';
+    label: string;
+    /** true when there is a next chapter to continue to */
+    hasNext: boolean;
+  };
   'reader:settingschange': { settings: TextEngineSettings };
   'reader:end': Record<string, never>;
   'reader:start': Record<string, never>;
