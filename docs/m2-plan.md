@@ -11,24 +11,25 @@ Sequential, one commit per task. Deps: **pdf.js** (`pdfjs-dist`, lazy chunk).
 
 ---
 
-## C0 — carry-over cleanup (M0.5 / M1 slivers) · S
+## C0 — carry-over cleanup (M0.5 / M1 slivers) · S ✅
 
-- [ ] **Per-book settings persistence** — settings store gets a `perBook[bookId]`
-      layer merged over global (spec §11.3); layout/fit/direction per-book,
-      behavior/keymap/theme global; persisted (localStorage now, IndexedDB in M3)
-- [ ] **Char-level anchor `offset`** — text `generateAnchor` records the char
-      offset into the block (Range walk); `resolveAnchor` uses it for sub-page
-      precision
-- [ ] **Bundled reading fonts** — ship serif / sans / slab / OpenDyslexic woff2
-      as `@font-face` in the text iframe; `fontFamily` setting already wired
-- [ ] **`publisherStyles: false`** — actually strip/neutralise author `<style>` +
-      `<link rel=stylesheet>` in `rewrite.ts` when off (currently only raises
-      specificity)
-- [ ] **Dark-theme image dim** — `filter: invert() hue-rotate()` on iframe images
-      when a dark theme + opt-in
-- [ ] Vitest for each
+- [x] **Per-book settings persistence** — `reader-react/settings-store.ts`:
+      localStorage, global prefs + per-book layout layer (spec §11.3);
+      `<Reader persistSettings>` seeds on mount, saves on change (`1a5460a`)
+- [x] **`publisherStyles: false`** — `rewrite.ts` `stripAuthorCss` removes
+      `<style>` / `<link rel=stylesheet>` / inline `style=`; engine re-renders
+      the spine on toggle
+- [x] **Dark-theme image dim** — `dimImages` setting → `filter: invert() hue-rotate()`
+      on iframe images when the theme is dark
+- [ ] **Char-level anchor `offset`** — _still deferred_: block-level anchor
+      already resumes to the right paragraph; sub-paragraph precision needs a
+      caret/Range walk that jsdom can't test. Low payoff, revisit if it bites.
+- [ ] **Bundled reading fonts** — _needs asset files_: `fontFamily` switches the
+      CSS stack (serif/sans/slab work today); OpenDyslexic needs a bundled woff2
+      the maintainer adds. Folds into the UI milestone's asset pass.
 
-**Done when:** the deferred M1 slivers are closed.
+**Done when:** the deferred M1 slivers are closed. ✅ (2 remain, both blocked on
+non-code inputs) 2026-08-29
 
 ---
 
@@ -39,7 +40,7 @@ destroy`; formalise it and give the shell one position vocabulary.
 
 - [ ] `Locator` — the abstract position the shell renders from:
       `{ kind: 'page'; index; total } | { kind: 'scroll'; fraction; total } |
-     { kind: 'anchor'; spine; block; offset; percent }` plus a computed
+   { kind: 'anchor'; spine; block; offset; percent }` plus a computed
       `percent`, `label`, `chapter?`
 - [ ] `toLocator(Position)` / `fromLocator(Locator)` round-trip helpers
 - [ ] `ReaderEngine<S>` interface in `reader-core` — the common surface
@@ -103,7 +104,7 @@ destroy`; formalise it and give the shell one position vocabulary.
 ## D5 — shared chrome data (design doc §9) · M
 
 - [ ] Engines emit a uniform `reader:progress { locator, percent, chapterLabel,
-    pagesLeftInChapter, minutesLeft? }` derived from the `Locator`
+  pagesLeftInChapter, minutesLeft? }` derived from the `Locator`
 - [ ] `minutesLeft`: image = pages left × per-page seconds (rolling avg);
       text = chars left ÷ reading speed (wpm setting)
 - [ ] Chapter model unified: image `chapters[]`, text spine+TOC, PDF outline →

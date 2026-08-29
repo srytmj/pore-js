@@ -83,6 +83,8 @@ export interface TypographyOptions {
   background?: string;
   direction: 'ltr' | 'rtl';
   publisherStyles: boolean;
+  /** Invert images (dark theme). */
+  dimImages?: boolean;
 }
 
 const FONT_STACKS: Record<TypographyOptions['fontFamily'], string> = {
@@ -137,7 +139,9 @@ body {
 }
 ${forceFamily ? `body, body * { font-family:${family} !important; }` : ''}
 #${FLOW_ID} p, #${FLOW_ID} li, #${FLOW_ID} blockquote, #${FLOW_ID} div { text-align:inherit; }
-#${FLOW_ID} img, #${FLOW_ID} svg, #${FLOW_ID} video { max-width:100%; max-height:${layout.contentHeight}px; height:auto; break-inside:avoid; }
+#${FLOW_ID} img, #${FLOW_ID} svg, #${FLOW_ID} video { max-width:100%; max-height:${layout.contentHeight}px; height:auto; break-inside:avoid;${
+    t.dimImages ? ' filter:invert(1) hue-rotate(180deg);' : ''
+  } }
 #${FLOW_ID} table, #${FLOW_ID} pre { max-width:100%; overflow-x:auto; break-inside:avoid; }
 #${FLOW_ID} a { color:inherit; }
 #${FLOW_ID} h1, #${FLOW_ID} h2, #${FLOW_ID} h3 { break-after:avoid; }

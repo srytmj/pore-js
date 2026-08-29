@@ -282,6 +282,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       background: theme.background,
       direction: book?.metadata.direction ?? 'ltr',
       publisherStyles: settings.publisherStyles,
+      dimImages: settings.dimImages && THEME_COLORS[settings.theme].dark,
     });
   };
 
@@ -309,7 +310,9 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     revokeUrls();
     const res = book.resource(item.href);
     const source_ = res ? new TextDecoder().decode(res.bytes) : '<p>(missing chapter)</p>';
-    const { html, urls } = rewriteResources(source_, book, item.href, parser);
+    const { html, urls } = rewriteResources(source_, book, item.href, parser, {
+      stripAuthorCss: !settings.publisherStyles,
+    });
     objectUrls = urls;
 
     return new Promise<void>((resolve) => {
@@ -549,13 +552,18 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   };
 
   function setSettings(patch: Partial<TextEngineSettings>): void {
-    const prevPos = settings.menuPosition;
+    const prev = settings;
     settings = { ...settings, ...patch };
-    if (settings.menuPosition !== prevPos) {
+    if (settings.menuPosition !== prev.menuPosition) {
       chromeVisible = settings.menuPosition === 'top';
       emitter.emit('reader:chrometoggle', { visible: chromeVisible });
     }
-    reflowKeepingPlace();
+    if (settings.publisherStyles !== prev.publisherStyles) {
+      // author CSS is baked in at render time — re-render the spine
+      void renderSpine(spineIndex);
+    } else {
+      reflowKeepingPlace();
+    }
     emitter.emit('reader:settingschange', { settings });
   }
 

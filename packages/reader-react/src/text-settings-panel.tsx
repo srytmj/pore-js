@@ -107,17 +107,26 @@ export function TextSettingsPanel({ onClose }: { onClose?: () => void }) {
         )}
 
         {tab === 'theme' && (
-          <Row label="Theme">
-            <select
-              value={s.theme}
-              onChange={(e) => set({ theme: e.target.value as TextEngineSettings['theme'] })}
-            >
-              <option value="light">Light</option>
-              <option value="sepia">Sepia</option>
-              <option value="dark">Dark</option>
-              <option value="oled">OLED black</option>
-            </select>
-          </Row>
+          <>
+            <Row label="Theme">
+              <select
+                value={s.theme}
+                onChange={(e) => set({ theme: e.target.value as TextEngineSettings['theme'] })}
+              >
+                <option value="light">Light</option>
+                <option value="sepia">Sepia</option>
+                <option value="dark">Dark</option>
+                <option value="oled">OLED black</option>
+              </select>
+            </Row>
+            <Row label="Dim images (dark themes)">
+              <input
+                type="checkbox"
+                checked={s.dimImages}
+                onChange={(e) => set({ dimImages: e.target.checked })}
+              />
+            </Row>
+          </>
         )}
 
         {tab === 'nav' && (

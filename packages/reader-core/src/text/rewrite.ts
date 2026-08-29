@@ -9,16 +9,22 @@ export interface RewriteResult {
   urls: string[];
 }
 
+export interface RewriteOptions {
+  /** Drop author `<style>` / `<link rel=stylesheet>` (publisher styles off). */
+  stripAuthorCss?: boolean;
+}
+
 /**
  * Rewrite a spine document's resource references (`src`, `href`, CSS `url()`)
  * to `blob:` URLs so it can render inside a scriptless sandboxed iframe.
- * `<script>` elements are dropped.
+ * `<script>` elements are dropped; author CSS optionally too.
  */
 export function rewriteResources(
   xhtml: string,
   book: EpubBook,
   spineHref: string,
   parser: DOMParser,
+  opts: RewriteOptions = {},
 ): RewriteResult {
   const doc = parser.parseFromString(xhtml, 'application/xhtml+xml');
   const root =
@@ -46,6 +52,13 @@ export function rewriteResources(
   };
 
   for (const el of Array.from(root.querySelectorAll('script'))) el.remove();
+
+  if (opts.stripAuthorCss) {
+    for (const el of Array.from(root.querySelectorAll('style, link[rel~="stylesheet"]'))) {
+      el.remove();
+    }
+    for (const el of Array.from(root.querySelectorAll('[style]'))) el.removeAttribute('style');
+  }
 
   for (const el of Array.from(root.querySelectorAll('[src]'))) {
     const v = el.getAttribute('src');

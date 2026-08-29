@@ -10,9 +10,11 @@ export interface TextEngineSettings {
   columnGap: number; // px
   columns: 1 | 2;
   theme: 'light' | 'sepia' | 'dark' | 'oled';
-  /** Raise user-stylesheet specificity to override stubborn publisher CSS. */
+  /** Keep the publisher's own CSS. When off, author styles are stripped. */
   publisherStyles: boolean;
   fontFamily: 'serif' | 'sans' | 'slab' | 'dyslexic' | 'original';
+  /** In dark themes, invert images so they don't glare. */
+  dimImages: boolean;
   /**
    * What happens when you page past the end of a chapter:
    * - `continuous`: flow straight into the next chapter
@@ -36,6 +38,7 @@ export const DEFAULT_TEXT_SETTINGS: TextEngineSettings = {
   theme: 'light',
   publisherStyles: true,
   fontFamily: 'original',
+  dimImages: false,
   endBehavior: 'continuous',
   menuPosition: 'top',
   menuReveal: 'click',

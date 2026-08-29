@@ -52,6 +52,20 @@ describe('rewriteResources', () => {
     expect(html).toMatch(/url\("blob:mock\/\d+"\)/);
   });
 
+  it('strips author CSS when stripAuthorCss is set', () => {
+    const book = fakeBook({ 'OEBPS/pub.css': { text: 'p{color:hotpink}', type: 'text/css' } });
+    const { html } = rewriteResources(
+      '<html><head><style>p{margin:9px}</style><link rel="stylesheet" href="pub.css"/></head><body><p style="color:red">x</p></body></html>',
+      book,
+      'OEBPS/ch01.xhtml',
+      new DOMParser(),
+      { stripAuthorCss: true },
+    );
+    expect(html).not.toContain('<style');
+    expect(html).not.toContain('<link');
+    expect(html).not.toContain('style="color:red"');
+  });
+
   it('leaves data: and absolute URLs alone', () => {
     const book = fakeBook({});
     const { html, urls } = rewriteResources(
