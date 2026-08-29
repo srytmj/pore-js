@@ -1,5 +1,6 @@
 import type { Position } from '../position/types.js';
-import type { GetPageOpts, Manifest, ReaderSource } from './types.js';
+import type { GetFileOpts, GetPageOpts, Manifest, TextManifest } from './types.js';
+import type { ReaderSource } from './types.js';
 import { parseImageManifestFile, type ParsedFixtureManifest } from './manifest-file.js';
 
 export interface DemoSourceOptions {
@@ -9,17 +10,27 @@ export interface DemoSourceOptions {
   fetch?: typeof fetch;
 }
 
+interface TextFixture {
+  kind: 'text';
+  manifest: TextManifest;
+  fileUrl: string;
+}
+type Loaded = ({ kind: 'image' } & ParsedFixtureManifest) | TextFixture;
+
 /**
  * Serves bundled public-domain / CC fixtures. Powers the public demo and tests.
  *
- * Progress is kept in-memory here; the demo app layers durable storage on top
- * via a `CachedSource` decorator (T7 / spec §2.2.1).
+ * A fixture's `manifest.json` is an image manifest by default; if it has
+ * `"type": "epub"` and a `"file"` it is served as a text book.
+ *
+ * Progress is kept in-memory here; the demo layers durable storage on top via
+ * a `CachedSource` decorator.
  */
 export class DemoSource implements ReaderSource {
   readonly #baseUrl: string;
   readonly #fetch: typeof fetch;
   readonly #progress = new Map<string, Position>();
-  readonly #parsed = new Map<string, ParsedFixtureManifest>();
+  readonly #loaded = new Map<string, Loaded>();
 
   constructor(opts: DemoSourceOptions = {}) {
     this.#baseUrl = (opts.baseUrl ?? '/fixtures').replace(/\/$/, '');
@@ -35,8 +46,11 @@ export class DemoSource implements ReaderSource {
   }
 
   async getPage(bookId: string, index: number, opts?: GetPageOpts): Promise<Blob> {
-    const { pageUrls } = await this.#load(bookId);
-    const url = pageUrls[index];
+    const loaded = await this.#load(bookId);
+    if (loaded.kind !== 'image') {
+      throw new Error(`DemoSource: "${bookId}" is a text book, use getFile`);
+    }
+    const url = loaded.pageUrls[index];
     if (url === undefined) {
       throw new RangeError(`DemoSource: page ${index} out of range for "${bookId}"`);
     }
@@ -45,8 +59,17 @@ export class DemoSource implements ReaderSource {
     return res.blob();
   }
 
-  getFile(_bookId: string): Promise<Blob> {
-    return Promise.reject(new Error('DemoSource.getFile: not implemented (M1, text formats)'));
+  async getFile(bookId: string, opts?: GetFileOpts): Promise<Blob> {
+    const loaded = await this.#load(bookId);
+    if (loaded.kind !== 'text') {
+      throw new Error(`DemoSource: "${bookId}" is an image book, use getPage`);
+    }
+    const res = await this.#fetch(
+      loaded.fileUrl,
+      opts?.signal ? { signal: opts.signal } : undefined,
+    );
+    if (!res.ok) throw new Error(`DemoSource: file for "${bookId}" → HTTP ${res.status}`);
+    return res.blob();
   }
 
   loadProgress(bookId: string): Promise<Position | null> {
@@ -62,18 +85,29 @@ export class DemoSource implements ReaderSource {
     return this.#baseUrl;
   }
 
-  async #load(bookId: string): Promise<ParsedFixtureManifest> {
-    const cached = this.#parsed.get(bookId);
+  async #load(bookId: string): Promise<Loaded> {
+    const cached = this.#loaded.get(bookId);
     if (cached) return cached;
 
-    const manifestUrl = `${this.#baseUrl}/${encodeURIComponent(bookId)}/manifest.json`;
+    const dir = `${this.#baseUrl}/${encodeURIComponent(bookId)}`;
+    const manifestUrl = `${dir}/manifest.json`;
     const res = await this.#fetch(manifestUrl);
     if (!res.ok) {
       throw new Error(`DemoSource: manifest for "${bookId}" → HTTP ${res.status}`);
     }
-    const raw: unknown = await res.json();
-    const parsed = parseImageManifestFile(raw, { bookId, manifestUrl });
-    this.#parsed.set(bookId, parsed);
-    return parsed;
+    const raw = (await res.json()) as { type?: string; file?: string; title?: string };
+
+    let loaded: Loaded;
+    if (raw.type === 'epub' && raw.file) {
+      loaded = {
+        kind: 'text',
+        manifest: { bookId, type: 'epub', title: raw.title ?? bookId },
+        fileUrl: `${dir}/${raw.file}`,
+      };
+    } else {
+      loaded = { kind: 'image', ...parseImageManifestFile(raw, { bookId, manifestUrl }) };
+    }
+    this.#loaded.set(bookId, loaded);
+    return loaded;
   }
 }

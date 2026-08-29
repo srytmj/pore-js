@@ -8,15 +8,30 @@
 export { ReaderProvider, useReaderSource } from './provider.js';
 export type { ReaderProviderProps } from './provider.js';
 
+export type {
+  ImageEngineSettings,
+  TextEngineSettings,
+  Position,
+  TocEntry,
+} from '@pore/reader-core';
+
 export {
   Reader,
   useReader,
+  useReaderKind,
   useReaderLocation,
   useReaderSettings,
   useReaderKeymap,
+  useTableOfContents,
   useResumedFromPage,
 } from './reader.js';
-export type { ReaderProps, ReaderHandle, ReaderLocation } from './reader.js';
+export type {
+  ReaderProps,
+  ReaderHandle,
+  ReaderLocation,
+  ReaderKind,
+  AnySettings,
+} from './reader.js';
 
 export { SettingsPanel } from './settings-panel.js';
 export type { SettingsPanelProps } from './settings-panel.js';

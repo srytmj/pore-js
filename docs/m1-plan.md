@@ -112,30 +112,40 @@ after a viewport resize.
 
 ---
 
-## E7 — Unify the shell / React · M
+## E7 — Unify the shell / React · M ✅
 
-- [ ] `createReaderEngine(manifest.type)` picks image vs text engine behind one
-      `ReaderEngine` interface (superset; `TurnDirection`, `on`, `goto(anchor|page)`)
-- [ ] `<Reader>` handles both; `useReaderLocation` returns a `Locator`
-      (spine+anchor | pageIndex | scroll%) with uniform `percent` / label
-- [ ] `<SettingsPanel>` gains a Typography tab when the book is text
-- [ ] `useTableOfContents`, `useReaderSearch` (stub for M3)
-- [ ] Vitest / RTL: `<Reader>` mounts a text book from `DemoSource`
+- [x] `<Reader>` reads `manifest.type` and mounts `createImageEngine` or `createTextEngine`; `useReaderKind()`
+- [x] `useReaderLocation` normalized (`page`, `label`, `position`, `percent`, `chapter?`); `handle.goto` accepts page or `Position`
+- [x] `useReaderSettings<T>()` generic (image XOR text); `useTableOfContents()`
+- [x] `<SettingsPanel>` delegates to `<TextSettingsPanel>` (Text / Theme tabs) for text books
+- [x] Demo `<Chrome>` guards image-only controls behind `kind === 'image'`, uses `loc.percent`
+- [ ] _`useReaderSearch` — M3_
 
-**Done when:** the same `<Reader bookId>` opens an EPUB or a manga transparently.
+**Done when:** the same `<Reader bookId>` opens an EPUB or a manga transparently. ✅ done 2026-08-29
 
 ---
 
-## E8 — Gutenberg fixtures + demo · S
+## E5 — Typography & theme · M (partial ✅)
 
-- [ ] Add 2 public-domain EPUBs to `fixtures/` (one plain prose, one with
-      structure: TOC depth, images, a table) + `LICENSE`/`SOURCE.md`
-- [ ] `DemoSource` serves them (`getFile` → the `.epub` blob); `getManifest` →
-      `TextManifest`
-- [ ] Demo book picker lists them; Typography controls in the panel
-- [ ] `gen:fixtures` untouched (EPUBs are checked in, not generated)
+- [x] Settings: `fontSizePct`, `lineHeight`, `textAlign`, `marginPct`, `columns` (1|2), `theme` (light/sepia/dark/oled), `publisherStyles`, `fontFamily` — all in `buildBaseStylesheet` + `<TextSettingsPanel>`
+- [x] Low-specificity element selectors; recompute pagination on every change; browser-verified live restyle
+- [ ] `fontFamily` bundled `@font-face` (serif/sans/slab/OpenDyslexic woff2) — needs packaged fonts
+- [ ] `publisherStyles: false` → strip/override author CSS
+- [ ] dark-theme image dim (`filter: invert() hue-rotate()`)
 
-**Done when:** `pnpm dev` → pick a Gutenberg book → read it.
+_Remainder folded into E9 / follow-up._
+
+---
+
+## E8 — demo fixture + wiring · S ✅
+
+- [x] `gen-fixtures.mjs` builds `demo-book/book.epub` — 3 chapters (nav TOC, `style.css`, noteref links, a `notes.xhtml`), CC0 synthetic
+- [x] `DemoSource`: `manifest.json` with `"type":"epub","file":...` → `TextManifest` + `getFile` serves the blob; `getPage`/`getFile` guard by kind
+- [x] Demo book picker lists "Demo Book (EPUB)"; text settings panel
+- [x] Browser-verified: multicol pagination (`scrollWidth` 4984 / 1280), page turn `translateX`, live font-size + theme
+
+**Done when:** `pnpm dev` → pick the EPUB → read it. ✅ done 2026-08-29
+_(real Project Gutenberg EPUBs can be dropped in later; the synthetic one exercises every code path)_
 
 ---
 

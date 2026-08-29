@@ -11,35 +11,53 @@ import {
 } from 'react';
 import {
   createImageEngine,
+  createTextEngine,
   DEFAULT_IMAGE_SETTINGS,
   DEFAULT_KEYMAP,
-  type ImageEngine,
-  type ImageEngineEvents,
+  DEFAULT_TEXT_SETTINGS,
   type ImageEngineSettings,
   type Keymap,
   type Position,
+  type TextEngineSettings,
+  type TocEntry,
   type TurnDirection,
 } from '@pore/reader-core';
 import { useReaderSource } from './provider.js';
+
+export type ReaderKind = 'image' | 'text';
+export type AnySettings = ImageEngineSettings | TextEngineSettings;
 
 export interface ReaderLocation {
   page: number;
   label: string;
   position: Position;
+  percent: number;
   chapter?: string;
 }
 
 export interface ReaderHandle {
   turn(dir: TurnDirection): void;
-  goto(page: number): void;
-  setSettings(patch: Partial<ImageEngineSettings>): void;
+  goto(target: number | Position): void;
+  setSettings(patch: Partial<AnySettings>): void;
   setKeymap(patch: Partial<Keymap>): void;
 }
 
+interface EngineLike {
+  mount(): Promise<void>;
+  turn(dir: TurnDirection): void;
+  goto(target: never): void;
+  setSettings(patch: never): void;
+  setKeymap?(patch: Partial<Keymap>): void;
+  on(event: string, handler: (payload: never) => void): () => void;
+  destroy(): void;
+}
+
 interface ReaderCtx {
+  kind: ReaderKind | null;
   location: ReaderLocation | null;
-  settings: ImageEngineSettings;
+  settings: AnySettings;
   keymap: Keymap;
+  toc: TocEntry[];
   resumedFromPage: number | null;
   handle: ReaderHandle;
 }
@@ -48,10 +66,9 @@ const RuntimeContext = createContext<ReaderCtx | null>(null);
 
 export interface ReaderProps {
   bookId: string;
-  initialSettings?: Partial<ImageEngineSettings>;
+  initialSettings?: Partial<AnySettings>;
   onPositionChange?: (loc: ReaderLocation) => void;
   className?: string;
-  /** Chrome (bars, toasts, settings panels) rendered above the reader surface, inside the hook context. */
   children?: ReactNode;
   ref?: Ref<ReaderHandle>;
 }
@@ -66,64 +83,104 @@ export function Reader({
 }: ReaderProps) {
   const source = useReaderSource();
   const hostRef = useRef<HTMLDivElement>(null);
-  const engineRef = useRef<ImageEngine | null>(null);
+  const engineRef = useRef<EngineLike | null>(null);
   const onPosRef = useRef(onPositionChange);
   onPosRef.current = onPositionChange;
 
+  const [kind, setKind] = useState<ReaderKind | null>(null);
   const [location, setLocation] = useState<ReaderLocation | null>(null);
-  const [settings, setSettings] = useState<ImageEngineSettings>(() => ({
+  const [settings, setSettings] = useState<AnySettings>(() => ({
     ...DEFAULT_IMAGE_SETTINGS,
     ...initialSettings,
   }));
   const [keymap, setKeymap] = useState<Keymap>(DEFAULT_KEYMAP);
+  const [toc, setToc] = useState<TocEntry[]>([]);
   const [resumedFromPage, setResumedFromPage] = useState<number | null>(null);
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
-    const engine = createImageEngine({
-      container: host,
-      source,
-      bookId,
-      ...(initialSettings ? { settings: initialSettings } : {}),
-    });
-    engineRef.current = engine;
+    let disposed = false;
+    const offs: Array<() => void> = [];
 
-    const offs: Array<() => void> = [
-      engine.on('reader:locationchange', (p: ImageEngineEvents['reader:locationchange']) => {
-        const loc: ReaderLocation = {
-          page: p.page,
-          label: p.label,
-          position: p.position,
-          ...(p.chapter ? { chapter: p.chapter } : {}),
-        };
-        setLocation(loc);
-        onPosRef.current?.(loc);
-      }),
-      engine.on('reader:resumed', (p) => {
-        setResumedFromPage(p.position && p.page > 0 ? p.page : null);
-      }),
-      engine.on('reader:settingschange', (p) => {
-        setSettings(p.settings);
-        setKeymap(p.keymap);
-      }),
-    ];
+    void (async () => {
+      const manifest = await source.getManifest(bookId);
+      if (disposed) return;
+      const isText = manifest.type !== 'image';
+      setKind(isText ? 'text' : 'image');
+      setSettings(
+        isText
+          ? { ...DEFAULT_TEXT_SETTINGS, ...initialSettings }
+          : { ...DEFAULT_IMAGE_SETTINGS, ...initialSettings },
+      );
 
-    void engine.mount();
+      const engine = (isText
+        ? createTextEngine({
+            container: host,
+            source,
+            bookId,
+            ...(initialSettings
+              ? { settings: initialSettings as Partial<TextEngineSettings> }
+              : {}),
+          })
+        : createImageEngine({
+            container: host,
+            source,
+            bookId,
+            ...(initialSettings
+              ? { settings: initialSettings as Partial<ImageEngineSettings> }
+              : {}),
+          })) as unknown as EngineLike;
+      engineRef.current = engine;
+
+      offs.push(
+        engine.on('reader:locationchange', (p: never) => {
+          const q = p as {
+            page: number;
+            label: string;
+            position: Position;
+            percent?: number;
+            chapter?: string;
+          };
+          const loc: ReaderLocation = {
+            page: q.page,
+            label: q.label,
+            position: q.position,
+            percent: q.percent ?? 0,
+            ...(q.chapter ? { chapter: q.chapter } : {}),
+          };
+          setLocation(loc);
+          onPosRef.current?.(loc);
+        }),
+        engine.on('reader:resumed', (p: never) => {
+          const q = p as { position: Position | null; page?: number };
+          setResumedFromPage(q.position ? (q.page ?? 1) : null);
+        }),
+        engine.on('reader:settingschange', (p: never) => {
+          const q = p as { settings: AnySettings; keymap?: Keymap };
+          setSettings(q.settings);
+          if (q.keymap) setKeymap(q.keymap);
+        }),
+        engine.on('reader:toc', (p: never) => setToc((p as { toc: TocEntry[] }).toc)),
+      );
+
+      await engine.mount();
+    })();
+
     return () => {
+      disposed = true;
       for (const off of offs) off();
-      engine.destroy();
+      engineRef.current?.destroy();
       engineRef.current = null;
     };
-    // remount only when the book or source changes
   }, [source, bookId]);
 
   const handle = useMemo<ReaderHandle>(
     () => ({
       turn: (d) => engineRef.current?.turn(d),
-      goto: (p) => engineRef.current?.goto(p),
-      setSettings: (patch) => engineRef.current?.setSettings(patch),
-      setKeymap: (patch) => engineRef.current?.setKeymap(patch),
+      goto: (t) => engineRef.current?.goto(t as never),
+      setSettings: (patch) => engineRef.current?.setSettings(patch as never),
+      setKeymap: (patch) => engineRef.current?.setKeymap?.(patch),
     }),
     [],
   );
@@ -131,8 +188,8 @@ export function Reader({
   useImperativeHandle(ref, () => handle, [handle]);
 
   const ctx = useMemo<ReaderCtx>(
-    () => ({ location, settings, keymap, resumedFromPage, handle }),
-    [location, settings, keymap, resumedFromPage, handle],
+    () => ({ kind, location, settings, keymap, toc, resumedFromPage, handle }),
+    [kind, location, settings, keymap, toc, resumedFromPage, handle],
   );
 
   return (
@@ -149,18 +206,29 @@ function useRuntime(): ReaderCtx {
   return ctx;
 }
 
+export function useReaderKind(): ReaderKind | null {
+  return useRuntime().kind;
+}
+
 export function useReaderLocation(): ReaderLocation | null {
   return useRuntime().location;
 }
 
-export function useReaderSettings(): [ImageEngineSettings, ReaderHandle['setSettings']] {
+export function useReaderSettings<T extends AnySettings = AnySettings>(): [
+  T,
+  (patch: Partial<T>) => void,
+] {
   const { settings, handle } = useRuntime();
-  return [settings, handle.setSettings];
+  return [settings as T, handle.setSettings as (patch: Partial<T>) => void];
 }
 
 export function useReaderKeymap(): [Keymap, ReaderHandle['setKeymap']] {
   const { keymap, handle } = useRuntime();
   return [keymap, handle.setKeymap];
+}
+
+export function useTableOfContents(): TocEntry[] {
+  return useRuntime().toc;
 }
 
 export function useReader(): ReaderHandle {

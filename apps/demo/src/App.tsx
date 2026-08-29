@@ -3,17 +3,10 @@ import { Reader, ReaderProvider } from '@pore/reader-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Chrome } from './Chrome.js';
 
-const BOOKS = [
-  {
-    id: 'demo-manga',
-    label: 'Demo Manga',
-    settings: { layout: 'paged-double', direction: 'rtl' } as const,
-  },
-  {
-    id: 'demo-webtoon',
-    label: 'Demo Webtoon',
-    settings: { layout: 'continuous-vertical' } as const,
-  },
+const BOOKS: { id: string; label: string; settings?: Record<string, unknown> }[] = [
+  { id: 'demo-manga', label: 'Demo Manga', settings: { layout: 'paged-double', direction: 'rtl' } },
+  { id: 'demo-webtoon', label: 'Demo Webtoon', settings: { layout: 'continuous-vertical' } },
+  { id: 'demo-book', label: 'Demo Book (EPUB)' },
 ];
 
 interface Dropped {
@@ -64,7 +57,7 @@ export function App() {
         <Reader
           key={activeBook}
           bookId={activeBook}
-          {...(dropped ? {} : { initialSettings: book.settings })}
+          {...(!dropped && book.settings ? { initialSettings: book.settings } : {})}
         >
           <Chrome
             books={BOOKS}

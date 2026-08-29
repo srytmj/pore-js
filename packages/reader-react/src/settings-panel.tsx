@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DEFAULT_KEYMAP, type ActionId, type ImageEngineSettings } from '@pore/reader-core';
-import { useReaderKeymap, useReaderSettings } from './reader.js';
+import { useReaderKeymap, useReaderKind, useReaderSettings } from './reader.js';
+import { TextSettingsPanel } from './text-settings-panel.js';
 
 type Tab = 'layout' | 'fit' | 'behavior' | 'keys';
 
@@ -34,7 +35,8 @@ export interface SettingsPanelProps {
 }
 
 export function SettingsPanel({ onClose }: SettingsPanelProps) {
-  const [s, set] = useReaderSettings();
+  const kind = useReaderKind();
+  const [s, set] = useReaderSettings<ImageEngineSettings>();
   const [keymap, setKeymap] = useReaderKeymap();
   const [tab, setTab] = useState<Tab>('layout');
   const [capturing, setCapturing] = useState<ActionId | null>(null);
@@ -43,6 +45,8 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
     <K extends keyof ImageEngineSettings>(k: K) =>
     (e: { target: { value: string } }) =>
       set({ [k]: Number(e.target.value) } as Partial<ImageEngineSettings>);
+
+  if (kind === 'text') return <TextSettingsPanel {...(onClose ? { onClose } : {})} />;
 
   return (
     <div className="pore-settings" role="dialog" aria-label="Reader settings">
