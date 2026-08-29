@@ -13,6 +13,9 @@ export default {
   extends: ['@commitlint/config-conventional'],
   rules: {
     'subject-case': [0],
+    // bodies are prose and often contain "word: value" lines (CSS, config keys)
+    // that the parser mistakes for footer tokens — don't nag about those
+    'footer-leading-blank': [0],
     'body-max-line-length': [1, 'always', 100],
     'footer-max-line-length': [1, 'always', 100],
   },
