@@ -8,6 +8,11 @@ Post-`v0.6.0-ui` UI polish.
   drag / keyboard seek → `goto`, chapter tick marks, a live
   "Ch 3/12 · 47% · N min left" label. `useReaderChapters()` hook. The demo docks
   it at the bottom, auto-hiding with the chrome.
+- **RTL-horizontal EPUBs (Arabic/Hebrew)** confirmed working — no engine change
+  needed, since CSS multicol reverses column fill order within an unchanged
+  box, so the existing paged translate math already lands on the right page.
+  Added `demo-rtl` (synthetic Arabic) fixture + a Playwright spec proving
+  direction, multicol, and the key swap.
 - **PDF in-book search** — `PdfImageSource` exposes `textContent(page)` /
   `pageCount()`; `createPdfEngine` builds a `SearchController` over the PDF's
   text layer and adds `search()` / `gotoHit()` / `reader:searchresults`, same

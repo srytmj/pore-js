@@ -126,8 +126,15 @@ source is usable programmatically now)_
 
 **Done when:** a vertical Japanese EPUB reads top-to-bottom, right-to-left. ✅
 done 2026-08-29
-_(full RTL-horizontal column flow for Arabic/Hebrew: keys are fixed; the visual
-column order is CSS's job and largely works — a dedicated pass is M4+.)_
+
+**RTL-horizontal (Arabic/Hebrew) — closed post-M3:** confirmed it needed no new
+code — `direction: rtl` in `buildBaseStylesheet` + the I4 key/click swap were
+already sufficient, since CSS multicol reverses column *fill order* within an
+unchanged box, so the existing `translateX(-page·pageStep)` chunking still lands
+on the right page. Added `demo-rtl` (synthetic Arabic, `page-progression-direction:
+rtl`, `lang="ar"`, no vertical) + a Playwright spec (multicol direction, key
+swap, `-pageStep` translate) to prove it. Browser-verified: justified RTL
+paragraphs, ArrowLeft → `translateX(-576px)`.
 
 ---
 

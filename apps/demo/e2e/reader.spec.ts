@@ -179,6 +179,25 @@ test.describe('Pore.js demo — M3', () => {
       .not.toBe(before);
   });
 
+  test('RTL-horizontal (Arabic) EPUB: multicol, direction, key swap', async ({ page }) => {
+    await page.goto('/?book=demo-rtl');
+    const css = await page
+      .frameLocator('iframe.pore-text__frame')
+      .locator('#pore-base-style')
+      .textContent();
+    expect(css).not.toContain('writing-mode:vertical-rl'); // horizontal, not vertical
+    expect(css).toContain('direction:rtl');
+
+    const flow = page.frameLocator('iframe.pore-text__frame').locator('#pore-flow');
+    const before = await flow.evaluate((el) => el.style.transform);
+    // ArrowLeft = forward in RTL, same as the vertical case, and moves -pageStep
+    await page.locator('.pore-text').press('ArrowLeft');
+    await expect
+      .poll(() => flow.evaluate((el) => el.style.transform))
+      .toMatch(/translate\(-\d/);
+    expect(await flow.evaluate((el) => el.style.transform)).not.toBe(before);
+  });
+
   test('flow mode turns the reader into a semantic scroller', async ({ page }) => {
     await page.goto('/?book=demo-book');
     await page.getByRole('button', { name: '⚙' }).click();
