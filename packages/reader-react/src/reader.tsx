@@ -87,6 +87,7 @@ interface ReaderCtx {
   endPage: EndPage | null;
   chromeVisible: boolean;
   resumedFromPage: number | null;
+  loading: boolean;
   handle: ReaderHandle;
 }
 
@@ -151,6 +152,7 @@ export function Reader({
   const [endPage, setEndPage] = useState<EndPage | null>(null);
   const [chromeVisible, setChromeVisible] = useState(true);
   const [resumedFromPage, setResumedFromPage] = useState<number | null>(null);
+  const [loading, setLoading] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     const host = hostRef.current;
@@ -216,6 +218,16 @@ export function Reader({
           persistence.save(bookId, rk, q.settings);
         }),
         engine.on('reader:toc', (p: never) => setToc((p as { toc: TocEntry[] }).toc)),
+        engine.on('reader:loadingstate', (p: never) => {
+          const q = p as { index?: number; spine?: number; state: string };
+          const key = String(q.index ?? q.spine ?? 0);
+          setLoading((prev) => {
+            const next = new Set(prev);
+            if (q.state === 'loading') next.add(key);
+            else next.delete(key);
+            return next.size === prev.size && [...next].every((k) => prev.has(k)) ? prev : next;
+          });
+        }),
         engine.on('reader:footnote', (p: never) => setFootnote(p as Footnote)),
         engine.on('reader:endpage', (p: never) => {
           const q = p as EndPage & { visible: boolean };
@@ -267,6 +279,7 @@ export function Reader({
       endPage,
       chromeVisible,
       resumedFromPage,
+      loading: loading.size > 0,
       handle,
     }),
     [
@@ -281,6 +294,7 @@ export function Reader({
       endPage,
       chromeVisible,
       resumedFromPage,
+      loading,
       handle,
     ],
   );
@@ -340,6 +354,11 @@ export function useEndPage(): EndPage | null {
 
 export function useChromeVisible(): boolean {
   return useRuntime().chromeVisible;
+}
+
+/** `true` while any page / spine image is still loading. */
+export function useReaderLoading(): boolean {
+  return useRuntime().loading;
 }
 
 export function useReader(): ReaderHandle {

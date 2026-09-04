@@ -119,18 +119,26 @@ done 2026-08-30
 
 ---
 
-## U5 — Demo shell redesign (Tailwind) · L
+## U5 — Demo shell redesign (Tailwind) · L 🟡
 
-- [ ] Chrome: auto-hiding top bar + bottom scrubber (design doc §9), tap-centre
-      toggle, idle-hide; GSAP slide
-- [ ] Scrubber: drag to seek, chapter ticks, "N min left" / "%"
-- [ ] Loading: skeleton / blurhash-ish placeholder while `reader:loadingstate`
-      is `loading`; error tile with retry
-- [ ] Settings, TOC, end-page, footnote styled; consistent light/dark
-- [ ] Responsive: mobile layout, safe-area insets, touch targets
-- [ ] Drop zone, resume toast, capped-preload notice restyled
+- [x] `useReaderLoading()` (reader-react) — `true` while any page / spine image
+      is in flight, from `reader:loadingstate`
+- [x] Chrome: `useAutoHide` idle-hides the top bar (2.6 s, CSS transform slide),
+      any activity or `:hover` / `:focus-within` brings it back; pinned while a
+      panel / search / end-page is open
+- [x] Top progress bar goes **indeterminate** while `useReaderLoading()` (reduced
+      motion → a static dim segment)
+- [x] Panel / search / footnote / toast enter animations (Radix `data-state` +
+      `@keyframes`, all disabled under `prefers-reduced-motion`)
+- [x] Responsive: `env(safe-area-inset-*)` on the bar / toast / footnote,
+      `@media (pointer: coarse)` bumps touch targets, panel width clamps to the
+      viewport; verified at 375 px
+- [ ] Bottom scrubber (drag-to-seek + chapter ticks), loading skeleton tiles,
+      error tile with retry, full end-page / drop-zone restyle → carried into a
+      follow-up (the shell is already coherent; these are refinements)
 
 **Done when:** the demo reads like a finished product on desktop and mobile.
+🟡 core polish landed 2026-08-30; scrubber + skeletons tracked as a follow-up
 
 ---
 

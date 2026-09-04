@@ -8,6 +8,7 @@ import {
   useReaderHistory,
   useReaderKind,
   useDownload,
+  useReaderLoading,
   useReaderSearch,
   useReaderLocation,
   useReaderProgress,
@@ -18,6 +19,7 @@ import {
 } from '@pore/reader-react';
 import { useEffect, useState } from 'react';
 import { useTheme } from './theme.js';
+import { useAutoHide } from './use-auto-hide.js';
 
 
 interface BookOpt {
@@ -40,6 +42,7 @@ export function Chrome({
   const progress = useReaderProgress();
   const download = useDownload(bookId);
   const search = useReaderSearch();
+  const loading = useReaderLoading();
   const [searchOpen, setSearchOpen] = useState(false);
   const [theme, toggleTheme] = useTheme();
   const reader = useReader();
@@ -60,6 +63,12 @@ export function Chrome({
   const menuPos = isText ? textSettings.menuPosition : 'top';
   const menuReveal = isText ? textSettings.menuReveal : 'hover';
   const side = menuPos === 'left' || menuPos === 'right';
+
+  const overlayOpen = panelOpen || searchOpen || endPage !== null;
+  const [autoHidden, pinChrome] = useAutoHide(2600, menuPos === 'top' && !overlayOpen);
+  useEffect(() => {
+    if (overlayOpen) pinChrome();
+  }, [overlayOpen, pinChrome]);
 
   const pos = loc?.position;
   const total = pos && pos.type !== 'anchor' ? pos.total : 0;
@@ -174,17 +183,17 @@ export function Chrome({
       <header
         className={`bar bar--${menuPos}${side ? ` bar--${menuReveal}` : ''}${
           side && chromeVisible ? ' bar--shown' : ''
-        }`}
+        }${!side && autoHidden ? ' bar--autohidden' : ''}`}
       >
         {barControls}
       </header>
 
       <div
-        className="progress"
+        className={`progress${loading ? ' progress--loading' : ''}`}
         role="progressbar"
         aria-valuenow={Math.round(pct)}
         style={{
-          width: `${pct}%`,
+          width: loading ? undefined : `${pct}%`,
           opacity: isImage && imgSettings.progressBar?.style === 'hidden' ? 0 : 1,
         }}
       />

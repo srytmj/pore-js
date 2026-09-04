@@ -38,6 +38,7 @@ export {
   useFootnote,
   useEndPage,
   useChromeVisible,
+  useReaderLoading,
   useResumedFromPage,
 } from './reader.js';
 export type {
