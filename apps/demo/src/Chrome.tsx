@@ -253,14 +253,32 @@ export function Chrome({
       )}
 
       {endPage && (
-        <div className="endpage">
+        <div className="endpage" role="status">
+          <div className="endpage__icon" aria-hidden>
+            {endPage.kind === 'book' ? '✓' : '·'}
+          </div>
           <div className="endpage__title">{endPage.label}</div>
-          <div className="endpage__menu">{barControls}</div>
-          {endPage.kind === 'book' ? (
-            <button onClick={() => reader.goto(0)}>Restart from the beginning</button>
-          ) : (
-            endPage.hasNext && <button onClick={() => reader.turn('forward')}>Continue →</button>
+          {progress && (
+            <div className="endpage__subtitle">
+              {endPage.kind === 'book'
+                ? `${progress.chapterCount} chapter${progress.chapterCount === 1 ? '' : 's'} · finished`
+                : `Chapter ${progress.chapterIndex + 1} of ${progress.chapterCount}`}
+            </div>
           )}
+          <div className="endpage__actions">
+            {endPage.kind === 'book' ? (
+              <button className="primary" onClick={() => reader.goto(0)}>
+                Restart from the beginning
+              </button>
+            ) : (
+              endPage.hasNext && (
+                <button className="primary" onClick={() => reader.turn('forward')}>
+                  Continue →
+                </button>
+              )
+            )}
+          </div>
+          <div className="endpage__menu">{barControls}</div>
         </div>
       )}
 

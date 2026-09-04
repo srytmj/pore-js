@@ -83,7 +83,17 @@ export function App() {
             droppedName={dropped?.bookId ?? null}
           />
         </Reader>
-        {dragging && <div className="dropzone">Drop a .cbz, .epub, .pdf, or images to read</div>}
+        {dragging && (
+          <div className="dropzone">
+            <div className="dropzone__card">
+              <div className="dropzone__icon" aria-hidden>
+                ⇩
+              </div>
+              <div className="dropzone__title">Drop to open</div>
+              <div className="dropzone__hint">.cbz, .epub, .pdf, or loose images</div>
+            </div>
+          </div>
+        )}
         {notice && (
           <div className="notice" role="status" onClick={() => setNotice(null)}>
             {notice}

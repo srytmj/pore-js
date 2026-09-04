@@ -212,10 +212,27 @@
   .endpage {
     @apply fixed inset-0 z-22 flex flex-col items-center justify-center gap-4 p-8 text-center;
     background: color-mix(in srgb, var(--color-canvas) 92%, transparent);
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(6px);
+    animation: pore-fade-in 0.25s ease-out;
+  }
+  .endpage__icon {
+    @apply flex size-14 items-center justify-center rounded-full border border-accent/40 bg-accent/10 text-2xl text-accent;
+    animation: pore-panel-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .endpage__title {
     @apply text-2xl font-bold;
+  }
+  .endpage__subtitle {
+    @apply -mt-2 text-sm text-muted;
+  }
+  .endpage__actions {
+    @apply flex flex-wrap justify-center gap-2;
+  }
+  .endpage__actions button {
+    @apply rounded-[var(--radius-control)] border border-line bg-surface px-4 py-2 text-sm font-medium;
+  }
+  .endpage__actions button.primary {
+    @apply border-accent bg-accent text-accent-fg;
   }
   .endpage__menu {
     @apply flex max-w-2xl flex-wrap justify-center gap-2 rounded-[var(--radius-panel)] border border-line bg-surface px-3 py-2.5;
@@ -223,7 +240,7 @@
   .endpage__menu strong {
     @apply self-center;
   }
-  .endpage button {
+  .endpage__menu button {
     @apply rounded-[var(--radius-control)] border border-line bg-surface px-3.5 py-1.5;
   }
 
@@ -248,7 +265,27 @@
   }
 
   .dropzone {
-    @apply pointer-events-none fixed inset-0 z-50 flex items-center justify-center border-4 border-dashed border-white/60 bg-black/55 text-xl text-white;
+    @apply pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px];
+    animation: pore-fade-in 0.15s ease-out;
+  }
+  .dropzone__card {
+    @apply flex flex-col items-center gap-2 rounded-[var(--radius-panel)] border-2 border-dashed border-white/50 px-12 py-10 text-center text-white;
+    animation: pore-panel-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .dropzone__icon {
+    @apply text-4xl;
+  }
+  .dropzone__title {
+    @apply text-xl font-semibold;
+  }
+  .dropzone__hint {
+    @apply text-sm text-white/70;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dropzone,
+    .dropzone__card {
+      animation: none;
+    }
   }
 
   .notice {
@@ -469,5 +506,9 @@
   .bar--left,
   .bar--right {
     transition: none;
+  }
+  .endpage,
+  .endpage__icon {
+    animation: none;
   }
 }

@@ -143,11 +143,15 @@ done 2026-08-30
       `useReaderError()` (`reader-react`) exposes the last `reader:error` +
       `dismiss`/`retry`. Demo: a shimmering skeleton after a 220 ms delay
       (no flash on fast loads), a centred error tile with Retry/Dismiss.
-- [ ] Full end-page / drop-zone restyle → still a follow-up (lower value; the
-      shell is coherent)
+- [x] **End-page / drop-zone restyle** — end-page gets an accent icon badge
+      (✓ for book-end), a "N chapters · finished" / "Chapter X of Y" subtitle,
+      and a primary accent Restart/Continue button, with a fade+scale entrance
+      (off under reduced motion). Drop-zone is a centred dashed card with an
+      icon, title, and file-type hint instead of bare overlay text.
 
 **Done when:** the demo reads like a finished product on desktop and mobile.
-🟢 landed 2026-08-30 — scrubber + loading/error states included
+🟢 landed 2026-08-30 — scrubber, loading/error states, and end-page/drop-zone
+restyle all included
 
 ---
 

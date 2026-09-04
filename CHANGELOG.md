@@ -8,6 +8,10 @@ Post-`v0.6.0-ui` UI polish.
   drag / keyboard seek → `goto`, chapter tick marks, a live
   "Ch 3/12 · 47% · N min left" label. `useReaderChapters()` hook. The demo docks
   it at the bottom, auto-hiding with the chrome.
+- **End-page / drop-zone restyle** — the end-page gets an accent icon badge, a
+  "N chapters · finished" / "Chapter X of Y" subtitle, and a primary
+  Restart/Continue button with a fade+scale entrance; the drop-zone is now a
+  centred dashed card with an icon and file-type hint.
 - **RTL-horizontal EPUBs (Arabic/Hebrew)** confirmed working — no engine change
   needed, since CSS multicol reverses column fill order within an unchanged
   box, so the existing paged translate math already lands on the right page.
