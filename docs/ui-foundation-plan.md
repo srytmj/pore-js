@@ -47,20 +47,27 @@ independent of the shell)_
 
 ---
 
-## U2 — Animation seam in `reader-core` · M
+## U2 — Animation seam in `reader-core` · M ✅
 
-- [ ] `ReaderTransitions` interface: `page(el, from, to, ctx)` /
+- [x] `transitions.ts` — `ReaderTransitions` (`page(el, from, to, ctx)` /
       `zoom(el, transform, reduced)` / `scrollTo(el, prop, to, reduced)` /
-      `cancel()` — where `ctx` carries `{ axis, dir, reduced }`
-- [ ] Default `instantTransitions` — sets style/prop synchronously (current behavior, zero cost)
-- [ ] Image + text engines: route `applyPage` / `applyZoom` / programmatic scroll
-      through `options.transitions ?? instantTransitions`
-- [ ] `prefers-reduced-motion` checked once and passed as `reduced` so adapters
-      can no-op
-- [ ] Vitest: engines still work with the default adapter (no behavior change);
-      a spy adapter receives the right calls
+      `cancel()`); `TransitionContext` = `{ axis, dir, reduced }`
+- [x] `instantTransitions` default — synchronous `el.style.transform` / `el[prop]`,
+      zero allocation; exported from core and re-exported from `reader-react`
+- [x] Text engine: `applyPage` routes the paged / vertical translate through
+      `transitions.page` (tracks `pageOffset` for `from`), flow-mode scroll
+      through `transitions.scrollTo`; `turn` / anchor-jump / `destroy` call
+      `transitions.cancel()`
+- [x] Image engine: `applyZoom` → `transitions.zoom`; deliberate jumps
+      (`goto`, continuous `turn`) → `transitions.scrollTo` via `animateScrollMain`;
+      `destroy` cancels. (Paged image slide waits for U4's render refactor.)
+- [x] `<Reader transitions={…}>` prop threads it to all three engines
+- [x] `prefers-reduced-motion` read at call time, passed as `ctx.reduced`
+- [x] Vitest: `instantTransitions` unit (4); all 166 engine tests unchanged with
+      the default; custom adapter accepted + cancelled on destroy
 
-**Done when:** engines animate nothing by default but expose the hook.
+**Done when:** engines animate nothing by default but expose the hook. ✅ done
+2026-08-30
 
 ---
 

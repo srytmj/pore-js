@@ -18,7 +18,10 @@ export type {
   Locator,
   TocEntry,
   SearchHit,
+  ReaderTransitions,
+  TransitionContext,
 } from '@pore/reader-core';
+export { instantTransitions } from '@pore/reader-core';
 
 export {
   Reader,

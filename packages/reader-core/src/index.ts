@@ -28,6 +28,8 @@ export type {
   ReaderProgress,
 } from './reader-engine.js';
 export { PaceEstimator, chapterProgress } from './progress.js';
+export { instantTransitions } from './transitions.js';
+export type { ReaderTransitions, TransitionContext } from './transitions.js';
 export { clampPagePosition, isPagePosition, isScrollPosition } from './position/position.js';
 
 export type { ImageEngineSettings, ProgressBarSettings } from './settings/types.js';

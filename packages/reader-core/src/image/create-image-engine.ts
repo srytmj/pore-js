@@ -9,6 +9,7 @@ import type { Direction, TurnDirection } from '../types.js';
 import { createEmitter } from '../internal/emitter.js';
 import type { Chapter } from '../reader-engine.js';
 import { PaceEstimator, chapterProgress } from '../progress.js';
+import { instantTransitions } from '../transitions.js';
 import type { ImageEngine, ImageEngineOptions } from './engine.js';
 import type { ImageEngineEvents } from './types.js';
 import {
@@ -58,6 +59,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
 
   let settings = resolveSettings(options.settings);
   let keymap: Keymap = resolveKeymap(options.keymap);
+  const transitions = options.transitions ?? instantTransitions;
   let manifest: ImageManifest | null = null;
   let destroyed = false;
   const pace = new PaceEstimator(8);
@@ -104,6 +106,10 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   const setScrollMain = (v: number) => {
     if (axis() === 'x') root.scrollLeft = v;
     else root.scrollTop = v;
+  };
+  /** Deliberate jump (goto / turn) — routed through the animation seam. */
+  const animateScrollMain = (v: number) => {
+    transitions.scrollTo(root, axis() === 'x' ? 'scrollLeft' : 'scrollTop', v, prefersReducedMotion());
   };
   const viewportMain = (): number => (axis() === 'x' ? root.clientWidth : root.clientHeight) || 1;
   const slotForPage = (page: number): number => {
@@ -501,10 +507,11 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
 
   const applyZoom = () => {
     if (isContinuous()) return;
-    viewport.style.transform =
+    const value =
       zoom === 1 && panX === 0 && panY === 0
         ? ''
         : `translate(${panX}px, ${panY}px) scale(${zoom})`;
+    transitions.zoom(viewport, value, prefersReducedMotion());
   };
 
   const setZoom = (next: number, originX = 0.5, originY = 0.5) => {
@@ -724,7 +731,8 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
         if (nextCh) armChapterAdvance(nextCh);
         return;
       }
-      setScrollMain(scrollMain() + (dir === 'forward' ? 1 : -1) * viewportMain() * 0.9);
+      transitions.cancel();
+      animateScrollMain(scrollMain() + (dir === 'forward' ? 1 : -1) * viewportMain() * 0.9);
       return;
     }
     const target = currentSpread + (dir === 'forward' ? 1 : -1);
@@ -741,8 +749,9 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     if (!manifest) return;
     const p = Math.round(pageIndex);
     if (isContinuous()) {
+      transitions.cancel();
       recomputeLayout();
-      setScrollMain(scrollForPage(clayout, slotForPage(p)));
+      animateScrollMain(scrollForPage(clayout, slotForPage(p)));
       onScroll();
     } else {
       goToSpread(spreadIndexForPage(spreads, p));
@@ -866,6 +875,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   function destroy(): void {
     flushSave();
     destroyed = true;
+    transitions.cancel();
     stopAutoscroll(true);
     if (autoPagedTimer) clearInterval(autoPagedTimer);
     if (autoResumeTimer) clearTimeout(autoResumeTimer);

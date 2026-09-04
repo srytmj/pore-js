@@ -10,6 +10,7 @@ import { rewriteResources } from './rewrite.js';
 import { blockElements, generateAnchor, pageForElement, resolveAnchor } from './anchor.js';
 import { SearchController } from '../search/search-controller.js';
 import type { SearchHit, SearchSection } from '../search/search-index.js';
+import { instantTransitions, type ReaderTransitions } from '../transitions.js';
 import {
   buildBaseStylesheet,
   computeTextLayout,
@@ -46,6 +47,8 @@ export interface CreateTextEngineOptions {
   domParser?: DOMParser;
   /** Passed to the in-book `SearchController`. `false` forces synchronous search. */
   searchWorkerFactory?: (() => Worker) | false;
+  /** Animation seam — defaults to synchronous {@link instantTransitions}. */
+  transitions?: ReaderTransitions;
 }
 
 export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
@@ -55,10 +58,12 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   const parser = options.domParser ?? new DOMParser();
 
   let settings: TextEngineSettings = { ...DEFAULT_TEXT_SETTINGS, ...options.settings };
+  const transitions = options.transitions ?? instantTransitions;
   let book: EpubBook | null = null;
   const pace = new PaceEstimator(30);
   let spineIndex = 0;
   let page = 0; // page within the current spine
+  let pageOffset = 0; // last translate applied by `applyPage` (paged / vertical)
   let spinePageCount = 1;
   /** page count per spine item, undefined until measured */
   let spinePages: (number | undefined)[] = [];
@@ -95,6 +100,8 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
 
   const mql = (q: string): boolean =>
     typeof matchMedia === 'function' ? matchMedia(q).matches : false;
+
+  const reduced = (): boolean => mql('(prefers-reduced-motion: reduce)');
 
   /** Single scrolling column (screen-reader friendly). */
   const flowActive = (): boolean => {
@@ -298,7 +305,11 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
         page = vp ? Math.round(vp.scrollTop / (vp.clientHeight || 1)) : Math.round(fraction * last);
       } else {
         const flow = flowEl();
-        if (flow) flow.style.transform = 'translateX(0)';
+        if (flow) {
+        transitions.cancel();
+        flow.style.transform = 'translateX(0)';
+        pageOffset = 0;
+      }
         page = layout().vertical
           ? Math.min(Math.round(fraction * last), last)
           : el
@@ -370,7 +381,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   });
 
   let endVisible = false;
-  const renderView = () => {
+  const renderView = (dir: -1 | 0 | 1 = 0) => {
     const showing = onEndSlot();
     if (showing) {
       renderEndCard();
@@ -379,7 +390,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     } else {
       endEl.style.display = 'none';
       frame.style.visibility = 'visible';
-      applyPage();
+      applyPage(dir);
     }
     if (showing !== endVisible) {
       endVisible = showing;
@@ -387,13 +398,13 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     }
   };
 
-  const applyPage = () => {
+  const applyPage = (dir: -1 | 0 | 1 = 0) => {
     const l = layout();
     if (flowActive()) {
       const vp = viewportEl();
       // scrolling to `page * clientHeight` yields a scroll event that computes
       // back to the same `page` (a no-op), so no suppression flag is needed.
-      if (vp) vp.scrollTop = page * (vp.clientHeight || 0);
+      if (vp) transitions.scrollTo(vp, 'scrollTop', page * (vp.clientHeight || 0), reduced());
       return;
     }
     const flow = flowEl();
@@ -401,7 +412,8 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     // vertical-rl content grows leftward from a right-pinned flow, so paging
     // forward shifts it right by `+pageStep` (mirror of the horizontal case).
     const x = l.vertical ? page * l.pageStep : offsetForPage(page, l.pageStep);
-    flow.style.transform = `translateX(${x}px)`;
+    transitions.page(flow, pageOffset, x, { axis: 'x', dir, reduced: reduced() });
+    pageOffset = x;
   };
 
   const measure = () => {
@@ -663,7 +675,11 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
         page = vp ? Math.round(vp.scrollTop / (vp.clientHeight || 1)) : 0;
       } else if (el && cdoc && !layout().vertical) {
         const flow = flowEl();
-        if (flow) flow.style.transform = 'translateX(0)';
+        if (flow) {
+        transitions.cancel();
+        flow.style.transform = 'translateX(0)';
+        pageOffset = 0;
+      }
         page = Math.min(pageForElement(el, layout().pageStep), Math.max(0, spinePageCount - 1));
       } else {
         page = 0;
@@ -687,8 +703,9 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     const delta = dir === 'forward' ? 1 : -1;
     const next = page + delta;
     if (next >= 0 && next <= maxPage()) {
+      transitions.cancel();
       page = next;
-      renderView();
+      renderView(delta);
       emitLocation();
       return;
     }
@@ -765,9 +782,11 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       settings.flowMode !== prev.flowMode
     ) {
       // writing mode / flow flips the whole pagination model — re-measure fresh
+      transitions.cancel();
       injectStyle();
       measure();
       page = 0;
+      pageOffset = 0;
       renderView();
       emitLocation();
     } else {
@@ -843,6 +862,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     resizeObserver?.disconnect();
     if (scrollSyncTimer) clearTimeout(scrollSyncTimer);
     scrollSyncEl?.removeEventListener('scroll', onFlowScroll);
+    transitions.cancel();
     revokeUrls();
     search.destroy();
     emitter.clear();

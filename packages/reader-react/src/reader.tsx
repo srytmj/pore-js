@@ -21,6 +21,7 @@ import {
   type Keymap,
   type Chapter,
   type Locator,
+  type ReaderTransitions,
   type Position,
   type ReaderProgress,
   type SearchHit,
@@ -103,6 +104,11 @@ export interface ReaderProps {
    * `true` (default) uses localStorage; `false` disables; or pass your own.
    */
   persistSettings?: boolean | SettingsPersistence;
+  /**
+   * Animation seam for page turns / zoom / scroll. Defaults to instant.
+   * Pass `gsapAdapter(gsap)` for smooth transitions.
+   */
+  transitions?: ReaderTransitions;
 }
 
 export function Reader({
@@ -113,12 +119,15 @@ export function Reader({
   children,
   ref,
   persistSettings = true,
+  transitions,
 }: ReaderProps) {
   const source = useReaderSource();
   const hostRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<EngineLike | null>(null);
   const onPosRef = useRef(onPositionChange);
   onPosRef.current = onPositionChange;
+  const transitionsRef = useRef(transitions);
+  transitionsRef.current = transitions;
   const persistence = useMemo<SettingsPersistence>(
     () =>
       persistSettings === false
@@ -163,12 +172,14 @@ export function Reader({
         ...seeded,
       });
 
+      const txOpt = transitionsRef.current ? { transitions: transitionsRef.current } : {};
       const engine = (isText
         ? createTextEngine({
             container: host,
             source,
             bookId,
             settings: seeded as Partial<TextEngineSettings>,
+            ...txOpt,
           })
         : isPdf
         ? createPdfEngine({
@@ -176,12 +187,14 @@ export function Reader({
             source,
             bookId,
             settings: seeded as Partial<ImageEngineSettings>,
+            ...txOpt,
           })
         : createImageEngine({
             container: host,
             source,
             bookId,
             settings: seeded as Partial<ImageEngineSettings>,
+            ...txOpt,
           })) as unknown as EngineLike;
       engineRef.current = engine;
 

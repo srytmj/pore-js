@@ -3,6 +3,7 @@ import type { ImageEngineSettings } from '../settings/types.js';
 import type { Keymap } from '../settings/keymap.js';
 import type { TurnDirection } from '../types.js';
 import type { Chapter } from '../reader-engine.js';
+import type { ReaderTransitions } from '../transitions.js';
 import type { ImageEngineEvents } from './types.js';
 
 export interface ImageEngineOptions {
@@ -14,6 +15,8 @@ export interface ImageEngineOptions {
   settings?: Partial<ImageEngineSettings>;
   /** Partial keymap merged over DEFAULT_KEYMAP. */
   keymap?: Partial<Keymap>;
+  /** Animation seam — defaults to synchronous `instantTransitions`. */
+  transitions?: ReaderTransitions;
 }
 
 export type Unsubscribe = () => void;

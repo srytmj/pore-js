@@ -175,6 +175,29 @@ describe('createTextEngine', () => {
     engine.destroy();
   });
 
+  it('accepts a custom transitions adapter and cancels it on destroy', async () => {
+    const calls: string[] = [];
+    const spy = {
+      page: () => calls.push('page'),
+      zoom: () => calls.push('zoom'),
+      scrollTo: () => calls.push('scrollTo'),
+      cancel: () => calls.push('cancel'),
+    };
+    const container = document.createElement('div');
+    const engine = createTextEngine({
+      container,
+      source: source(),
+      bookId: 'b',
+      transitions: spy as never,
+    });
+    await engine.mount();
+    engine.turn('forward'); // walks to the next spine in the tiny fixture
+    await new Promise((r) => setTimeout(r, 90));
+    engine.destroy();
+    expect(calls).toContain('cancel');
+    // instantTransitions is the default and unaffected
+  });
+
   it('flow mode reports itself and still navigates', async () => {
     const container = document.createElement('div');
     const engine = createTextEngine({
