@@ -32,28 +32,40 @@ F1/F2; they can reorder or drop without blocking the others.
 
 ---
 
-## F1 — Precise text ranges (`epubcfi`-flavored) · M
+## F1 — Precise text ranges (`epubcfi`-flavored) · M · done (v0.7.0-annotate wip)
 
-- [ ] Extend `anchor.ts`: `generateAnchor` records a real character `offset`
-      into the resolved block (today it's hardcoded `0`) via a `Range` walk
-      over text nodes — the deferred M0.5 sliver, finally worth doing because
-      F2 needs it
-- [ ] A `RangeAnchor` for highlight spans: `{ spine, startBlock, startOffset,
-      endBlock, endOffset }` — reuses the same block-ordinal addressing as
-      `Position['anchor']`, just with a pair of endpoints instead of one
-- [ ] `serializeCfi(doc, range) → string` / `resolveCfi(doc, cfi) → Range`
-      producing real `epubcfi(/6/4[chap01]!/4/2/1:0,/4/2/1:5)`-shaped strings —
-      spec-compliant enough to be portable to another reader, not just our own
-      round-trip. Keep `RangeAnchor` as the fast internal path; CFI is the
-      export/interchange format.
-- [ ] Fallback cascade on resolve: exact CFI/anchor → nearest block → percent
-      (same pattern as `resolveAnchor` today)
-- [ ] Vitest: round-trip generate → serialize → resolve on fixture HTML with
-      nested inline markup (em/strong/a inside the target block) — the
-      bug-prone case call out in the design doc
+- [x] Extend `anchor.ts`: `generateAnchor` records a real character `offset`
+      into the resolved block via `offsetForVisibleWord` (word-level Range walk
+      over text nodes, not full-character precision — cheap and sufficient for
+      resume/highlight-anchor purposes). `resolveAnchor` resolves it back via
+      `rangeAtOffset`, falling back to whole-block resolution when the range
+      has no layout signal (jsdom, or a drifted document). Fully backward
+      compatible — offset `0` behaves exactly as before.
+- [x] `serializeCfi(doc, spineIndex, spineIdref, el, offset) → string` /
+      `parseCfi(cfi) → ParsedCfi` / `resolveCfiElement` / `resolveCfiRange` in
+      new `cfi.ts` — a **documented, pragmatic CFI-shaped serialization**, not
+      full IDPF conformance: element-sibling-only step numbering (ignores
+      interleaved text-node steps) and the conventional `/6/` package→spine
+      assumption. Round-trips through nested inline markup (em/strong/a).
+      (Skipped the separate `RangeAnchor` type — a single-offset CFI covers
+      the resume-position use case F1 targets; F2 can add a range pair when
+      highlights need start+end.)
+- [x] `TextEngine.getCfi(): string | null` wired end-to-end: engine → 
+      `reader-react`'s `ReaderHandle` → a real demo feature (🔗 "Copy position"
+      button in `Chrome.tsx`, EPUB-only) — browser-verified producing
+      `epubcfi(/6/6[c3]!/2/2/2:0)` for a real reading position.
+- [x] Fallback cascade on resolve: exact offset-range → whole block → (existing
+      percent fallback further up the stack) — same pattern as before.
+- [x] Vitest: `anchor.test.ts` (+8 tests: `offsetForVisibleWord`,
+      `rangeAtOffset`, offset-precision generate/resolve incl. the
+      no-layout-signal fallback) and new `cfi.test.ts` (8 tests: step
+      round-trip, serialize/parse, escaping, nested inline markup, drift →
+      null). 199 total tests passing, lint/typecheck clean.
 
 **Done when:** a highlight's start/end survives a reload and a re-render at a
-different font size, and its CFI string is one a spec-reader would accept.
+different font size, and its CFI string is one a spec-reader would accept. —
+met for the single-position case (resume/share-position); highlight start+end
+pairing is F2's job.
 
 ---
 

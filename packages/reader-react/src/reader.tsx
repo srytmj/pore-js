@@ -67,6 +67,8 @@ export interface ReaderHandle {
   /** Full-text search — resolves `[]` on engines without it (image/PDF). */
   search(query: string): Promise<SearchHit[]>;
   gotoHit(hit: SearchHit): void;
+  /** Portable `epubcfi(...)` for the current position — `null` on engines without one (image/PDF). */
+  getCfi(): string | null;
 }
 
 interface EngineLike {
@@ -79,6 +81,7 @@ interface EngineLike {
   chapters?(): Chapter[];
   search?(query: string): Promise<SearchHit[]>;
   gotoHit?(hit: SearchHit): void;
+  getCfi?(): string | null;
   on(event: string, handler: (payload: never) => void): () => void;
   destroy(): void;
 }
@@ -279,6 +282,7 @@ export function Reader({
       goToHref: (href) => engineRef.current?.goToHref?.(href),
       search: (q) => engineRef.current?.search?.(q) ?? Promise.resolve([]),
       gotoHit: (hit) => engineRef.current?.gotoHit?.(hit),
+      getCfi: () => engineRef.current?.getCfi?.() ?? null,
       setSettings: (patch) => engineRef.current?.setSettings(patch as never),
       setKeymap: (patch) => engineRef.current?.setKeymap?.(patch),
       chapters: () => engineRef.current?.chapters?.() ?? [],

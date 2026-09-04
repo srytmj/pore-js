@@ -2,8 +2,17 @@
 
 ## Unreleased
 
-Post-`v0.6.0-ui` UI polish.
+M4 F1 — precise text ranges (`epubcfi`-flavored), plus post-`v0.6.0-ui` UI polish.
 
+- **Word-level anchor offsets + `epubcfi`-shaped positions** — `anchor.ts`
+  now records a real character offset into the resolved block (previously
+  hardcoded to `0`) via a word-level `Range` walk, with a whole-block fallback
+  when no layout signal is available. New `cfi.ts` module serializes/parses a
+  documented, pragmatic CFI-shaped string (`epubcfi(/6/N[idref]!/steps:offset)`
+  — element-sibling step numbering, not full IDPF conformance) that round-trips
+  through nested inline markup. `TextEngine.getCfi()` exposes it end-to-end
+  through `reader-react`'s `<Reader>` handle; the demo adds a 🔗 "Copy position"
+  button for EPUBs. See `docs/m4-plan.md` F1.
 - **`<ReaderScrubber>`** — a Radix `Slider` bound to the reader position:
   drag / keyboard seek → `goto`, chapter tick marks, a live
   "Ch 3/12 · 47% · N min left" label. `useReaderChapters()` hook. The demo docks

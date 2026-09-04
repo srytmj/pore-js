@@ -8,6 +8,7 @@ import type { EpubBook, TocEntry } from './epub/types.js';
 import { dirOf, resolveHref, stripHash } from './epub/path.js';
 import { rewriteResources } from './rewrite.js';
 import { blockElements, generateAnchor, pageForElement, resolveAnchor } from './anchor.js';
+import { serializeCfi } from './cfi.js';
 import { SearchController } from '../search/search-controller.js';
 import type { SearchHit, SearchSection } from '../search/search-index.js';
 import { instantTransitions, type ReaderTransitions } from '../transitions.js';
@@ -165,6 +166,18 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       bookPercent,
       pageWidth: layout().measure,
     });
+  };
+
+  /** Portable `epubcfi(...)` for the current position, or `null` before the spine has rendered. */
+  const getCfi = (): string | null => {
+    const cdoc = frame.contentDocument;
+    if (!cdoc || !book) return null;
+    const anchor = anchorFor();
+    if (anchor.type !== 'anchor') return null;
+    const el = blockElements(cdoc)[anchor.block];
+    if (!el) return null;
+    const idref = book.spine[spineIndex]?.idref ?? String(spineIndex);
+    return serializeCfi(cdoc, spineIndex, idref, el, anchor.offset);
   };
 
   const emitLocation = () => {
@@ -880,5 +893,6 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     chapters: engineChapters,
     search: runSearch,
     gotoHit,
+    getCfi,
   };
 }

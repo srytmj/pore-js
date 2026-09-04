@@ -110,7 +110,23 @@ export {
   offsetForPage,
 } from './text/paginate.js';
 export type { TextLayout } from './text/paginate.js';
-export { generateAnchor, resolveAnchor, blockElements, pageForElement } from './text/anchor.js';
+export {
+  generateAnchor,
+  resolveAnchor,
+  blockElements,
+  pageForElement,
+  offsetForVisibleWord,
+  rangeAtOffset,
+} from './text/anchor.js';
+export type { Rect, RectOf, RangeRectOf } from './text/anchor.js';
+export {
+  serializeCfi,
+  parseCfi,
+  resolveCfiElement,
+  resolveCfiRange,
+  elementSteps,
+} from './text/cfi.js';
+export type { ParsedCfi } from './text/cfi.js';
 export { openKvStore } from './offline/idb.js';
 export type { KvStore } from './offline/idb.js';
 

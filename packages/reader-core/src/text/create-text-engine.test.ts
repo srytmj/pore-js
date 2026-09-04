@@ -175,6 +175,20 @@ describe('createTextEngine', () => {
     engine.destroy();
   });
 
+  it('getCfi returns null before mount and never throws once mounted', async () => {
+    // The full generate -> serialize -> resolve mechanics are covered against
+    // fake documents in anchor.test.ts / cfi.test.ts; jsdom's srcdoc iframe
+    // doesn't reliably expose contentDocument outside the initial render tick
+    // (a standing limitation of this test env, not this feature — see the
+    // Playwright coverage / browser verification for the real integration).
+    const container = document.createElement('div');
+    const engine = createTextEngine({ container, source: source(), bookId: 'b' });
+    expect(engine.getCfi()).toBeNull();
+    await engine.mount();
+    expect(() => engine.getCfi()).not.toThrow();
+    engine.destroy();
+  });
+
   it('accepts a custom transitions adapter and cancels it on destroy', async () => {
     const calls: string[] = [];
     const spy = {

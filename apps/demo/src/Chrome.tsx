@@ -58,6 +58,7 @@ export function Chrome({
   const chromeVisible = useChromeVisible();
   const [dismissed, setDismissed] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [posNotice, setPosNotice] = useState<string | null>(null);
 
   useReaderHistory({ mode: 'url-and-title' });
   useEffect(() => setDismissed(false), [bookId]);
@@ -131,6 +132,21 @@ export function Chrome({
           aria-label="Search in book"
         >
           🔍
+        </button>
+      )}
+      {isText && (
+        <button
+          onClick={() => {
+            const cfi = reader.getCfi();
+            if (!cfi) return;
+            void navigator.clipboard?.writeText(cfi).catch(() => {});
+            setPosNotice(cfi);
+            setTimeout(() => setPosNotice(null), 4000);
+          }}
+          aria-label="Copy position (CFI)"
+          title="Copy a portable position link (epubcfi)"
+        >
+          🔗
         </button>
       )}
       <button
@@ -283,6 +299,12 @@ export function Chrome({
       )}
 
       <FootnotePopover />
+
+      {posNotice && (
+        <div className="notice" role="status" onClick={() => setPosNotice(null)}>
+          Copied: {posNotice}
+        </div>
+      )}
 
       {showSkeleton && !readerError.error && (
         <div className="skeleton" aria-hidden>

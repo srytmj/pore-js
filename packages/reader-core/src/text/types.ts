@@ -104,6 +104,8 @@ export interface TextEngine {
   search(query: string): Promise<SearchHit[]>;
   /** Jump to a hit from {@link search}. */
   gotoHit(hit: SearchHit): void;
+  /** Portable `epubcfi(...)` for the current position, or `null` before the spine has rendered. */
+  getCfi(): string | null;
   on<E extends keyof TextEngineEvents>(
     event: E,
     handler: (payload: TextEngineEvents[E]) => void,
