@@ -22,6 +22,8 @@ export type {
   TransitionContext,
 } from '@pore/reader-core';
 export { instantTransitions } from '@pore/reader-core';
+export { gsapAdapter } from './gsap-adapter.js';
+export type { GsapLike, GsapAdapterOptions } from './gsap-adapter.js';
 
 export {
   Reader,

@@ -1,7 +1,10 @@
 import { CachedSource, DemoSource, LocalFileSource, type ReaderSource } from '@pore/reader-core';
-import { Reader, ReaderAnnouncer, ReaderProvider } from '@pore/reader-react';
+import { Reader, ReaderAnnouncer, ReaderProvider, gsapAdapter } from '@pore/reader-react';
+import gsap from 'gsap';
 import { useEffect, useMemo, useState } from 'react';
 import { Chrome } from './Chrome.js';
+
+const transitions = gsapAdapter(gsap);
 
 const BOOKS: { id: string; label: string; settings?: Record<string, unknown> }[] = [
   { id: 'demo-manga', label: 'Demo Manga', settings: { layout: 'paged-double', direction: 'rtl' } },
@@ -65,6 +68,7 @@ export function App() {
         <Reader
           key={activeBook}
           bookId={activeBook}
+          transitions={transitions}
           {...(!dropped && book.settings ? { initialSettings: book.settings } : {})}
         >
           <ReaderAnnouncer />

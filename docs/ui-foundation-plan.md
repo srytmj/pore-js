@@ -95,19 +95,27 @@ end-page styling; Radix `Select`/`DropdownMenu` variants deferred to U5)_
 
 ---
 
-## U4 — `gsapAdapter` (GSAP animation) · M
+## U4 — `gsapAdapter` (GSAP animation) · M ✅
 
-- [ ] `@pore/reader-react` exports `gsapAdapter(gsap)` → `ReaderTransitions`
-- [ ] Page turn: direction-aware slide + slight fade (image paged & text);
-      webtoon/continuous uses eased `scrollTo`; ~220 ms, `power2.out`
-- [ ] Zoom / pan: eased transform; double-tap zoom springs
-- [ ] `cancel()` kills tweens on rapid input (no queue build-up)
-- [ ] `reduced === true` → every method falls back to instant
-- [ ] Panel / chrome / popover enter-exit: via Radix data-attrs
-      (`data-state=open/closed`) animated by GSAP or CSS in the demo
-- [ ] Vitest: adapter calls `gsap.to` with expected vars; reduced-motion no-ops
+- [x] `@pore/reader-react` exports `gsapAdapter(gsap, opts?)` → `ReaderTransitions`;
+      `gsap` is an **optional peer dep** (`peerDependenciesMeta`), never bundled
+- [x] `page()` — eased `x`/`y` slide from → to (~220 ms `power2.out`) with a
+      short opacity fade on a real turn (`dir !== 0`); flow-mode / continuous use
+      eased `scrollTo`
+- [x] `zoom()` — eased transform-string tween (double-tap zoom springs toward
+      the target)
+- [x] `cancel()` kills tweens on every touched element (rapid input, spine jump,
+      destroy)
+- [x] `reduced` → instant `el.style.transform` / `el[prop]`, no tween
+- [x] Demo wires `<Reader transitions={gsapAdapter(gsap)}>`
+- [x] Vitest (5): slide vars, no-fade-on-jump, reduced instant, eased scroll,
+      cancel touches every element
+- [x] Browser-verified: EPUB turn slides `-210 → -346 → … → -576` (eased),
+      image double-tap zoom `scale(1.68 → 1.84)`, no console errors
+- [ ] Panel / popover enter-exit animation → **U5** (Radix `data-state` + CSS)
 
-**Done when:** `<Reader transitions={gsapAdapter(gsap)}>` gives smooth turns.
+**Done when:** `<Reader transitions={gsapAdapter(gsap)}>` gives smooth turns. ✅
+done 2026-08-30
 
 ---
 
