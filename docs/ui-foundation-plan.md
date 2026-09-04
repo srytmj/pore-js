@@ -30,16 +30,20 @@ unopinionated about design.
 
 ---
 
-## U1 — Tailwind + design tokens in the demo · S
+## U1 — Tailwind + design tokens in the demo · S ✅
 
-- [ ] Tailwind v4 in `apps/demo` (`@tailwindcss/vite`), `prefers-reduced-motion` + `dark` (class strategy) wired
-- [ ] Design tokens: color scale (bg/surface/text/accent), radius, spacing,
-      reading-surface vars; light + dark
-- [ ] Port the existing hand-rolled `styles.css` to Tailwind utility classes /
-      `@apply` components — no visual regression
-- [ ] Keep `styles.css` only for the tokens `@theme` block
+- [x] Tailwind v4 via `@tailwindcss/vite`; `dark` is a class strategy
+      (`@custom-variant dark`), `prefers-reduced-motion` guards the transitions
+- [x] `@theme` tokens — `--color-canvas / surface / fg / muted / line / accent`,
+      `--radius-panel / control`; the `.dark` block re-maps the same roles
+- [x] `styles.css` rebuilt: `@theme` + `@layer components` with `@apply`, same
+      class names (Chrome / SettingsPanel markup untouched)
+- [x] `theme.ts` — `useTheme()` toggle (`<html class="dark">` + localStorage);
+      ☾ / ☀ button in the bar
 
 **Done when:** the demo looks the same but is Tailwind-driven; dark mode toggles.
+✅ done 2026-08-30 _(the reading surface keeps its own theme via the Theme tab —
+independent of the shell)_
 
 ---
 

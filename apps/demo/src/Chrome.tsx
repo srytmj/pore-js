@@ -18,6 +18,7 @@ import {
   type TocEntry,
 } from '@pore/reader-react';
 import { useEffect, useState } from 'react';
+import { useTheme } from './theme.js';
 
 function flattenToc(entries: TocEntry[], depth = 0): { label: string; href: string }[] {
   return entries.flatMap((e) => [
@@ -47,6 +48,7 @@ export function Chrome({
   const download = useDownload(bookId);
   const search = useReaderSearch();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [theme, toggleTheme] = useTheme();
   const reader = useReader();
   const kind = useReaderKind();
   const [imgSettings, setImgSettings] = useReaderSettings<ImageEngineSettings>();
@@ -135,6 +137,12 @@ export function Chrome({
           🔍
         </button>
       )}
+      <button
+        onClick={toggleTheme}
+        aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+      >
+        {theme === 'dark' ? '☀' : '☾'}
+      </button>
       <button
         className={panelOpen ? 'active' : ''}
         onClick={() => setPanelOpen((v) => !v)}
