@@ -75,6 +75,10 @@ export function Chrome({
 
   const isImage = kind === 'image';
   const isText = kind === 'text';
+  // The reader kind for PDF is 'image' (it's the image engine underneath);
+  // search is only meaningful when there's a text layer, so key off the id.
+  const isPdf = isImage && /\.pdf$|^demo-pdf$/i.test(bookId);
+  const canSearch = isText || isPdf;
   const menuPos = isText ? textSettings.menuPosition : 'top';
   const menuReveal = isText ? textSettings.menuReveal : 'hover';
   const side = menuPos === 'left' || menuPos === 'right';
@@ -120,7 +124,7 @@ export function Chrome({
           {imgSettings.autoscroll ? '⏸' : '▶'}
         </button>
       )}
-      {isText && (
+      {canSearch && (
         <button
           className={searchOpen ? 'active' : ''}
           onClick={() => setSearchOpen((v) => !v)}
@@ -207,7 +211,7 @@ export function Chrome({
 
       <SettingsPanel open={panelOpen} onOpenChange={setPanelOpen} />
 
-      {searchOpen && isText && (
+      {searchOpen && canSearch && (
         <div className="search" role="search">
           <div className="search__row">
             <input

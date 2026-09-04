@@ -88,9 +88,10 @@ source is usable programmatically now)_
       (maps `hit.start` → block element → page); `reader:searchresults` event
 - [x] `reader-react` `useReaderSearch()` — debounced, cancellable, `next`/`prev`;
       demo gets a 🔍 panel with highlighted snippets (`<mark>`)
-- [ ] PDF search — _deferred_: needs `PdfImageSource` to surface `textContent`
-      per page and a rect-based `gotoHit`; folds into a later PDF pass. Image /
-      CBZ have no text (correctly skipped).
+- [x] PDF search — landed post-M3: `PdfImageSource.textContent(n)` +
+      `createPdfEngine` builds a `SearchController` over per-page text,
+      `gotoHit` → `goto(page)` (page-level, not rect-level — good enough to
+      jump to the right page). Image / CBZ have no text (correctly skipped).
 - [x] Vitest (13): `querySearchIndex` (5 — order, snippet range, whitespace,
       min length, limit), `SearchController` (3 — sync, latest-wins, worker
       plumbing), text-engine `search` + `gotoHit` integration

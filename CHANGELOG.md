@@ -8,6 +8,11 @@ Post-`v0.6.0-ui` UI polish.
   drag / keyboard seek → `goto`, chapter tick marks, a live
   "Ch 3/12 · 47% · N min left" label. `useReaderChapters()` hook. The demo docks
   it at the bottom, auto-hiding with the chrome.
+- **PDF in-book search** — `PdfImageSource` exposes `textContent(page)` /
+  `pageCount()`; `createPdfEngine` builds a `SearchController` over the PDF's
+  text layer and adds `search()` / `gotoHit()` / `reader:searchresults`, same
+  shape as the EPUB engine (page-level jump, not rect-level). The demo's search
+  panel now works for PDFs too.
 - **Loading skeleton + error tile** — the image engine's `loadInto` now emits
   `reader:loadingstate` (`loading`/`loaded`/`error`) for the *visible* page, not
   just prefetch; `reader-react` gains `useReaderError()` (last `reader:error` +

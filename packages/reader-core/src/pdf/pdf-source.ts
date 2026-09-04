@@ -35,6 +35,16 @@ export class PdfImageSource implements ReaderSource {
     return (await this.#load()).outline;
   }
 
+  /** Page count, for building search sections without re-touching pdf.js internals. */
+  async pageCount(): Promise<number> {
+    return (await this.#load()).pageCount;
+  }
+
+  /** Plain text of one page (1-based), for in-book search. */
+  async textContent(page: number): Promise<string> {
+    return (await this.#load()).textContent(page);
+  }
+
   async getManifest(bookId: string): Promise<Manifest> {
     const doc = await this.#load(bookId);
     const sizes = await Promise.all(

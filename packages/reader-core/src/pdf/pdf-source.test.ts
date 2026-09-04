@@ -11,7 +11,8 @@ const fakeDoc = (over: Partial<PdfDoc> = {}): PdfDoc => ({
   ],
   pageSize: async () => ({ width: 612, height: 792 }),
   renderToBlob: async () => new Blob([new Uint8Array([1, 2])], { type: 'image/webp' }),
-  textContent: async () => 'text',
+  textContent: async (n: number) =>
+    n === 2 ? 'the falcon flies over the harbour at dawn' : `page ${n} filler text`,
   destroy: async () => {},
   ...over,
 });
@@ -73,6 +74,13 @@ describe('PdfImageSource', () => {
     await src.saveProgress('doc', { type: 'page', value: 2, total: 3 });
     expect(i.saveProgress).toHaveBeenCalledWith('doc', { type: 'page', value: 2, total: 3 });
   });
+
+  it('exposes pageCount and per-page textContent for search', async () => {
+    const { PdfImageSource } = await import('./pdf-source.js');
+    const src = new PdfImageSource(inner());
+    expect(await src.pageCount()).toBe(3);
+    expect(await src.textContent(2)).toContain('falcon');
+  });
 });
 
 describe('createPdfEngine', () => {
@@ -88,6 +96,32 @@ describe('createPdfEngine', () => {
     await new Promise((r) => setTimeout(r, 10));
     expect(ready).toHaveLength(1);
     expect((tocs[0] as { label: string }[]).map((t) => t.label)).toEqual(['Intro', 'Body']);
+    engine.destroy();
+  });
+
+  it('searches the PDF text layer and jumps to the hit page', async () => {
+    const { createPdfEngine } = await import('./create-pdf-engine.js');
+    const container = document.createElement('div');
+    const engine = createPdfEngine({
+      container,
+      source: inner(),
+      bookId: 'doc',
+      searchWorkerFactory: false,
+    });
+    const results: unknown[] = [];
+    engine.on('reader:searchresults', (p) => results.push(p));
+    await engine.mount();
+
+    const hits = await engine.search('falcon');
+    expect(hits).toHaveLength(1);
+    expect(hits[0]!.sectionId).toBe('page:2');
+    expect(hits[0]!.sectionIndex).toBe(1);
+    expect(results).toHaveLength(1);
+
+    const locs: Array<{ page: number }> = [];
+    engine.on('reader:locationchange', (p) => locs.push(p));
+    engine.gotoHit(hits[0]!);
+    expect(locs.at(-1)?.page).toBe(1);
     engine.destroy();
   });
 });
