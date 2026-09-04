@@ -40,6 +40,7 @@ export {
   useChromeVisible,
   useReaderLoading,
   useReaderChapters,
+  useReaderError,
   useResumedFromPage,
 } from './reader.js';
 export type {
@@ -53,6 +54,8 @@ export type {
   AnySettings,
   Footnote,
   EndPage,
+  ReaderErrorInfo,
+  UseReaderError,
 } from './reader.js';
 
 export { SettingsPanel, SettingsPanelBody } from './settings-panel.js';

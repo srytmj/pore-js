@@ -138,11 +138,16 @@ done 2026-08-30
       `onValueCommit` → `handle.goto`, chapter tick marks from
       `useReaderChapters()`, a live "Ch 3/12 · 47% · N min left" label. Demo docks
       it at the bottom, auto-hiding with the chrome. `useReaderChapters()` added.
-- [ ] Loading skeleton tiles, error tile with retry, full end-page / drop-zone
-      restyle → still a follow-up (lower value; the shell is coherent)
+- [x] **Loading skeleton + error tile** — `loadInto` (image engine) now emits
+      `reader:loadingstate` for the visible page (was prefetch-only);
+      `useReaderError()` (`reader-react`) exposes the last `reader:error` +
+      `dismiss`/`retry`. Demo: a shimmering skeleton after a 220 ms delay
+      (no flash on fast loads), a centred error tile with Retry/Dismiss.
+- [ ] Full end-page / drop-zone restyle → still a follow-up (lower value; the
+      shell is coherent)
 
 **Done when:** the demo reads like a finished product on desktop and mobile.
-🟢 landed 2026-08-30 (scrubber included); skeleton/error tiles remain optional
+🟢 landed 2026-08-30 — scrubber + loading/error states included
 
 ---
 

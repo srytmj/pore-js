@@ -226,6 +226,41 @@ describe('createImageEngine (paged-single)', () => {
     engine.destroy();
   });
 
+  it('emits loading/loaded/error loadingstate for the visible page', async () => {
+    const manifestUrl = '/fixtures/b/manifest.json';
+    const fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url === manifestUrl) {
+        return new Response(
+          JSON.stringify({ pages: Array.from({ length: 3 }, (_, i) => ({ src: `p${i}.svg` })) }),
+          { status: 200 },
+        );
+      }
+      if (url.endsWith('p1.svg')) return new Response('nope', { status: 500 });
+      return new Response(new Blob(['<svg/>'], { type: 'image/svg+xml' }), { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const container = document.createElement('div');
+    const engine = createImageEngine({
+      container,
+      source: new DemoSource({ fetch }),
+      bookId: 'b',
+    });
+    const states = collect(engine, 'reader:loadingstate');
+    const errors = collect(engine, 'reader:error');
+    await engine.mount();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(states).toContainEqual({ index: 0, state: 'loading' });
+    expect(states).toContainEqual({ index: 0, state: 'loaded' });
+
+    engine.goto(1);
+    await new Promise((r) => setTimeout(r, 10));
+    expect(states).toContainEqual({ index: 1, state: 'error' });
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.index).toBe(1);
+    engine.destroy();
+  });
+
   it('rejects a non-image book', async () => {
     const fetch = vi.fn(
       async () => new Response(JSON.stringify({ pages: [] }), { status: 200 }),

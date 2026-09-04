@@ -43,6 +43,14 @@ export interface Footnote {
   href: string;
 }
 
+export interface ReaderErrorInfo {
+  /** Book-level page or spine index the error happened on, if known. */
+  index?: number;
+  error: unknown;
+  /** Bumped on every occurrence so consumers can re-key a toast even if the message repeats. */
+  at: number;
+}
+
 export interface EndPage {
   kind: 'chapter' | 'book';
   label: string;
@@ -89,6 +97,8 @@ interface ReaderCtx {
   resumedFromPage: number | null;
   loading: boolean;
   chapters: Chapter[];
+  error: ReaderErrorInfo | null;
+  clearError: () => void;
   handle: ReaderHandle;
 }
 
@@ -155,6 +165,7 @@ export function Reader({
   const [resumedFromPage, setResumedFromPage] = useState<number | null>(null);
   const [loading, setLoading] = useState<Set<string>>(() => new Set());
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [error, setError] = useState<ReaderErrorInfo | null>(null);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -244,6 +255,10 @@ export function Reader({
         engine.on('reader:chrometoggle', (p: never) =>
           setChromeVisible((p as { visible: boolean }).visible),
         ),
+        engine.on('reader:error', (p: never) => {
+          const q = p as { index?: number; error: unknown };
+          setError({ ...(q.index !== undefined ? { index: q.index } : {}), error: q.error, at: Date.now() });
+        }),
       );
 
       await engine.mount();
@@ -271,6 +286,7 @@ export function Reader({
     [],
   );
   const clearFootnote = useMemo(() => () => setFootnote(null), []);
+  const clearError = useMemo(() => () => setError(null), []);
 
   useImperativeHandle(ref, () => handle, [handle]);
 
@@ -289,6 +305,8 @@ export function Reader({
       resumedFromPage,
       loading: loading.size > 0,
       chapters,
+      error,
+      clearError,
       handle,
     }),
     [
@@ -305,6 +323,8 @@ export function Reader({
       chromeVisible,
       resumedFromPage,
       loading,
+      error,
+      clearError,
       handle,
     ],
   );
@@ -374,6 +394,23 @@ export function useReaderLoading(): boolean {
 /** The book's chapters (`{ id, label, startPage, startPercent }`), empty until known. */
 export function useReaderChapters(): Chapter[] {
   return useRuntime().chapters;
+}
+
+export interface UseReaderError {
+  error: ReaderErrorInfo | null;
+  dismiss: () => void;
+  /** Nudge the engine to reload the current page — `goto`'s the current position. */
+  retry: () => void;
+}
+
+/** The most recent `reader:error`, with a dismiss and a best-effort retry. */
+export function useReaderError(): UseReaderError {
+  const { error, clearError, location, handle } = useRuntime();
+  const retry = useCallback(() => {
+    if (location) handle.goto(location.page);
+    clearError();
+  }, [location, handle, clearError]);
+  return { error, dismiss: clearError, retry };
 }
 
 export function useReader(): ReaderHandle {

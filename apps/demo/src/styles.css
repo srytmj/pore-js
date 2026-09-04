@@ -289,6 +289,53 @@
     @apply bg-neutral-950;
   }
 
+  /* --- loading skeleton + error tile --------------------------------------- */
+  .skeleton {
+    @apply pointer-events-none fixed inset-0 z-[15] flex items-center justify-center;
+  }
+  .skeleton__tile {
+    @apply h-[70vh] max-h-[560px] w-[min(70vw,420px)] rounded-[var(--radius-panel)];
+    background: linear-gradient(
+      100deg,
+      color-mix(in srgb, currentColor 8%, transparent) 30%,
+      color-mix(in srgb, currentColor 16%, transparent) 50%,
+      color-mix(in srgb, currentColor 8%, transparent) 70%
+    );
+    background-size: 200% 100%;
+    animation:
+      pore-shimmer 1.6s ease-in-out infinite,
+      pore-fade-in 0.2s ease-out;
+  }
+  @keyframes pore-shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  .error-tile {
+    @apply fixed top-1/2 left-1/2 z-[16] w-[min(90vw,22rem)] -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-panel)] border border-line bg-surface p-4 text-center text-fg shadow-2xl;
+    animation: pore-panel-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .error-tile__actions {
+    @apply mt-3 flex justify-center gap-2;
+  }
+  .error-tile__actions button {
+    @apply rounded-[var(--radius-control)] border border-line bg-canvas px-3 py-1.5 text-[0.85rem];
+  }
+  .error-tile__actions button:first-child {
+    @apply border-accent bg-accent text-accent-fg;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton__tile {
+      animation: none;
+      background-position: 0 0;
+    }
+  }
+
   .panel-wrap {
     @apply fixed top-12 right-4 z-20;
   }

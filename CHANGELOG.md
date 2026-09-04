@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+Post-`v0.6.0-ui` UI polish.
+
+- **`<ReaderScrubber>`** — a Radix `Slider` bound to the reader position:
+  drag / keyboard seek → `goto`, chapter tick marks, a live
+  "Ch 3/12 · 47% · N min left" label. `useReaderChapters()` hook. The demo docks
+  it at the bottom, auto-hiding with the chrome.
+- **Loading skeleton + error tile** — the image engine's `loadInto` now emits
+  `reader:loadingstate` (`loading`/`loaded`/`error`) for the *visible* page, not
+  just prefetch; `reader-react` gains `useReaderError()` (last `reader:error` +
+  `dismiss`/`retry`, where `retry` re-`goto`s the current page). The demo shows
+  a shimmering skeleton tile after a 220 ms delay (no flash on fast loads) and a
+  centred "Couldn't load this page" tile with Retry/Dismiss on error.
+
 ## v0.6.0-ui — 2026-08-30
 
 UI foundation: Tailwind, a headless Radix component layer, and an injectable

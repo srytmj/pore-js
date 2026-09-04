@@ -248,12 +248,18 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   };
 
   const loadInto = (img: HTMLImageElement, pageIndex: number) => {
+    emitter.emit('reader:loadingstate', { index: pageIndex, state: 'loading' });
     loader
       ?.get(pageIndex)
       .then((url) => {
-        if (!destroyed) img.src = url;
+        if (destroyed) return;
+        img.src = url;
+        emitter.emit('reader:loadingstate', { index: pageIndex, state: 'loaded' });
       })
-      .catch((error: unknown) => emitter.emit('reader:error', { index: pageIndex, error }));
+      .catch((error: unknown) => {
+        emitter.emit('reader:loadingstate', { index: pageIndex, state: 'error' });
+        emitter.emit('reader:error', { index: pageIndex, error });
+      });
   };
 
   const syncPrefetchAndRetain = () => {

@@ -10,6 +10,7 @@ import {
   useDownload,
   ReaderScrubber,
   useReaderLoading,
+  useReaderError,
   useReaderSearch,
   useReaderLocation,
   useReaderProgress,
@@ -44,6 +45,8 @@ export function Chrome({
   const download = useDownload(bookId);
   const search = useReaderSearch();
   const loading = useReaderLoading();
+  const readerError = useReaderError();
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [theme, toggleTheme] = useTheme();
   const reader = useReader();
@@ -58,6 +61,17 @@ export function Chrome({
 
   useReaderHistory({ mode: 'url-and-title' });
   useEffect(() => setDismissed(false), [bookId]);
+
+  // Only show the skeleton for loads that take a moment — avoids a flash on
+  // cache-warm / fast page turns.
+  useEffect(() => {
+    if (!loading) {
+      setShowSkeleton(false);
+      return;
+    }
+    const t = setTimeout(() => setShowSkeleton(true), 220);
+    return () => clearTimeout(t);
+  }, [loading]);
 
   const isImage = kind === 'image';
   const isText = kind === 'text';
@@ -247,6 +261,22 @@ export function Chrome({
       )}
 
       <FootnotePopover />
+
+      {showSkeleton && !readerError.error && (
+        <div className="skeleton" aria-hidden>
+          <div className="skeleton__tile" />
+        </div>
+      )}
+
+      {readerError.error && (
+        <div className="error-tile" role="alert">
+          <p>Couldn't load this page.</p>
+          <div className="error-tile__actions">
+            <button onClick={readerError.retry}>Retry</button>
+            <button onClick={readerError.dismiss}>Dismiss</button>
+          </div>
+        </div>
+      )}
 
       {resumed !== null && !dismissed && (
         <div className="toast">
