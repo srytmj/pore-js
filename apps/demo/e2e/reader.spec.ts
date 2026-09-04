@@ -258,6 +258,21 @@ test.describe('Pore.js demo — M3', () => {
     await expect(page.getByRole('button', { name: 'Reader settings' })).toBeFocused();
   });
 
+  test('bottom scrubber seeks and shows chapter ticks', async ({ page }) => {
+    await page.goto('/?book=demo-manga');
+    await page.getByRole('button', { name: '›' }).click(); // wake the chrome
+    const slider = page.getByRole('slider', { name: 'Seek' });
+    await expect(slider).toBeVisible();
+    // demo-manga has 3 chapters → 2 interior ticks
+    await expect(page.locator('.pore-scrubber__tick')).toHaveCount(2);
+
+    const track = page.locator('.pore-scrubber__track');
+    const box = (await track.boundingBox())!;
+    await page.mouse.click(box.x + box.width * 0.8, box.y + box.height / 2);
+    await expect(page.locator('.loc')).toContainText('Ch 3/3');
+    await expect(page.locator('.pore-scrubber__label')).toContainText('%');
+  });
+
   test('reduced motion: page turns apply instantly', async ({ browser }) => {
     const context = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await context.newPage();

@@ -88,6 +88,7 @@ interface ReaderCtx {
   chromeVisible: boolean;
   resumedFromPage: number | null;
   loading: boolean;
+  chapters: Chapter[];
   handle: ReaderHandle;
 }
 
@@ -153,6 +154,7 @@ export function Reader({
   const [chromeVisible, setChromeVisible] = useState(true);
   const [resumedFromPage, setResumedFromPage] = useState<number | null>(null);
   const [loading, setLoading] = useState<Set<string>>(() => new Set());
+  const [chapters, setChapters] = useState<Chapter[]>([]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -200,12 +202,15 @@ export function Reader({
           })) as unknown as EngineLike;
       engineRef.current = engine;
 
+      const refreshChapters = () => setChapters(engine.chapters?.() ?? []);
+
       offs.push(
         engine.on('reader:locationchange', (p: never) => {
           const loc = p as Locator;
           setLocation(loc);
           onPosRef.current?.(loc);
         }),
+        engine.on('reader:ready', () => refreshChapters()),
         engine.on('reader:progress', (p: never) => setProgress(p as ReaderProgress)),
         engine.on('reader:resumed', (p: never) => {
           const q = p as { position: Position | null; page?: number };
@@ -217,7 +222,10 @@ export function Reader({
           if (q.keymap) setKeymap(q.keymap);
           persistence.save(bookId, rk, q.settings);
         }),
-        engine.on('reader:toc', (p: never) => setToc((p as { toc: TocEntry[] }).toc)),
+        engine.on('reader:toc', (p: never) => {
+          setToc((p as { toc: TocEntry[] }).toc);
+          refreshChapters();
+        }),
         engine.on('reader:loadingstate', (p: never) => {
           const q = p as { index?: number; spine?: number; state: string };
           const key = String(q.index ?? q.spine ?? 0);
@@ -280,6 +288,7 @@ export function Reader({
       chromeVisible,
       resumedFromPage,
       loading: loading.size > 0,
+      chapters,
       handle,
     }),
     [
@@ -292,6 +301,7 @@ export function Reader({
       footnote,
       clearFootnote,
       endPage,
+      chapters,
       chromeVisible,
       resumedFromPage,
       loading,
@@ -359,6 +369,11 @@ export function useChromeVisible(): boolean {
 /** `true` while any page / spine image is still loading. */
 export function useReaderLoading(): boolean {
   return useRuntime().loading;
+}
+
+/** The book's chapters (`{ id, label, startPage, startPercent }`), empty until known. */
+export function useReaderChapters(): Chapter[] {
+  return useRuntime().chapters;
 }
 
 export function useReader(): ReaderHandle {

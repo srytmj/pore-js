@@ -133,12 +133,16 @@ done 2026-08-30
 - [x] Responsive: `env(safe-area-inset-*)` on the bar / toast / footnote,
       `@media (pointer: coarse)` bumps touch targets, panel width clamps to the
       viewport; verified at 375 px
-- [ ] Bottom scrubber (drag-to-seek + chapter ticks), loading skeleton tiles,
-      error tile with retry, full end-page / drop-zone restyle → carried into a
-      follow-up (the shell is already coherent; these are refinements)
+- [x] **Bottom scrubber** — `<ReaderScrubber>` in `reader-react`: Radix `Slider`
+      bound to `location.page` / `total` (keyboard-seekable, labelled),
+      `onValueCommit` → `handle.goto`, chapter tick marks from
+      `useReaderChapters()`, a live "Ch 3/12 · 47% · N min left" label. Demo docks
+      it at the bottom, auto-hiding with the chrome. `useReaderChapters()` added.
+- [ ] Loading skeleton tiles, error tile with retry, full end-page / drop-zone
+      restyle → still a follow-up (lower value; the shell is coherent)
 
 **Done when:** the demo reads like a finished product on desktop and mobile.
-🟡 core polish landed 2026-08-30; scrubber + skeletons tracked as a follow-up
+🟢 landed 2026-08-30 (scrubber included); skeleton/error tiles remain optional
 
 ---
 

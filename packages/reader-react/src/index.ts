@@ -39,6 +39,7 @@ export {
   useEndPage,
   useChromeVisible,
   useReaderLoading,
+  useReaderChapters,
   useResumedFromPage,
 } from './reader.js';
 export type {
@@ -75,3 +76,5 @@ export { useDownload } from './use-download.js';
 export type { UseDownload } from './use-download.js';
 
 export { ReaderAnnouncer } from './announcer.js';
+export { ReaderScrubber } from './scrubber.js';
+export type { ReaderScrubberProps, ScrubberLabelInfo } from './scrubber.js';

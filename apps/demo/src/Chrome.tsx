@@ -8,6 +8,7 @@ import {
   useReaderHistory,
   useReaderKind,
   useDownload,
+  ReaderScrubber,
   useReaderLoading,
   useReaderSearch,
   useReaderLocation,
@@ -70,15 +71,6 @@ export function Chrome({
     if (overlayOpen) pinChrome();
   }, [overlayOpen, pinChrome]);
 
-  const pos = loc?.position;
-  const total = pos && pos.type !== 'anchor' ? pos.total : 0;
-  const pct = loc
-    ? loc.percent
-      ? loc.percent * 100
-      : total > 0
-        ? ((loc.page + 1) / total) * 100
-        : 0
-    : 0;
 
   const barControls = (
     <>
@@ -188,15 +180,16 @@ export function Chrome({
         {barControls}
       </header>
 
-      <div
-        className={`progress${loading ? ' progress--loading' : ''}`}
-        role="progressbar"
-        aria-valuenow={Math.round(pct)}
-        style={{
-          width: loading ? undefined : `${pct}%`,
-          opacity: isImage && imgSettings.progressBar?.style === 'hidden' ? 0 : 1,
-        }}
-      />
+      {loading && <div className="progress progress--loading" aria-hidden />}
+
+      {!(isImage && imgSettings.progressBar?.style === 'hidden') && (
+        <div
+          className={`scrubber-dock${!side && autoHidden ? ' scrubber-dock--hidden' : ''}`}
+          onPointerEnter={pinChrome}
+        >
+          <ReaderScrubber />
+        </div>
+      )}
 
       <SettingsPanel open={panelOpen} onOpenChange={setPanelOpen} />
 

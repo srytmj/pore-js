@@ -142,8 +142,55 @@
     @apply h-[3px] flex-none bg-accent transition-[width] duration-200;
   }
   .progress--loading {
-    @apply w-2/5;
+    @apply fixed inset-x-0 top-0 z-30 w-2/5;
     animation: pore-progress-indeterminate 1.1s ease-in-out infinite alternate;
+  }
+
+  /* --- bottom scrubber --------------------------------------------------- */
+  .scrubber-dock {
+    @apply fixed inset-x-0 bottom-0 z-30 px-3 pt-3 pb-1 transition-transform duration-300;
+    padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    background: linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 88%, transparent), transparent);
+  }
+  .scrubber-dock--hidden:not(:hover):not(:focus-within) {
+    transform: translateY(calc(100% - 3px));
+  }
+  .pore-scrubber {
+    @apply mx-auto flex max-w-3xl flex-col gap-1;
+  }
+  .pore-scrubber__slider {
+    @apply relative flex h-5 w-full touch-none items-center select-none;
+  }
+  .pore-scrubber__track {
+    @apply relative h-[3px] grow overflow-visible rounded-full bg-fg/20;
+  }
+  .pore-scrubber__range {
+    @apply absolute h-full rounded-full bg-accent;
+  }
+  .pore-scrubber__tick {
+    @apply absolute top-1/2 h-2.5 w-px -translate-x-1/2 -translate-y-1/2 bg-fg/35;
+  }
+  .pore-scrubber__thumb {
+    @apply block size-3 rounded-full bg-accent shadow transition-transform;
+  }
+  .pore-scrubber__thumb:hover,
+  .pore-scrubber__thumb:focus-visible,
+  .pore-scrubber__slider[data-dragging] .pore-scrubber__thumb {
+    @apply scale-150;
+  }
+  .pore-scrubber__thumb:focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+  .pore-scrubber__label {
+    @apply text-center text-[0.72rem] text-muted [font-variant-numeric:tabular-nums];
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scrubber-dock,
+    .pore-scrubber__thumb {
+      transition: none;
+    }
   }
   @keyframes pore-progress-indeterminate {
     from {
@@ -182,7 +229,7 @@
 
   .toast {
     @apply fixed left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-[var(--radius-control)] bg-neutral-900 px-3 py-2 text-[0.8rem] text-white;
-    bottom: calc(1rem + env(safe-area-inset-bottom));
+    bottom: calc(4.25rem + env(safe-area-inset-bottom));
     animation: pore-fade-in 0.2s ease-out;
   }
   .toast button {

@@ -41,6 +41,10 @@ core.
   pinned while a panel is open); indeterminate top bar during loading; panel /
   search / footnote / toast enter animations — all disabled under reduced
   motion. Safe-area insets, coarse-pointer touch targets, viewport-clamped panel.
+- **`<ReaderScrubber>`** — a Radix `Slider` bound to the reader position:
+  drag / keyboard seek → `goto`, chapter tick marks, a live
+  "Ch 3/12 · 47% · N min left" label. `useReaderChapters()` hook. The demo docks
+  it at the bottom, auto-hiding with the chrome.
 
 ## v0.5.0-m3 — 2026-08-29
 
