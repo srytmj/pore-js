@@ -83,9 +83,13 @@ navigation, footnote popovers.
 See `docs/m0-plan.md` … `docs/m3-plan.md` for the task breakdowns, and
 [`CHANGELOG.md`](CHANGELOG.md).
 
-UI foundation: [`docs/ui-foundation-plan.md`](docs/ui-foundation-plan.md) (U1–U4
-done; U5 core polish done, bottom scrubber + loading skeletons tracked as a
-follow-up).
+UI foundation: [`docs/ui-foundation-plan.md`](docs/ui-foundation-plan.md) — done
+(U1–U6, plus the scrubber / loading-skeleton+error / PDF-search /
+RTL-horizontal / end-page follow-ups all landed on `main`).
+
+Next: [`docs/m4-plan.md`](docs/m4-plan.md) — CFI-precise text ranges,
+highlights & notes, fixed-layout EPUB, an `OpdsSource`, TTS (stretch).
+**Scoped, not started** — a few open questions in that doc first.
 
 ## License
 

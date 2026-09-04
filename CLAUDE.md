@@ -30,5 +30,8 @@ engine code — the demo consumes the built `dist/`.
 
 ## Milestones
 
-See `docs/*-plan.md`. M0–M3 done (engine fundamentals complete, `v0.5.0-m3`).
-Current: **UI foundation** — Radix + Tailwind + GSAP (`docs/ui-foundation-plan.md`).
+See `docs/*-plan.md`. M0–M3 done (`v0.5.0-m3`); UI foundation done (`v0.6.0-ui`,
+plus scrubber/loading-error/PDF-search/RTL/end-page follow-ups on `main`).
+Next: **M4** — CFI, highlights & notes, fixed-layout EPUB, OPDS, TTS
+(`docs/m4-plan.md`) — **scoped, not started**; open questions in that doc need
+an answer before F1 begins.
