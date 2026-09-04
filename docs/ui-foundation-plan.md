@@ -71,24 +71,27 @@ independent of the shell)_
 
 ---
 
-## U3 — `reader-react` chrome on Radix (headless) · L
+## U3 — `reader-react` chrome on Radix (headless) · L ✅
 
-- [ ] Add `@radix-ui/react-*` deps: `dialog`, `tabs`, `slider`, `select`,
-      `popover`, `switch`, `dropdown-menu`, `scroll-area`, `toggle-group`,
-      `visually-hidden`
-- [ ] Rebuild components, unstyled, emitting `data-pore-*` hooks:
-  - `<ReaderSettings>` — Radix `Dialog` + `Tabs`; `Slider` for numeric, `Select`
-    for enums, `Switch` for booleans; drives the same core/text settings
-  - `<TableOfContents>` — Radix `DropdownMenu` (or `Select`) → `goToHref`
-  - `<FootnotePopover>` — Radix `Popover` anchored to the noteref, `Dialog`
-    fallback on small screens
-  - `<KeybindEditor>` — Radix primitives + key capture
-  - `<EndPageMenu>` — the centred end-of-book / end-of-chapter menu
-- [ ] All components take `className`/`asChild` so the demo styles with Tailwind
-- [ ] Keep the existing hooks (`useReaderLocation` …) unchanged
-- [ ] Vitest + Testing Library: dialog open/close, tab switch, slider→setting
+- [x] Deps: `@radix-ui/react-{dialog,tabs,slider,select,switch,popover,visually-hidden}`
+- [x] `primitives.tsx` — headless `Field` / `SelectField` (native `<select>`,
+      still fully accessible) / `SliderField` (Radix Slider) / `SwitchField`
+      (Radix Switch) / `Tabs` (Radix Tabs); every element carries a
+      `data-pore-*` hook and takes `className`
+- [x] `<SettingsPanel>` — Radix `Dialog` (focus trap, Esc, overlay) + `Tabs`
+      when given `open`/`onOpenChange`/`trigger`, else inline; `SettingsPanelBody`
+      picks image vs text tab set. `<KeybindEditor>` kept as the Keybinds tab.
+- [x] `<TableOfContents>` — bound native `<select>` → `goToHref` (`data-pore-toc`)
+- [x] `<FootnotePopover>` — Radix `Popover` around `reader:footnote`
+- [x] Existing hooks unchanged; demo Chrome swapped to the new components
+- [x] Vitest + Testing Library + user-event (jsdom): `SelectField` change,
+      `SwitchField` toggle, `Tabs` panel switch on click
+- [x] Browser-verified: settings dialog opens with overlay + focus trap, Esc
+      closes, tabs switch, sliders/switches styled; TOC + footnote work
 
-**Done when:** every piece of chrome is a Radix-backed, unstyled component.
+**Done when:** every piece of chrome is a Radix-backed, unstyled component. ✅
+done 2026-08-30 _(EndPageMenu still rendered by the demo — folds into U5's
+end-page styling; Radix `Select`/`DropdownMenu` variants deferred to U5)_
 
 ---
 

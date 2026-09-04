@@ -51,8 +51,19 @@ export type {
   EndPage,
 } from './reader.js';
 
-export { SettingsPanel } from './settings-panel.js';
+export { SettingsPanel, SettingsPanelBody } from './settings-panel.js';
 export type { SettingsPanelProps } from './settings-panel.js';
+export { TableOfContents } from './table-of-contents.js';
+export type { TableOfContentsProps } from './table-of-contents.js';
+export { FootnotePopover } from './footnote-popover.js';
+export {
+  Field,
+  SelectField,
+  SliderField,
+  SwitchField,
+  Tabs as SettingsTabs,
+} from './primitives.js';
+export type { TabDef } from './primitives.js';
 
 export { useReaderHistory } from './history.js';
 export type { HistoryMode, UseReaderHistoryOptions } from './history.js';

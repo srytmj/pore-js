@@ -204,11 +204,74 @@
     @apply fixed top-12 right-4 z-20;
   }
 
+  .pore-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .pore-settings__overlay {
+    @apply fixed inset-0 z-[40] bg-black/30;
+  }
+
   .pore-settings {
-    @apply max-h-[75vh] w-80 overflow-y-auto rounded-[var(--radius-panel)] border border-line bg-surface text-[0.85rem] text-fg shadow-2xl;
+    @apply fixed top-12 right-4 z-[41] max-h-[75vh] w-80 overflow-y-auto rounded-[var(--radius-panel)] border border-line bg-surface text-[0.85rem] text-fg shadow-2xl;
+  }
+
+  /* Radix Slider */
+  .pore-slider {
+    @apply relative flex h-4 w-40 touch-none items-center select-none;
+  }
+  .pore-slider__track {
+    @apply relative h-1 grow rounded-full bg-fg/20;
+  }
+  .pore-slider__range {
+    @apply absolute h-full rounded-full bg-accent;
+  }
+  .pore-slider__thumb {
+    @apply block h-3.5 w-3.5 rounded-full border border-line bg-surface shadow;
+  }
+  .pore-slider__thumb:focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+
+  /* Radix Switch */
+  .pore-switch {
+    @apply relative h-[18px] w-8 shrink-0 rounded-full bg-fg/25 transition-colors;
+  }
+  .pore-switch[data-state='checked'] {
+    @apply bg-accent;
+  }
+  .pore-switch__thumb {
+    @apply block size-3.5 translate-x-0.5 rounded-full bg-white transition-transform;
+  }
+  .pore-switch__thumb[data-state='checked'] {
+    @apply translate-x-[15px];
+  }
+  .pore-switch:focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+
+  [data-pore-field-hint] {
+    @apply text-muted;
+  }
+  .pore-tabs {
+    @apply flex flex-col;
   }
   .pore-settings__tabs {
     @apply sticky top-0 flex gap-1 border-b border-line bg-surface p-1.5;
+  }
+  [data-pore-tab] {
+    @apply rounded-[6px] px-2 py-1 text-[0.8rem];
+  }
+  [data-pore-tab][data-state='active'] {
+    @apply bg-fg/15;
   }
   .pore-settings__tabs button {
     @apply rounded-[6px] px-2 py-1 text-[0.8rem];

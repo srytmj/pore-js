@@ -1,8 +1,9 @@
 import {
+  FootnotePopover,
   SettingsPanel,
+  TableOfContents,
   useChromeVisible,
   useEndPage,
-  useFootnote,
   useReader,
   useReaderHistory,
   useReaderKind,
@@ -12,20 +13,12 @@ import {
   useReaderProgress,
   useReaderSettings,
   useResumedFromPage,
-  useTableOfContents,
   type ImageEngineSettings,
   type TextEngineSettings,
-  type TocEntry,
 } from '@pore/reader-react';
 import { useEffect, useState } from 'react';
 import { useTheme } from './theme.js';
 
-function flattenToc(entries: TocEntry[], depth = 0): { label: string; href: string }[] {
-  return entries.flatMap((e) => [
-    { label: `${'  '.repeat(depth)}${e.label}`, href: e.href },
-    ...flattenToc(e.children, depth + 1),
-  ]);
-}
 
 interface BookOpt {
   id: string;
@@ -54,13 +47,10 @@ export function Chrome({
   const [imgSettings, setImgSettings] = useReaderSettings<ImageEngineSettings>();
   const [textSettings] = useReaderSettings<TextEngineSettings>();
   const resumed = useResumedFromPage();
-  const toc = useTableOfContents();
   const endPage = useEndPage();
   const chromeVisible = useChromeVisible();
-  const [footnote, clearFootnote] = useFootnote();
   const [dismissed, setDismissed] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
-  const tocFlat = flattenToc(toc).filter((e) => e.href);
 
   useReaderHistory({ mode: 'url-and-title' });
   useEffect(() => setDismissed(false), [bookId]);
@@ -97,20 +87,7 @@ export function Chrome({
         ))}
       </select>
 
-      {tocFlat.length > 0 && (
-        <select
-          aria-label="Table of contents"
-          value=""
-          onChange={(e) => e.target.value && reader.goToHref(e.target.value)}
-        >
-          <option value="">Contents…</option>
-          {tocFlat.map((t, i) => (
-            <option key={i} value={t.href}>
-              {t.label}
-            </option>
-          ))}
-        </select>
-      )}
+      <TableOfContents />
 
       <button onClick={() => reader.turn('back')} aria-label="Previous page">
         ‹
@@ -212,11 +189,7 @@ export function Chrome({
         }}
       />
 
-      {panelOpen && (
-        <div className="panel-wrap">
-          <SettingsPanel onClose={() => setPanelOpen(false)} />
-        </div>
-      )}
+      <SettingsPanel open={panelOpen} onOpenChange={setPanelOpen} />
 
       {searchOpen && isText && (
         <div className="search" role="search">
@@ -271,14 +244,7 @@ export function Chrome({
         </div>
       )}
 
-      {footnote && (
-        <div className="footnote" role="dialog" aria-label="Footnote">
-          <button className="footnote__close" onClick={clearFootnote} aria-label="Close">
-            ×
-          </button>
-          <div dangerouslySetInnerHTML={{ __html: footnote.html }} />
-        </div>
-      )}
+      <FootnotePopover />
 
       {resumed !== null && !dismissed && (
         <div className="toast">

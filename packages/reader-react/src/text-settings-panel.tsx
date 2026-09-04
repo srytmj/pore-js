@@ -1,200 +1,163 @@
 import { useState } from 'react';
 import type { TextEngineSettings } from '@pore/reader-core';
 import { useReaderSettings } from './reader.js';
+import { SelectField, SliderField, SwitchField, Tabs, type TabDef } from './primitives.js';
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="pore-settings__row">
-      <span>{label}</span>
-      {children}
-    </label>
-  );
-}
-
-export function TextSettingsPanel({ onClose }: { onClose?: () => void }) {
+/** The Text/Theme/Navigation tab set for an EPUB or PDF. Behaviour via Radix Tabs. */
+export function TextSettingsPanel({ trailing }: { trailing?: React.ReactNode }) {
   const [s, set] = useReaderSettings<TextEngineSettings>();
-  const [tab, setTab] = useState<'text' | 'theme' | 'nav'>('text');
+  const [tab, setTab] = useState('text');
 
-  return (
-    <div className="pore-settings" role="dialog" aria-label="Reader settings">
-      <div className="pore-settings__tabs">
-        <button className={tab === 'text' ? 'active' : ''} onClick={() => setTab('text')}>
-          Text
-        </button>
-        <button className={tab === 'theme' ? 'active' : ''} onClick={() => setTab('theme')}>
-          Theme
-        </button>
-        <button className={tab === 'nav' ? 'active' : ''} onClick={() => setTab('nav')}>
-          Navigation
-        </button>
-        {onClose && (
-          <button className="pore-settings__close" onClick={onClose} aria-label="Close">
-            ×
-          </button>
-        )}
-      </div>
+  const tabs: TabDef[] = [
+    {
+      id: 'text',
+      label: 'Text',
+      content: (
+        <>
+          <SelectField
+            label="Font"
+            value={s.fontFamily}
+            onValueChange={(fontFamily) => set({ fontFamily })}
+            options={[
+              { value: 'original', label: 'Publisher' },
+              { value: 'serif', label: 'Serif' },
+              { value: 'sans', label: 'Sans' },
+              { value: 'slab', label: 'Slab' },
+              { value: 'dyslexic', label: 'OpenDyslexic' },
+            ]}
+          />
+          <SliderField
+            label="Font size"
+            min={70}
+            max={220}
+            step={5}
+            value={s.fontSizePct}
+            onValueChange={(fontSizePct) => set({ fontSizePct })}
+            format={(v) => `${v}%`}
+          />
+          <SliderField
+            label="Line height"
+            min={1}
+            max={2.4}
+            step={0.05}
+            value={s.lineHeight}
+            onValueChange={(lineHeight) => set({ lineHeight })}
+            format={(v) => v.toFixed(2)}
+          />
+          <SwitchField
+            label="Justify text"
+            checked={s.textAlign === 'justify'}
+            onCheckedChange={(j) => set({ textAlign: j ? 'justify' : 'start' })}
+          />
+          <SliderField
+            label="Margin"
+            min={0}
+            max={16}
+            value={s.marginPct}
+            onValueChange={(marginPct) => set({ marginPct })}
+            format={(v) => `${v}%`}
+          />
+          <SelectField
+            label="Columns"
+            value={String(s.columns) as '1' | '2'}
+            onValueChange={(c) => set({ columns: Number(c) as 1 | 2 })}
+            options={[
+              { value: '1', label: 'One' },
+              { value: '2', label: 'Two' },
+            ]}
+          />
+          <SwitchField
+            label="Publisher styles"
+            checked={s.publisherStyles}
+            onCheckedChange={(publisherStyles) => set({ publisherStyles })}
+          />
+        </>
+      ),
+    },
+    {
+      id: 'theme',
+      label: 'Theme',
+      content: (
+        <>
+          <SelectField
+            label="Theme"
+            value={s.theme}
+            onValueChange={(theme) => set({ theme })}
+            options={[
+              { value: 'light', label: 'Light' },
+              { value: 'sepia', label: 'Sepia' },
+              { value: 'dark', label: 'Dark' },
+              { value: 'oled', label: 'OLED black' },
+            ]}
+          />
+          <SwitchField
+            label="Dim images (dark themes)"
+            checked={s.dimImages}
+            onCheckedChange={(dimImages) => set({ dimImages })}
+          />
+        </>
+      ),
+    },
+    {
+      id: 'nav',
+      label: 'Navigation',
+      content: (
+        <>
+          <SelectField
+            label="Reading mode"
+            value={s.flowMode}
+            onValueChange={(flowMode) => set({ flowMode })}
+            options={[
+              { value: 'paged', label: 'Paged' },
+              { value: 'flow', label: 'Flow (scroll, a11y)' },
+              { value: 'auto', label: 'Auto (high-contrast → flow)' },
+            ]}
+          />
+          <SelectField
+            label="Vertical text"
+            value={s.verticalText}
+            disabled={s.flowMode === 'flow'}
+            onValueChange={(verticalText) => set({ verticalText })}
+            options={[
+              { value: 'auto', label: 'Auto (from book)' },
+              { value: 'on', label: 'Always on' },
+              { value: 'off', label: 'Always off' },
+            ]}
+          />
+          <SelectField
+            label="At chapter end"
+            value={s.endBehavior}
+            onValueChange={(endBehavior) => set({ endBehavior })}
+            options={[
+              { value: 'continuous', label: 'Continue to next' },
+              { value: 'endpage', label: 'Show end page' },
+            ]}
+          />
+          <SelectField
+            label="Menu position"
+            value={s.menuPosition}
+            onValueChange={(menuPosition) => set({ menuPosition })}
+            options={[
+              { value: 'top', label: 'Top bar' },
+              { value: 'left', label: 'Left side' },
+              { value: 'right', label: 'Right side' },
+            ]}
+          />
+          <SelectField
+            label="Reveal side menu"
+            value={s.menuReveal}
+            disabled={s.menuPosition === 'top'}
+            onValueChange={(menuReveal) => set({ menuReveal })}
+            options={[
+              { value: 'hover', label: 'On hover' },
+              { value: 'click', label: 'Tap centre' },
+              { value: 'dblclick', label: 'Double-tap centre' },
+            ]}
+          />
+        </>
+      ),
+    },
+  ];
 
-      <div className="pore-settings__body">
-        {tab === 'text' && (
-          <>
-            <Row label="Font">
-              <select
-                value={s.fontFamily}
-                onChange={(e) =>
-                  set({ fontFamily: e.target.value as TextEngineSettings['fontFamily'] })
-                }
-              >
-                <option value="original">Publisher</option>
-                <option value="serif">Serif</option>
-                <option value="sans">Sans</option>
-                <option value="slab">Slab</option>
-                <option value="dyslexic">OpenDyslexic</option>
-              </select>
-            </Row>
-            <Row label={`Font size (${s.fontSizePct}%)`}>
-              <input
-                type="range"
-                min={70}
-                max={220}
-                step={5}
-                value={s.fontSizePct}
-                onChange={(e) => set({ fontSizePct: Number(e.target.value) })}
-              />
-            </Row>
-            <Row label={`Line height (${s.lineHeight.toFixed(2)})`}>
-              <input
-                type="range"
-                min={1}
-                max={2.4}
-                step={0.05}
-                value={s.lineHeight}
-                onChange={(e) => set({ lineHeight: Number(e.target.value) })}
-              />
-            </Row>
-            <Row label="Justify text">
-              <input
-                type="checkbox"
-                checked={s.textAlign === 'justify'}
-                onChange={(e) => set({ textAlign: e.target.checked ? 'justify' : 'start' })}
-              />
-            </Row>
-            <Row label={`Margin (${s.marginPct}%)`}>
-              <input
-                type="range"
-                min={0}
-                max={16}
-                value={s.marginPct}
-                onChange={(e) => set({ marginPct: Number(e.target.value) })}
-              />
-            </Row>
-            <Row label="Columns">
-              <select
-                value={s.columns}
-                onChange={(e) => set({ columns: Number(e.target.value) as 1 | 2 })}
-              >
-                <option value={1}>One</option>
-                <option value={2}>Two</option>
-              </select>
-            </Row>
-            <Row label="Publisher styles">
-              <input
-                type="checkbox"
-                checked={s.publisherStyles}
-                onChange={(e) => set({ publisherStyles: e.target.checked })}
-              />
-            </Row>
-          </>
-        )}
-
-        {tab === 'theme' && (
-          <>
-            <Row label="Theme">
-              <select
-                value={s.theme}
-                onChange={(e) => set({ theme: e.target.value as TextEngineSettings['theme'] })}
-              >
-                <option value="light">Light</option>
-                <option value="sepia">Sepia</option>
-                <option value="dark">Dark</option>
-                <option value="oled">OLED black</option>
-              </select>
-            </Row>
-            <Row label="Dim images (dark themes)">
-              <input
-                type="checkbox"
-                checked={s.dimImages}
-                onChange={(e) => set({ dimImages: e.target.checked })}
-              />
-            </Row>
-          </>
-        )}
-
-        {tab === 'nav' && (
-          <>
-            <Row label="Reading mode">
-              <select
-                value={s.flowMode}
-                onChange={(e) =>
-                  set({ flowMode: e.target.value as TextEngineSettings['flowMode'] })
-                }
-              >
-                <option value="paged">Paged</option>
-                <option value="flow">Flow (scroll, a11y)</option>
-                <option value="auto">Auto (high-contrast → flow)</option>
-              </select>
-            </Row>
-            <Row label="Vertical text">
-              <select
-                value={s.verticalText}
-                disabled={s.flowMode === 'flow'}
-                onChange={(e) =>
-                  set({ verticalText: e.target.value as TextEngineSettings['verticalText'] })
-                }
-              >
-                <option value="auto">Auto (from book)</option>
-                <option value="on">Always on</option>
-                <option value="off">Always off</option>
-              </select>
-            </Row>
-            <Row label="At chapter end">
-              <select
-                value={s.endBehavior}
-                onChange={(e) =>
-                  set({ endBehavior: e.target.value as TextEngineSettings['endBehavior'] })
-                }
-              >
-                <option value="continuous">Continue to next</option>
-                <option value="endpage">Show end page</option>
-              </select>
-            </Row>
-            <Row label="Menu position">
-              <select
-                value={s.menuPosition}
-                onChange={(e) =>
-                  set({ menuPosition: e.target.value as TextEngineSettings['menuPosition'] })
-                }
-              >
-                <option value="top">Top bar</option>
-                <option value="left">Left side</option>
-                <option value="right">Right side</option>
-              </select>
-            </Row>
-            <Row label="Reveal side menu">
-              <select
-                value={s.menuReveal}
-                disabled={s.menuPosition === 'top'}
-                onChange={(e) =>
-                  set({ menuReveal: e.target.value as TextEngineSettings['menuReveal'] })
-                }
-              >
-                <option value="hover">On hover</option>
-                <option value="click">Tap centre</option>
-                <option value="dblclick">Double-tap centre</option>
-              </select>
-            </Row>
-          </>
-        )}
-      </div>
-    </div>
-  );
+  return <Tabs tabs={tabs} value={tab} onValueChange={setTab} {...(trailing ? { trailing } : {})} />;
 }
