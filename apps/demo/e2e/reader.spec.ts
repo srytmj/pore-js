@@ -65,15 +65,15 @@ test.describe('Pore.js demo', () => {
   test('settings panel changes the fit mode live', async ({ page }) => {
     await page.goto('/?book=demo-manga');
     await page.getByRole('button', { name: '⚙' }).click();
-    await page.getByRole('dialog', { name: 'Reader settings' }).getByText('Image fit').click();
-    await page.getByRole('dialog').locator('select').first().selectOption('width');
+    await page.getByRole('tab', { name: 'Image fit' }).click();
+    await page.locator('[data-pore-tabpanel]:not([hidden]) select').first().selectOption('width');
     await expect(page.locator('.pore-image img').first()).toHaveAttribute('style', /width:\s*100%/);
   });
 
   test('continuous-horizontal reads and virtualizes', async ({ page }) => {
     await page.goto('/?book=demo-manga');
     await page.getByRole('button', { name: '⚙' }).click();
-    await page.getByRole('dialog').locator('select').first().selectOption('continuous-horizontal');
+    await page.locator('[data-pore-tabpanel]:not([hidden]) select').first().selectOption('continuous-horizontal');
     const surface = page.locator('.pore-image');
     await expect(surface).toHaveCSS('overflow-x', 'auto');
     await surface.evaluate((el) => {
@@ -124,8 +124,8 @@ test.describe('Pore.js demo — EPUB', () => {
   test('theme + font size restyle without losing the chapter', async ({ page }) => {
     await page.goto('/?book=demo-book');
     await page.getByRole('button', { name: '⚙' }).click();
-    await page.getByRole('dialog', { name: 'Reader settings' }).getByText('Theme').click();
-    await page.getByRole('dialog').locator('select').selectOption('dark');
+    await page.getByRole('tab', { name: 'Theme' }).click();
+    await page.locator('[data-pore-tabpanel]:not([hidden]) select').first().selectOption('dark');
     const bg = await page
       .frameLocator('iframe.pore-text__frame')
       .locator('#pore-base-style')
@@ -153,7 +153,8 @@ test.describe('Pore.js demo — PDF', () => {
   test('pinch/zoom controls work like the image reader', async ({ page }) => {
     await page.goto('/?book=demo-pdf');
     await page.getByRole('button', { name: '⚙' }).click();
-    await page.getByRole('dialog').locator('select').first().selectOption('width');
+    await page.getByRole('tab', { name: 'Image fit' }).click();
+    await page.locator('[data-pore-tabpanel]:not([hidden]) select').first().selectOption('width');
     await expect(page.locator('.pore-image img').first()).toHaveAttribute('style', /width:\s*100%/);
   });
 });
@@ -181,8 +182,8 @@ test.describe('Pore.js demo — M3', () => {
   test('flow mode turns the reader into a semantic scroller', async ({ page }) => {
     await page.goto('/?book=demo-book');
     await page.getByRole('button', { name: '⚙' }).click();
-    await page.getByRole('dialog', { name: 'Reader settings' }).getByText('Navigation').click();
-    await page.getByRole('dialog').getByLabel('Reading mode').selectOption('flow');
+    await page.getByRole('tab', { name: 'Navigation' }).click();
+    await page.getByLabel('Reading mode').selectOption('flow');
     await page.getByRole('button', { name: '⚙' }).click();
 
     const vp = page.frameLocator('iframe.pore-text__frame').locator('#pore-viewport');
@@ -229,5 +230,45 @@ test.describe('Pore.js demo — M3', () => {
       (v) => v.impact === 'critical' || v.impact === 'serious',
     );
     expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+  });
+
+  test('settings dialog: focus trap, Radix tabs, axe clean', async ({ page }) => {
+    await page.goto('/?book=demo-book');
+    await page.getByRole('button', { name: '⚙' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Reader settings' });
+    await expect(dialog).toBeVisible();
+
+    // tab switch works and only one panel shows
+    await page.getByRole('tab', { name: 'Navigation' }).click();
+    await expect(page.locator('[data-pore-tabpanel]:not([hidden])')).toHaveCount(1);
+    await expect(dialog.getByLabel('Reading mode')).toBeVisible();
+
+    const results = await new AxeBuilder({ page })
+      .include('[data-pore-dialog]')
+      .withTags(['wcag2a', 'wcag2aa'])
+      .analyze();
+    expect(
+      results.violations.filter((v) => v.impact === 'critical' || v.impact === 'serious'),
+      JSON.stringify(results.violations, null, 2),
+    ).toEqual([]);
+
+    // Esc closes and returns focus to the trigger
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Reader settings' })).toBeFocused();
+  });
+
+  test('reduced motion: page turns apply instantly', async ({ browser }) => {
+    const context = await browser.newContext({ reducedMotion: 'reduce' });
+    const page = await context.newPage();
+    await page.goto('/?book=demo-book');
+    const flow = page.frameLocator('iframe.pore-text__frame').locator('#pore-flow');
+    await flow.waitFor();
+    await page.locator('.pore-text').press('ArrowRight');
+    // no GSAP tween: the transform is the final translate immediately, no translate3d easing frames
+    await expect
+      .poll(() => flow.evaluate((el) => el.style.transform))
+      .toMatch(/translateX\(-\d/);
+    await context.close();
   });
 });

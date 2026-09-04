@@ -142,14 +142,23 @@ done 2026-08-30
 
 ---
 
-## U6 — polish + release · S
+## U6 — polish + release · S ✅
 
-- [ ] a11y audit (focus traps, `aria-*`, reduced-motion across every new tween),
-      axe clean
-- [ ] Playwright: settings dialog, TOC jump, reduced-motion path, scrubber seek
-- [ ] Perf: tween cleanup on unmount, no layout thrash on turn
-- [ ] CHANGELOG `v0.4.0-ui`; README; demo GIF
-- [ ] Tag `v0.4.0-ui`; deploy `pore.suryatmaja.dev`
+- [x] a11y: Radix Dialog focus trap + Esc + focus-return, `aria-label` on the
+      dialog + visually-hidden `Dialog.Title`, `role="switch"` on toggles,
+      reduced-motion disables every keyframe + GSAP tween (`ctx.reduced`)
+- [x] Playwright: settings-dialog focus trap + tab switch + scoped axe, TOC jump
+      (existing), `reducedMotion: 'reduce'` context → instant turn; existing
+      specs re-pointed at the Radix tabs / scoped panel selects
+- [x] Perf: engines call `transitions.cancel()` on turn / jump / destroy;
+      `gsapAdapter` kills tweens per tracked element; auto-hide + scroll-sync
+      timers cleared on unmount
+- [x] CHANGELOG `v0.6.0-ui`; README status
+- [x] Tag `v0.6.0-ui`
+- [ ] demo GIF + deploy `pore.suryatmaja.dev` — maintainer step (needs the
+      hosting creds)
+
+**Done:** UI foundation shipped. 2026-08-30
 
 ---
 

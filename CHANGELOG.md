@@ -1,5 +1,47 @@
 # Changelog
 
+## v0.6.0-ui — 2026-08-30
+
+UI foundation: Tailwind, a headless Radix component layer, and an injectable
+animation seam with a GSAP adapter — none of it reaching the framework-agnostic
+core.
+
+### Added — styling & tokens
+
+- **Tailwind v4** in the demo (`@tailwindcss/vite`); `styles.css` is an `@theme`
+  token block plus `@layer components` with `@apply`. Class-strategy dark mode
+  (`@custom-variant dark`) with a `.dark` palette; `useTheme()` toggle.
+
+### Added — animation seam
+
+- **`ReaderTransitions`** (`transitions.ts`) — `page` / `zoom` / `scrollTo` /
+  `cancel` with a `{ axis, dir, reduced }` context. `instantTransitions` is the
+  synchronous default (no behaviour change). The text and image engines route
+  their translates / zoom / deliberate scroll through it; `<Reader transitions>`
+  supplies a custom one. `prefers-reduced-motion` flows through as `ctx.reduced`.
+- **`gsapAdapter(gsap)`** (`reader-react`) — eased page slides (~220 ms
+  `power2.out`, fade on real turns), eased zoom, eased scroll, `cancel()` that
+  kills every touched tween. `gsap` is an **optional peer dependency**.
+
+### Added — headless Radix chrome (`reader-react`)
+
+- **`primitives.tsx`** — `Field` / `SelectField` / `SliderField` (Radix Slider) /
+  `SwitchField` (Radix Switch) / `Tabs` (Radix Tabs); every element carries a
+  `data-pore-*` hook and takes `className`.
+- **`<SettingsPanel>`** is a Radix `Dialog` (focus trap, Esc, overlay) wrapping
+  the tab set (`SettingsPanelBody` picks image vs text; `KeybindEditor` is the
+  Keybinds tab).
+- **`<TableOfContents>`** (bound `<select>` → `goToHref`) and
+  **`<FootnotePopover>`** (Radix `Popover`).
+- **`useReaderLoading()`** — `true` while any page / spine image is in flight.
+
+### Added — demo shell
+
+- Auto-hiding top bar (idle 2.6 s, slide, wakes on activity / hover / focus,
+  pinned while a panel is open); indeterminate top bar during loading; panel /
+  search / footnote / toast enter animations — all disabled under reduced
+  motion. Safe-area insets, coarse-pointer touch targets, viewport-clamped panel.
+
 ## v0.5.0-m3 — 2026-08-29
 
 Platform integration, offline, in-book search, vertical text, and an accessible

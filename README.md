@@ -36,14 +36,21 @@ pnpm --filter @pore/demo e2e           # end-to-end demo tests
 
 Requires Node >= 20.
 
-## Status — engine fundamentals complete (`v0.5.0-m3`)
+## Status — UI foundation (`v0.6.0-ui`)
+
+**UI foundation:** Tailwind v4 + design tokens + dark mode in the demo; a
+headless Radix component layer in `reader-react` (`<SettingsPanel>` Dialog,
+`<TableOfContents>`, `<FootnotePopover>`, `SelectField` / `SliderField` /
+`SwitchField` / `Tabs` primitives); an injectable animation seam
+(`ReaderTransitions` / `instantTransitions` in core) with `gsapAdapter(gsap)`
+for eased page turns, zoom and scroll — reduced-motion aware. The engine stays
+framework- and animation-library-agnostic.
 
 **Integration & a11y (M3):** `KavitaSource` reads from a live
 [Kavita](https://www.kavitareader.com/) server; `CachedSource` v2 + `MediaCache`
 download whole books for offline reading (`useDownload`); in-book search runs in
 a Worker (`useReaderSearch`); vertical Japanese (`vertical-rl`) and an accessible
-scrolling **flow mode**; `<ReaderAnnouncer>` for screen readers. Next: UI &
-animation (`docs/ui-foundation-plan.md`).
+scrolling **flow mode**; `<ReaderAnnouncer>` for screen readers.
 
 **PDF (M2):** `loadPdf` wraps `pdfjs-dist`; `PdfImageSource` renders pages to
 webp and feeds the image engine unchanged; `createPdfEngine` adds the outline as
@@ -76,7 +83,9 @@ navigation, footnote popovers.
 See `docs/m0-plan.md` … `docs/m3-plan.md` for the task breakdowns, and
 [`CHANGELOG.md`](CHANGELOG.md).
 
-Next: **UI foundation** — Radix + Tailwind + GSAP ([`docs/ui-foundation-plan.md`](docs/ui-foundation-plan.md)).
+UI foundation: [`docs/ui-foundation-plan.md`](docs/ui-foundation-plan.md) (U1–U4
+done; U5 core polish done, bottom scrubber + loading skeletons tracked as a
+follow-up).
 
 ## License
 
