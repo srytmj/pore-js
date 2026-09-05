@@ -28,12 +28,33 @@ lives in a chat transcript but not in git history.
 
 ## Current focus
 
-**M5 shipped — `v0.8.0-comfort`.** G1 (menu bar) · F2b (highlight notes +
-`<HighlightsPanel>`) · F2c (PDF Shift-drag highlights) · F6 (hardening). F3b
-(fixed-layout two-page spreads) deferred — needs a text-engine reshape, own
-task. Next milestone not yet scoped.
+**M6 scoped, not started — `docs/m6-plan.md`, target `v0.9.0-editorial`.** A
+design pass, not a feature milestone: the demo works but doesn't look finished
+(icon-soup chrome, raw `<select>`s, doubled status, bare settings form, thin
+landing, half-migrated palette). Direction settled with the user: quiet /
+editorial aesthetic, accent-less (drop the orange), bundle fonts (Literata +
+Hanken Grotesk proposed). D0 (tokens/palette/fonts) → D1 (chrome) → D2 (panels)
+→ D3 (landing) → D4 (reading surface) → D5/D6 (motion/responsive) → D7 (ship).
+Six open questions in the plan need answers before D0. `reader-react` stays
+headless; the one core touch is `THEME_COLORS`.
+
+M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-06 — M6 scoped: editorial redesign
+- **What:** `docs/m6-plan.md`. User's call: "lets fix the ui design, its still
+  bad actually." Reviewed every surface in the browser (landing, EPUB/webtoon
+  readers, settings). Scoped a pure design milestone — D0 tokens/palette/fonts,
+  D1 chrome rebuild (three zones + overflow menu, kill raw selects, one status,
+  SVG icons), D2 panels, D3 landing, D4 reading surface + font menu, D5 motion,
+  D6 responsive, D7 ship.
+- **Decisions (from the user):** quiet/editorial aesthetic; accent-less (remove
+  `--color-accent`, one functional colour for focus/error); bundle fonts.
+- **State:** committed. Not started — 6 open questions in the plan (font pair,
+  icon set, TOC control, shell-vs-reader theme coupling, focus colour, warmth).
+- **Notes:** D1 will churn Playwright selectors (bar structure + glyphs) —
+  budgeted in the plan. Keep every icon button's `aria-label`.
 
 ## 2026-09-06 — F6 + release v0.8.0-comfort
 - **What:** a11y pass on the new UI (new e2e "M5 UI … axe clean &
