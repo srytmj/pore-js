@@ -88,6 +88,13 @@ export function Chrome({
   useReaderHistory({ mode: 'url-and-title' });
   useEffect(() => setDismissed(false), [bookId]);
 
+  // The "Resumed from p.N" toast auto-dismisses after 15s.
+  useEffect(() => {
+    if (resumed === null) return;
+    const t = setTimeout(() => setDismissed(true), 15_000);
+    return () => clearTimeout(t);
+  }, [resumed]);
+
   // Only show the skeleton for loads that take a moment — avoids a flash on
   // cache-warm / fast page turns.
   useEffect(() => {

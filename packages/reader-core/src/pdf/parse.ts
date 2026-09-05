@@ -4,10 +4,26 @@ import type { TocEntry } from '../text/epub/types.js';
 type PdfjsModule = typeof Pdfjs;
 type PdfDocumentProxy = Awaited<ReturnType<PdfjsModule['getDocument']>['promise']>;
 
+let workerSrc: string | null = null;
+
+/**
+ * Point pdf.js at its worker script (a URL). Call once at startup, before any
+ * PDF is opened. Lets an app pass e.g. Vite's `?url` import for the worker so
+ * pdf.js itself never lands in the main bundle — this module already imports
+ * the library lazily.
+ */
+export function setPdfWorkerSrc(src: string): void {
+  workerSrc = src;
+}
+
 let modPromise: Promise<PdfjsModule> | null = null;
 function pdfjs(): Promise<PdfjsModule> {
   // the legacy build runs in Node and older browsers alike
-  modPromise ??= import('pdfjs-dist/legacy/build/pdf.mjs') as Promise<PdfjsModule>;
+  modPromise ??= import('pdfjs-dist/legacy/build/pdf.mjs').then((m) => {
+    const mod = m as unknown as PdfjsModule;
+    if (workerSrc) mod.GlobalWorkerOptions.workerSrc = workerSrc;
+    return mod;
+  });
   return modPromise;
 }
 

@@ -2,9 +2,20 @@
 
 ## Unreleased
 
+- **Demo landing page** — the demo opens on a landing screen instead of
+  auto-loading a sample: "open your own" (drop/pick an EPUB, PDF, CBZ/ZIP or
+  image folder — all client-side) and "try every mode" (the seven sample
+  fixtures, each labelled with what engine mode it shows). A `?book=<id>`
+  deep link still goes straight to the reader; the bar's "Pore.js" wordmark
+  is now a "Back to start" button.
+- **Smaller demo bundle** — `setPdfWorkerSrc()` lets an app point pdf.js at
+  its worker with just a URL, so pdf.js no longer has to be statically
+  imported. The demo's main chunk drops from ~960 kB to ~484 kB (308 → 164 kB
+  gzipped); pdf.js becomes its own chunk, loaded only when a PDF is opened.
+- The demo's "Resumed from p.N" toast auto-dismisses after 15s.
+
 Post-`v0.7.0-annotate` — fixes from running the full Playwright e2e suite to
-completion for the first time (it now passes, 28 tests). All of these predate
-M4:
+completion for the first time (it now passes). All of these predate M4:
 
 - **TOC navigation was silently broken** — `TextEngine.goToHref()` (what
   `<TableOfContents>` calls) re-resolved its argument against the current
