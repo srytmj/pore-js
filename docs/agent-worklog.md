@@ -44,6 +44,26 @@ F2b → F2c → F3b → F6 in order (user: "all of it, in order").
   F2c storage = `kind:'text'|'rect'` discriminated union. F3b spreads = two
   iframes.
 
+## 2026-09-06 — F2c groundwork: HighlightRecord discriminated union
+- **What:** `HighlightRecord` is now `TextHighlightRecord | RectHighlightRecord`
+  discriminated on `kind` (`'text'` = DOM range + cfi, `'rect'` = page +
+  normalized `NormRect[]`). Shared fields on a `HighlightBase`. New types
+  exported from both packages. `create-text-engine` stamps `kind: 'text'` and
+  `applyHighlights` narrows; `<HighlightsPanel>` jump target is `h.page` for
+  rect / anchor Position for text.
+- **Why:** open question #3 — one collection / one panel / one
+  `useReaderHighlights()` for PDF + EPUB highlights (user chose the discriminant
+  over a parallel `RectHighlightRecord[]`).
+- **State:** committed `be45408`. 255 unit + typecheck + lint green.
+- **Notes:** the PDF **engine** side of F2c (text-item geometry in `parse.ts`,
+  a marquee/selection overlay in the image engine, rect rendering, wiring
+  `addHighlight`/`updateHighlight`/`listHighlights` on `createPdfEngine`) is
+  NOT done — it's a sizable image-engine subsystem. Plan: expose
+  `PdfDoc.textRects(page)` (normalized boxes + strings via pdf.js
+  `getTextContent` + `Util.transform`), add an overlay in **paged-single mode
+  only** to start (continuous/zoom paint nothing — documented limitation like
+  the `<mark>` multi-element fallback).
+
 ## 2026-09-06 — F2b: highlight notes + headless `<HighlightsPanel>`
 - **What:** `TextEngine.updateHighlight(id, {color?, note?})`
   (`create-text-engine.ts`, `text/types.ts`) — emits `reader:highlightschange`,
