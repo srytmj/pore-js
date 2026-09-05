@@ -3,9 +3,24 @@
 Source-agnostic web reader engine for manga (image-based) and text (EPUB, PDF,
 CBZ). Custom rendering + pagination engine, not a wrapper.
 
-> **Design docs:** [`docs/reader-engine-design.md`](docs/reader-engine-design.md) ·
-> [`docs/image-engine-spec.md`](docs/image-engine-spec.md) ·
-> [`docs/m0-plan.md`](docs/m0-plan.md)
+> ### 🤖 If you are an AI agent
+>
+> **Read [`docs/ai-agent-guide.md`](docs/ai-agent-guide.md) first.** It is the
+> single entry point: the repo map, how to run/build/test/verify, the commit
+> and worklog conventions, the invariants you must not break, and the current
+> milestone. From there:
+> [`docs/architecture.md`](docs/architecture.md) (how the engine works inside) ·
+> [`docs/integration.md`](docs/integration.md) (how to consume the packages) ·
+> [`docs/agent-worklog.md`](docs/agent-worklog.md) (what recent sessions did —
+> and where you append your own entry).
+
+**Docs:** [`docs/ai-agent-guide.md`](docs/ai-agent-guide.md) ·
+[`docs/architecture.md`](docs/architecture.md) ·
+[`docs/integration.md`](docs/integration.md) ·
+[`docs/reader-engine-design.md`](docs/reader-engine-design.md) (RFC) ·
+[`docs/image-engine-spec.md`](docs/image-engine-spec.md) ·
+[`docs/m6-plan.md`](docs/m6-plan.md) (current milestone) ·
+[`CHANGELOG.md`](CHANGELOG.md)
 
 ## Workspace
 
@@ -35,6 +50,36 @@ pnpm --filter @pore/demo e2e           # end-to-end demo tests
 ```
 
 Requires Node >= 20.
+
+## Integrating it in your app
+
+Full guide: [`docs/integration.md`](docs/integration.md). The short version —
+
+```tsx
+import { ReaderProvider, Reader } from '@pore/reader-react';
+import { CachedSource, DemoSource } from '@pore/reader-core';
+
+const source = new CachedSource(new DemoSource()); // swap DemoSource for your own
+
+<ReaderProvider source={source}>
+  <Reader bookId="demo-book" className="reader-host" />
+</ReaderProvider>
+```
+
+- **`@pore/reader-react`** — React 19: `<Reader>`, the `useReader*` hooks, and
+  **headless** components (`<SettingsPanel>`, `<TableOfContents>`,
+  `<HighlightsPanel>`, `<ReaderScrubber>`, `<FootnotePopover>`,
+  `<ReaderAnnouncer>`). **Ships no CSS** — you style the `data-pore-*` markup.
+  `apps/demo/src/styles.css` is a complete worked example.
+- **`@pore/reader-core`** — framework-agnostic. `createImageEngine` /
+  `createTextEngine` / `createPdfEngine` if you're not on React.
+- **Sources** — implement `ReaderSource` (`getManifest`, `getPage`, `getFile`,
+  `loadProgress` / `saveProgress`, optional `loadHighlights` / `saveHighlights`)
+  or use a built-in: `DemoSource`, `LocalFileSource`, `CachedSource` (offline),
+  `KavitaSource`, `OpdsSource`. Wrap any of them in `CachedSource` for offline +
+  resume.
+- **Position** (`loadProgress` / `saveProgress`) is a small opaque JSON value —
+  store it verbatim; it round-trips across devices and viewport sizes.
 
 ## Status — reading comfort (`v0.8.0-comfort`)
 
@@ -108,8 +153,13 @@ RTL-horizontal / end-page follow-ups all landed on `main`).
 M4: [`docs/m4-plan.md`](docs/m4-plan.md) — done (F1–F6, `v0.7.0-annotate`).
 
 M5: [`docs/m5-plan.md`](docs/m5-plan.md) — done (G1 · F2b · F2c ·
-F6, `v0.8.0-comfort`; F3b deferred). Live status in
-[`docs/agent-worklog.md`](docs/agent-worklog.md).
+F6, `v0.8.0-comfort`; F3b deferred).
+
+M6: [`docs/m6-plan.md`](docs/m6-plan.md) — **in progress** — an editorial UI
+redesign of the demo (quiet aesthetic, accent-less, bundled fonts). Target
+`v0.9.0-editorial`.
+
+Live status: [`docs/agent-worklog.md`](docs/agent-worklog.md).
 
 ## License
 

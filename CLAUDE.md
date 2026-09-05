@@ -1,13 +1,19 @@
 # Contributor & agent guide
 
-## Agents: read the worklog first
+## Agents: start here
 
-If you are an AI agent and did **not** continue directly from the original chat
-session, read [`docs/agent-worklog.md`](docs/agent-worklog.md) before doing
-anything — it is the append-only journal of what recent sessions did, why, and
-what is committed vs in-flight vs blocked. **Append an entry** there whenever you
-finish a meaningful unit of work (a commit, a decision, a blocker). It is the
-narrative layer above git history and the changelog.
+If you are an AI agent, read **[`docs/ai-agent-guide.md`](docs/ai-agent-guide.md)**
+first — the repo map, how to run/build/test/verify, the invariants, and the
+current milestone. It points to [`docs/architecture.md`](docs/architecture.md)
+(engine internals) and [`docs/integration.md`](docs/integration.md) (consuming
+the packages).
+
+Then, if you did **not** continue directly from the original chat session, read
+[`docs/agent-worklog.md`](docs/agent-worklog.md) — the append-only journal of
+what recent sessions did, why, and what is committed vs in-flight vs blocked.
+**Append an entry** there whenever you finish a meaningful unit of work (a
+commit, a decision, a blocker). It is the narrative layer above git history and
+the changelog.
 
 ## Commits
 

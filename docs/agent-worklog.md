@@ -42,6 +42,20 @@ M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
 
+## 2026-09-06 — documentation for AI + human integrators
+- **What:** `docs/ai-agent-guide.md` (the single AI entry point — repo map,
+  run/verify, conventions, invariants, UI/styling map, current milestone),
+  `docs/architecture.md` (engine internals), `docs/integration.md` (consuming
+  the packages — sources, hooks, headless components, custom `ReaderSource`).
+  README gained a "🤖 If you are an AI agent" callout + a docs index + an
+  "Integrating it in your app" section. CLAUDE.md points at the guide first.
+- **Why:** owner wants the docs complete enough that an AI agent in another
+  tool (Antigravity) can pick up the M6 UI work cold; and a real integration
+  guide for human consumers.
+- **State:** committed. Docs only, no code.
+- **Notes:** the UI/styling map in `ai-agent-guide.md` §7 is the quick "what
+  file do I edit" table for the M6 redesign.
+
 ## 2026-09-06 — M6 scoped: editorial redesign
 - **What:** `docs/m6-plan.md`. User's call: "lets fix the ui design, its still
   bad actually." Reviewed every surface in the browser (landing, EPUB/webtoon
