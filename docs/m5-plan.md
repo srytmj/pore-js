@@ -146,7 +146,31 @@ survives; the highlights panel is a reusable component, not demo glue.
 
 ---
 
-## F2c — PDF rect-based highlights · M
+## F2c — PDF rect-based highlights · M · **DONE**
+
+**Shipped (Unreleased).** `HighlightRecord` = `TextHighlightRecord |
+RectHighlightRecord` (`kind` discriminant). `PdfDoc.textRects(page)` returns
+normalized text-run boxes + strings (pdf.js `getTextContent` + `Util.transform`).
+`pdf/pdf-highlights.ts` hangs a transparent overlay over the page `<img>`;
+**Shift+drag** = marquee → intersect with text runs → merge to line rows +
+concatenated text → `RectHighlightRecord`. `createPdfEngine` gains
+`addHighlight`/`removeHighlight`/`updateHighlight`/`listHighlights` +
+`reader:selection`/`reader:highlightschange`. Same `<HighlightsPanel>`, same
+`loadHighlights`/`saveHighlights`. e2e: Shift-drag → swatch → reload → still
+painted. Retro-notes:
+
+- **Gesture is Shift+drag, not a plain drag** — a plain drag on the `<img>`
+  fought tap-to-turn and native image-drag (which navigated the page to the
+  blob URL). `img.draggable = false` + a `dragstart` guard were also needed.
+- **Single-page mode only.** Continuous / double / zoomed don't paint the
+  overlay (it hides); highlights stay persisted. Documented limit, like the
+  text engine's `<mark>` cross-element fallback.
+- Overlay must attach on `reader:ready` (the image engine does
+  `container.replaceChildren(root)` during mount) and repaint on the page
+  `<img>`'s `load` (its box is 96×24 until the blob decodes). `inset` is
+  shorthand — setting it after `left`/`top` silently cleared them.
+
+<details><summary>Original plan</summary>
 
 Cut from F2. PDF has no DOM range to anchor to — highlights are page +
 bounding boxes over the text layer.
@@ -169,6 +193,8 @@ bounding boxes over the text layer.
 
 **Done when:** highlight a run of text in the demo PDF, reload, it's still
 painted on the right page.
+
+</details>
 
 ---
 

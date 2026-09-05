@@ -45,6 +45,13 @@ export class PdfImageSource implements ReaderSource {
     return (await this.#load()).textContent(page);
   }
 
+  /** Normalized text-run boxes for one page (1-based) — marquee → highlight. */
+  async textRects(
+    page: number,
+  ): Promise<{ str: string; x: number; y: number; w: number; h: number }[]> {
+    return (await this.#load()).textRects(page);
+  }
+
   async getManifest(bookId: string): Promise<Manifest> {
     const doc = await this.#load(bookId);
     const sizes = await Promise.all(

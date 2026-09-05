@@ -33,6 +33,12 @@ export interface PdfDoc {
   outline: TocEntry[];
   pageSize(n: number): Promise<{ width: number; height: number }>;
   /**
+   * Every text run on page `n` (1-based) as a normalized (0–1, page-relative,
+   * y-down) box plus its string — enough to turn a marquee drag into a
+   * highlight with real text. Browser or Node.
+   */
+  textRects(n: number): Promise<{ str: string; x: number; y: number; w: number; h: number }[]>;
+  /**
    * Render page `n` (1-based) to an image the image engine can consume.
    * Browser only (needs a canvas).
    */
@@ -42,7 +48,7 @@ export interface PdfDoc {
 }
 
 export async function loadPdf(data: Uint8Array): Promise<PdfDoc> {
-  const { getDocument } = await pdfjs();
+  const { getDocument, Util } = await pdfjs();
   const task = getDocument({ data, isEvalSupported: false } as Parameters<typeof getDocument>[0]);
   const doc: PdfDocumentProxy = await task.promise;
   const outline = await buildOutline(doc);
@@ -82,6 +88,29 @@ export async function loadPdf(data: Uint8Array): Promise<PdfDoc> {
         .join(' ')
         .replace(/\s+/g, ' ')
         .trim();
+    },
+
+    async textRects(n) {
+      const page = await doc.getPage(n);
+      const vp = page.getViewport({ scale: 1 });
+      const tc = await page.getTextContent();
+      const out: { str: string; x: number; y: number; w: number; h: number }[] = [];
+      for (const it of tc.items) {
+        if (!('str' in it) || it.str === '') continue;
+        // item transform → device space (y-down, origin top-left)
+        const m = Util.transform(vp.transform, it.transform);
+        const fontH = Math.hypot(m[2], m[3]) || it.height || 1;
+        const x = m[4];
+        const y = m[5] - fontH;
+        out.push({
+          str: it.str,
+          x: x / vp.width,
+          y: y / vp.height,
+          w: it.width / vp.width,
+          h: fontH / vp.height,
+        });
+      }
+      return out;
     },
 
     async destroy() {

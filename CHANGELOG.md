@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- **PDF highlights (M5 F2c)** — **Shift-drag** over a page in the demo PDF to
+  highlight a passage: the marquee is intersected with pdf.js's text runs, so
+  the highlight snaps to the covered lines and stores the real text. Painted
+  back over the right page, listed in the same `<HighlightsPanel>` as EPUB
+  highlights (jump = go to page), and persisted through the same
+  `ReaderSource.loadHighlights` / `saveHighlights`. `HighlightRecord` is now a
+  `text | rect` discriminated union; `createPdfEngine` gains
+  `addHighlight` / `removeHighlight` / `updateHighlight` / `listHighlights` and
+  `reader:selection` / `reader:highlightschange`; `PdfDoc.textRects(page)` is
+  new. Single-page mode only — continuous / zoomed views don't paint the
+  overlay (highlights stay saved).
 - **Highlight notes & a reusable highlights panel (M5 F2b)** —
   `TextEngine.updateHighlight(id, { color?, note? })` (also on `ReaderHandle`
   and `useReaderSelection()`); `note: ''` clears the note. New headless

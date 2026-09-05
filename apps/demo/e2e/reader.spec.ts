@@ -140,6 +140,32 @@ test.describe('Pore.js demo', () => {
     await expect(bar).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
   });
 
+  test('PDF rect highlight: Shift-drag a passage, it persists across reload', async ({ page }) => {
+    await page.goto('/?book=demo-pdf');
+    const img = page.locator('.pore-image__viewport img');
+    await expect(img).toBeVisible();
+    // wait for the rendered page (broken/loading img is tiny)
+    await expect.poll(async () => (await img.boundingBox())!.width).toBeGreaterThan(200);
+    const box = (await img.boundingBox())!;
+
+    await page.mouse.move(box.x + box.width * 0.15, box.y + box.height * 0.09);
+    await page.keyboard.down('Shift');
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.7, box.y + box.height * 0.11, { steps: 8 });
+    await page.mouse.up();
+    await page.keyboard.up('Shift');
+
+    await page.getByRole('button', { name: /Highlight in/ }).first().click();
+    await expect(page.locator('.pore-pdf-hl__box')).toHaveCount(1);
+    await expect(page.getByRole('button', { name: 'Highlights' })).toContainText('1');
+
+    await page.waitForTimeout(800); // debounced save
+    await page.reload();
+    await expect(page.locator('.pore-pdf-hl__box')).toHaveCount(1);
+    await page.getByRole('button', { name: 'Highlights' }).click();
+    await expect(page.locator('[data-pore-hl-jump]').first()).toContainText('Lorem');
+  });
+
   test('theme button on an EPUB cycles light → sepia → dark', async ({ page }) => {
     await page.goto('/?book=demo-book');
     await page.frameLocator('iframe.pore-text__frame').locator('h1').waitFor();

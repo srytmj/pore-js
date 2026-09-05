@@ -44,6 +44,25 @@ F2b → F2c → F3b → F6 in order (user: "all of it, in order").
   F2c storage = `kind:'text'|'rect'` discriminated union. F3b spreads = two
   iframes.
 
+## 2026-09-06 — F2c: PDF rect highlights (Shift+drag)
+- **What:** `PdfDoc.textRects(page)` (pdf.js text-run boxes, normalized).
+  `pdf/pdf-highlights.ts` — transparent overlay over the page `<img>`, Shift+drag
+  marquee → intersect text runs → merge to line rows → `RectHighlightRecord`.
+  `createPdfEngine` grew `addHighlight`/`removeHighlight`/`updateHighlight`/
+  `listHighlights` + `reader:selection`/`reader:highlightschange`. Demo:
+  `canAnnotate = isText || isPdf`, empty-state + tooltip say "Shift-drag".
+- **Why:** F2c, "all in order".
+- **State:** browser-verified working (marquee → yellow line highlight →
+  persists reload). 256 unit + 36 e2e green. Committing now.
+- **Notes:** Shift+drag (not plain drag — native img-drag navigated to the blob
+  URL; `img.draggable=false` + dragstart guard added). Single-page mode only.
+  Overlay attaches on `reader:ready` (image engine `replaceChildren`s the
+  container in mount) and repaints on img `load`. **Dev-server pain:** repeated
+  `preview_stop`/`start` + partial rebuilds wedged Vite HMR (stale
+  `dist/*.js` 404s, ghost engines) — fix was `rm -rf apps/demo/node_modules/.vite`
+  + a brand-new browser tab. Do a full `pnpm build` before verifying, not
+  per-package.
+
 ## 2026-09-06 — F2c groundwork: HighlightRecord discriminated union
 - **What:** `HighlightRecord` is now `TextHighlightRecord | RectHighlightRecord`
   discriminated on `kind` (`'text'` = DOM range + cfi, `'rect'` = page +

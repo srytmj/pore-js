@@ -119,6 +119,7 @@ export function Chrome({
   // search is only meaningful when there's a text layer, so key off the id.
   const isPdf = isImage && /\.pdf$|^demo-pdf$/i.test(bookId);
   const canSearch = isText || isPdf;
+  const canAnnotate = isText || isPdf;
   const menuPos = menu.placement;
 
   const overlayOpen = panelOpen || searchOpen || endPage !== null;
@@ -200,12 +201,12 @@ export function Chrome({
           🔗
         </button>
       )}
-      {isText && (
+      {canAnnotate && (
         <button
           className={highlightsOpen ? 'active' : ''}
           onClick={() => setHighlightsOpen((v) => !v)}
           aria-label="Highlights"
-          title="Highlights"
+          title={isPdf ? 'Highlights — Shift-drag on the page to add' : 'Highlights'}
         >
           🖍{highlights.length > 0 ? ` ${highlights.length}` : ''}
         </button>
@@ -395,9 +396,11 @@ export function Chrome({
 
       <FootnotePopover />
 
-      {isText && selection && selection.text.trim().length > 0 && (
+      {canAnnotate && selection && (isPdf || selection.text.trim().length > 0) && (
         <div className="selection-toolbar" role="toolbar" aria-label="Highlight selection">
-          <span className="selection-toolbar__text">"{selection.text.slice(0, 40)}"</span>
+          <span className="selection-toolbar__text">
+            {selection.text.trim() ? `"${selection.text.slice(0, 40)}"` : 'Selected region'}
+          </span>
           {HIGHLIGHT_COLORS.map((color) => (
             <button
               key={color}
@@ -420,7 +423,7 @@ export function Chrome({
         </div>
       )}
 
-      {isText && highlightsOpen && (
+      {canAnnotate && highlightsOpen && (
         <div className="highlights-panel" role="dialog" aria-label="Highlights">
           <div className="highlights-panel__header">
             <strong>Highlights</strong>
@@ -431,6 +434,11 @@ export function Chrome({
           <HighlightsPanel
             className="highlights-panel__body"
             colors={HIGHLIGHT_COLORS}
+            emptyLabel={
+              isPdf
+                ? 'Shift-drag over the page to highlight a passage.'
+                : 'Select text in the book to highlight it.'
+            }
             onJump={() => setHighlightsOpen(false)}
           />
         </div>
