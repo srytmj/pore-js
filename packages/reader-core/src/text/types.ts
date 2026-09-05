@@ -3,6 +3,15 @@ import type { TocEntry, EpubMetadata } from './epub/types.js';
 import type { PageLoadState } from '../image/types.js';
 import type { Chapter, Locator, ReaderProgress } from '../reader-engine.js';
 import type { SearchHit } from '../search/search-index.js';
+import type { HighlightRecord } from '../source/types.js';
+import type { Rect } from './anchor.js';
+
+export type { HighlightRecord } from '../source/types.js';
+
+export interface TextSelection {
+  rect: Rect;
+  text: string;
+}
 
 export interface TextEngineSettings {
   fontSizePct: number; // 100 = author default
@@ -88,6 +97,10 @@ export interface TextEngineEvents {
   'reader:end': Record<string, never>;
   'reader:start': Record<string, never>;
   'reader:error': { error: unknown };
+  /** The live text selection inside the sandboxed iframe, debounced; `null` when it collapses. */
+  'reader:selection': TextSelection | null;
+  /** Fired after `addHighlight`/`removeHighlight` and once on mount (with whatever was persisted). */
+  'reader:highlightschange': { highlights: HighlightRecord[] };
 }
 
 export interface TextEngine {
@@ -106,6 +119,13 @@ export interface TextEngine {
   gotoHit(hit: SearchHit): void;
   /** Portable `epubcfi(...)` for the current position, or `null` before the spine has rendered. */
   getCfi(): string | null;
+  /**
+   * Highlight the current selection (see `reader:selection`). Returns `null`
+   * when there's no live selection or it can't be resolved to a range.
+   */
+  addHighlight(opts?: { color?: string; note?: string }): HighlightRecord | null;
+  removeHighlight(id: string): void;
+  listHighlights(): HighlightRecord[];
   on<E extends keyof TextEngineEvents>(
     event: E,
     handler: (payload: TextEngineEvents[E]) => void,

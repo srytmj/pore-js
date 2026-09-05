@@ -2,8 +2,19 @@
 
 ## Unreleased
 
-M4 F1 — precise text ranges (`epubcfi`-flavored), plus post-`v0.6.0-ui` UI polish.
+M4 F1–F2 — precise text ranges + highlights, plus post-`v0.6.0-ui` UI polish.
 
+- **Text highlights (EPUB)** — `TextEngine.addHighlight`/`removeHighlight`/
+  `listHighlights()`, driven by a debounced `reader:selection` event off the
+  sandboxed iframe's own selection. Persisted via new optional
+  `ReaderSource.loadHighlights`/`saveHighlights` methods (`CachedSource`
+  implements both, mirroring its progress-caching pattern). Rendered with the
+  CSS Custom Highlight API where available, a `<mark>` fallback otherwise. The
+  demo adds a selection toolbar (color swatches) and a highlights panel
+  (list/jump/remove). Fixed a pre-existing bug found while verifying jump-to
+  at desktop width: anchor/CFI page resolution didn't account for the reading
+  column being centred in a wider window, landing on the wrong page — now
+  fixed for resume-position and `getCfi()` too. See `docs/m4-plan.md` F2.
 - **Word-level anchor offsets + `epubcfi`-shaped positions** — `anchor.ts`
   now records a real character offset into the resolved block (previously
   hardcoded to `0`) via a word-level `Range` walk, with a whole-block fallback

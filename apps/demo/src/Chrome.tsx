@@ -15,9 +15,12 @@ import {
   useReaderLocation,
   useReaderProgress,
   useReaderSettings,
+  useReaderHighlights,
+  useReaderSelection,
   useResumedFromPage,
   type ImageEngineSettings,
   type TextEngineSettings,
+  type Position,
 } from '@pore/reader-react';
 import { useEffect, useState } from 'react';
 import { useTheme } from './theme.js';
@@ -28,6 +31,8 @@ interface BookOpt {
   id: string;
   label: string;
 }
+
+const HIGHLIGHT_COLORS = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8'];
 
 export function Chrome({
   books,
@@ -59,6 +64,9 @@ export function Chrome({
   const [dismissed, setDismissed] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [posNotice, setPosNotice] = useState<string | null>(null);
+  const [highlightsOpen, setHighlightsOpen] = useState(false);
+  const { selection, highlight, removeHighlight } = useReaderSelection();
+  const highlights = useReaderHighlights();
 
   useReaderHistory({ mode: 'url-and-title' });
   useEffect(() => setDismissed(false), [bookId]);
@@ -147,6 +155,16 @@ export function Chrome({
           title="Copy a portable position link (epubcfi)"
         >
           🔗
+        </button>
+      )}
+      {isText && (
+        <button
+          className={highlightsOpen ? 'active' : ''}
+          onClick={() => setHighlightsOpen((v) => !v)}
+          aria-label="Highlights"
+          title="Highlights"
+        >
+          🖍{highlights.length > 0 ? ` ${highlights.length}` : ''}
         </button>
       )}
       <button
@@ -299,6 +317,66 @@ export function Chrome({
       )}
 
       <FootnotePopover />
+
+      {isText && selection && selection.text.trim().length > 0 && (
+        <div className="selection-toolbar" role="toolbar" aria-label="Highlight selection">
+          <span className="selection-toolbar__text">"{selection.text.slice(0, 40)}"</span>
+          {HIGHLIGHT_COLORS.map((color) => (
+            <button
+              key={color}
+              className="selection-toolbar__swatch"
+              style={{ background: color }}
+              aria-label={`Highlight in ${color}`}
+              onClick={() => highlight({ color })}
+            />
+          ))}
+        </div>
+      )}
+
+      {isText && highlightsOpen && (
+        <div className="highlights-panel" role="dialog" aria-label="Highlights">
+          <div className="highlights-panel__header">
+            <strong>Highlights</strong>
+            <button onClick={() => setHighlightsOpen(false)} aria-label="Close highlights">
+              ×
+            </button>
+          </div>
+          {highlights.length === 0 ? (
+            <p className="highlights-panel__empty">Select text in the book to highlight it.</p>
+          ) : (
+            <ol className="highlights-panel__list">
+              {highlights.map((h) => (
+                <li key={h.id}>
+                  <button
+                    className="highlights-panel__jump"
+                    style={{ borderLeftColor: h.color }}
+                    onClick={() => {
+                      const pos: Position = {
+                        type: 'anchor',
+                        spine: h.range.spine,
+                        block: h.range.startBlock,
+                        offset: h.range.startOffset,
+                        percent: 0,
+                      };
+                      reader.goto(pos);
+                      setHighlightsOpen(false);
+                    }}
+                  >
+                    {h.text.slice(0, 80)}
+                  </button>
+                  <button
+                    className="highlights-panel__remove"
+                    aria-label="Remove highlight"
+                    onClick={() => removeHighlight(h.id)}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      )}
 
       {posNotice && (
         <div className="notice" role="status" onClick={() => setPosNotice(null)}>

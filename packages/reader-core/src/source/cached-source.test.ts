@@ -93,6 +93,47 @@ describe('CachedSource', () => {
     expect(src.pendingWrites).toBe(1);
   });
 
+  it('saves highlights locally and mirrors to the inner source', async () => {
+    const saveHighlights = vi.fn(async () => {});
+    const inner = innerSource({ saveHighlights });
+    const store = memStore();
+    const src = new CachedSource(inner, { store, cache: false });
+    const hls = [
+      {
+        id: 'h1',
+        range: { spine: 0, startBlock: 0, startOffset: 0, endBlock: 0, endOffset: 5 },
+        cfi: { start: 'epubcfi(/6/2!/2:0)', end: 'epubcfi(/6/2!/2:5)' },
+        color: 'yellow',
+        text: 'hello',
+        createdAt: 1,
+      },
+    ];
+    await src.saveHighlights('b', hls);
+    expect(await store.get('pore:highlights:b')).toEqual(hls);
+    expect(saveHighlights).toHaveBeenCalledWith('b', hls);
+  });
+
+  it('prefers the local highlights copy on load, falling back to the inner source', async () => {
+    const loadHighlights = vi.fn(async () => []);
+    const inner = innerSource({ loadHighlights });
+    const store = memStore();
+    const src = new CachedSource(inner, { store, cache: false });
+    expect(await src.loadHighlights('b')).toEqual([]);
+    expect(loadHighlights).toHaveBeenCalledWith('b');
+
+    await store.set('pore:highlights:b', [{ id: 'h1' }]);
+    loadHighlights.mockClear();
+    expect(await src.loadHighlights('b')).toEqual([{ id: 'h1' }]);
+    expect(loadHighlights).not.toHaveBeenCalled();
+  });
+
+  it('loadHighlights/saveHighlights degrade gracefully when the inner source has neither', async () => {
+    const inner = innerSource();
+    const src = new CachedSource(inner, { store: memStore(), cache: false });
+    expect(await src.loadHighlights('b')).toEqual([]);
+    await expect(src.saveHighlights('b', [])).resolves.toBeUndefined();
+  });
+
   it('passes manifest/page/file straight through', async () => {
     const inner = innerSource();
     const src = new CachedSource(inner, { store: memStore(), cache: false });

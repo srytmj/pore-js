@@ -42,6 +42,28 @@ export interface GetFileOpts {
   signal?: AbortSignal;
 }
 
+/** Endpoints of a highlight span, addressed the same way `Position['anchor']` is (block ordinal + flattened-text offset), just with a start and an end. */
+export interface HighlightRange {
+  spine: number;
+  startBlock: number;
+  startOffset: number;
+  endBlock: number;
+  endOffset: number;
+}
+
+/** A persisted text highlight (+ optional note). Not a `Position` — a parallel per-book collection. */
+export interface HighlightRecord {
+  id: string;
+  range: HighlightRange;
+  /** Portable `epubcfi(...)` endpoints, for interchange (see `text/cfi.ts`). */
+  cfi: { start: string; end: string };
+  color: string;
+  note?: string;
+  /** Snapshot of the highlighted text, so a highlights panel can list them before resolving. */
+  text: string;
+  createdAt: number;
+}
+
 /**
  * The seam between the reader and its data. Everything above this is
  * source-blind. See docs/reader-engine-design.md §4.
@@ -52,4 +74,7 @@ export interface ReaderSource {
   getFile(bookId: string, opts?: GetFileOpts): Promise<Blob>;
   loadProgress(bookId: string): Promise<Position | null>;
   saveProgress(bookId: string, p: Position): Promise<void>;
+  /** Optional — sources that don't implement it simply can't persist highlights. */
+  loadHighlights?(bookId: string): Promise<HighlightRecord[]>;
+  saveHighlights?(bookId: string, highlights: HighlightRecord[]): Promise<void>;
 }

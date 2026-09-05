@@ -1,5 +1,5 @@
 import type { Position } from '../position/types.js';
-import type { GetFileOpts, GetPageOpts, Manifest, ReaderSource } from './types.js';
+import type { GetFileOpts, GetPageOpts, HighlightRecord, Manifest, ReaderSource } from './types.js';
 import { openKvStore, type KvStore } from '../offline/idb.js';
 import { MediaCache } from '../offline/media-cache.js';
 
@@ -157,6 +157,27 @@ export class CachedSource implements ReaderSource {
     }
   }
 
+  /** Local copy wins; falls back to the wrapped source when we have nothing (both optional — most sources have neither). */
+  async loadHighlights(bookId: string): Promise<HighlightRecord[]> {
+    const local = await this.#store.get<HighlightRecord[]>(this.#hlKey(bookId));
+    if (local) return local;
+    try {
+      return (await this.#inner.loadHighlights?.(bookId)) ?? [];
+    } catch {
+      return [];
+    }
+  }
+
+  /** Mirrors {@link saveProgress}'s local-first approach, without the offline queue (a highlight save can just retry on the next call). */
+  async saveHighlights(bookId: string, highlights: HighlightRecord[]): Promise<void> {
+    await this.#store.set(this.#hlKey(bookId), highlights);
+    try {
+      await this.#inner.saveHighlights?.(bookId, highlights);
+    } catch {
+      // best-effort mirror; the local copy above is authoritative for loadHighlights
+    }
+  }
+
   /** Push any queued offline writes to the wrapped source. */
   async flush(): Promise<void> {
     if (this.#flushing || this.#queue.length === 0) return;
@@ -193,6 +214,10 @@ export class CachedSource implements ReaderSource {
 
   #key(bookId: string): string {
     return `${this.#ns}:progress:${bookId}`;
+  }
+
+  #hlKey(bookId: string): string {
+    return `${this.#ns}:highlights:${bookId}`;
   }
 }
 

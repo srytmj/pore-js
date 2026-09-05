@@ -26,6 +26,8 @@ import {
   type ReaderProgress,
   type SearchHit,
   type TextEngineSettings,
+  type TextSelection,
+  type HighlightRecord,
   type TocEntry,
   type TurnDirection,
 } from '@pore/reader-core';
@@ -69,6 +71,10 @@ export interface ReaderHandle {
   gotoHit(hit: SearchHit): void;
   /** Portable `epubcfi(...)` for the current position — `null` on engines without one (image/PDF). */
   getCfi(): string | null;
+  /** Highlight the current text selection — `null` on engines without one (image/PDF), or if there's no live selection. */
+  addHighlight(opts?: { color?: string; note?: string }): HighlightRecord | null;
+  removeHighlight(id: string): void;
+  listHighlights(): HighlightRecord[];
 }
 
 interface EngineLike {
@@ -82,6 +88,9 @@ interface EngineLike {
   search?(query: string): Promise<SearchHit[]>;
   gotoHit?(hit: SearchHit): void;
   getCfi?(): string | null;
+  addHighlight?(opts?: { color?: string; note?: string }): HighlightRecord | null;
+  removeHighlight?(id: string): void;
+  listHighlights?(): HighlightRecord[];
   on(event: string, handler: (payload: never) => void): () => void;
   destroy(): void;
 }
@@ -103,6 +112,8 @@ interface ReaderCtx {
   error: ReaderErrorInfo | null;
   clearError: () => void;
   handle: ReaderHandle;
+  selection: TextSelection | null;
+  highlights: HighlightRecord[];
 }
 
 const RuntimeContext = createContext<ReaderCtx | null>(null);
@@ -169,6 +180,8 @@ export function Reader({
   const [loading, setLoading] = useState<Set<string>>(() => new Set());
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [error, setError] = useState<ReaderErrorInfo | null>(null);
+  const [selection, setSelection] = useState<TextSelection | null>(null);
+  const [highlights, setHighlights] = useState<HighlightRecord[]>([]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -262,6 +275,10 @@ export function Reader({
           const q = p as { index?: number; error: unknown };
           setError({ ...(q.index !== undefined ? { index: q.index } : {}), error: q.error, at: Date.now() });
         }),
+        engine.on('reader:selection', (p: never) => setSelection(p as TextSelection | null)),
+        engine.on('reader:highlightschange', (p: never) =>
+          setHighlights((p as { highlights: HighlightRecord[] }).highlights),
+        ),
       );
 
       await engine.mount();
@@ -272,6 +289,7 @@ export function Reader({
       for (const off of offs) off();
       engineRef.current?.destroy();
       engineRef.current = null;
+      setSelection(null);
     };
   }, [source, bookId]);
 
@@ -283,6 +301,9 @@ export function Reader({
       search: (q) => engineRef.current?.search?.(q) ?? Promise.resolve([]),
       gotoHit: (hit) => engineRef.current?.gotoHit?.(hit),
       getCfi: () => engineRef.current?.getCfi?.() ?? null,
+      addHighlight: (opts) => engineRef.current?.addHighlight?.(opts) ?? null,
+      removeHighlight: (id) => engineRef.current?.removeHighlight?.(id),
+      listHighlights: () => engineRef.current?.listHighlights?.() ?? [],
       setSettings: (patch) => engineRef.current?.setSettings(patch as never),
       setKeymap: (patch) => engineRef.current?.setKeymap?.(patch),
       chapters: () => engineRef.current?.chapters?.() ?? [],
@@ -312,6 +333,8 @@ export function Reader({
       error,
       clearError,
       handle,
+      selection,
+      highlights,
     }),
     [
       kind,
@@ -330,6 +353,8 @@ export function Reader({
       error,
       clearError,
       handle,
+      selection,
+      highlights,
     ],
   );
 
@@ -494,5 +519,28 @@ export function useReaderSearch(opts?: { debounceMs?: number }): ReaderSearch {
     next: () => go(activeIndex + 1 < hits.length ? activeIndex + 1 : 0),
     prev: () => go(activeIndex > 0 ? activeIndex - 1 : hits.length - 1),
     clear: () => setQuery(''),
+  };
+}
+
+/** The book's saved highlights (empty on engines without one, e.g. image/PDF). */
+export function useReaderHighlights(): HighlightRecord[] {
+  return useRuntime().highlights;
+}
+
+export interface ReaderSelectionApi {
+  /** The live text selection inside the reader, or `null` when nothing's selected. */
+  selection: TextSelection | null;
+  /** Highlight the current selection; returns `null` if there's nothing selected. */
+  highlight(opts?: { color?: string; note?: string }): HighlightRecord | null;
+  removeHighlight(id: string): void;
+}
+
+/** Selection-driven highlighting — pair with `selection` to position a floating toolbar. */
+export function useReaderSelection(): ReaderSelectionApi {
+  const { selection, handle } = useRuntime();
+  return {
+    selection,
+    highlight: (opts) => handle.addHighlight(opts),
+    removeHighlight: (id) => handle.removeHighlight(id),
   };
 }

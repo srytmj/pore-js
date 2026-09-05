@@ -292,6 +292,50 @@
     @apply fixed bottom-4 left-1/2 z-[60] max-w-[90vw] -translate-x-1/2 cursor-pointer rounded-2xl bg-black/80 px-4 py-2 text-center text-[0.8rem] break-all text-white;
   }
 
+  /* --- highlights (F2) ------------------------------------------------------ */
+  .selection-toolbar {
+    @apply fixed bottom-16 left-1/2 z-[58] flex max-w-[90vw] -translate-x-1/2 items-center gap-2 rounded-full border border-line bg-surface px-3 py-2 text-fg shadow-2xl;
+    animation: pore-panel-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .selection-toolbar__text {
+    @apply max-w-[16rem] truncate text-[0.8rem] text-muted italic;
+  }
+  .selection-toolbar__swatch {
+    @apply h-6 w-6 shrink-0 cursor-pointer rounded-full border border-black/10;
+  }
+  .selection-toolbar__swatch:hover {
+    @apply scale-110;
+  }
+
+  .highlights-panel {
+    @apply fixed top-[52px] right-3 z-[55] flex max-h-[60vh] w-[min(360px,calc(100vw-24px))] flex-col overflow-hidden rounded-[var(--radius-control)] border border-line bg-surface text-fg shadow-2xl;
+    animation: pore-panel-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .highlights-panel__header {
+    @apply flex items-center justify-between border-b border-line p-2 px-3;
+  }
+  .highlights-panel__empty {
+    @apply p-4 text-center text-[0.85rem] text-muted;
+  }
+  .highlights-panel__list {
+    @apply m-0 list-none overflow-y-auto p-0;
+  }
+  .highlights-panel__list li {
+    @apply flex items-stretch border-b border-line/60;
+  }
+  .highlights-panel__jump {
+    @apply flex-1 border-0 border-l-4 border-solid bg-transparent p-2 text-left text-[0.85rem] leading-snug;
+  }
+  .highlights-panel__jump:hover {
+    @apply bg-fg/10;
+  }
+  .highlights-panel__remove {
+    @apply w-9 shrink-0 border-0 bg-transparent text-muted;
+  }
+  .highlights-panel__remove:hover {
+    @apply text-fg;
+  }
+
   .search {
     @apply fixed top-[52px] right-3 z-[55] flex max-h-[60vh] w-[min(360px,calc(100vw-24px))] flex-col overflow-hidden rounded-[var(--radius-control)] border border-line bg-surface text-fg shadow-2xl;
     animation: pore-panel-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);

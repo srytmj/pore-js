@@ -17,6 +17,8 @@ export type {
   ImagePage,
   GetPageOpts,
   GetFileOpts,
+  HighlightRange,
+  HighlightRecord,
 } from './source/types.js';
 
 export type { Position } from './position/types.js';
@@ -101,7 +103,13 @@ export { resolvePath, resolveHref, dirOf, stripHash, fragmentOf } from './text/e
 export { createTextEngine } from './text/create-text-engine.js';
 export type { CreateTextEngineOptions } from './text/create-text-engine.js';
 export { DEFAULT_TEXT_SETTINGS } from './text/types.js';
-export type { TextEngine, TextEngineEvents, TextEngineSettings } from './text/types.js';
+export type { TextEngine, TextEngineEvents, TextEngineSettings, TextSelection } from './text/types.js';
+export {
+  locateOffset,
+  offsetOfPoint,
+  rangeForHighlight,
+  highlightRangeFromSelection,
+} from './text/highlight.js';
 export { rewriteResources } from './text/rewrite.js';
 export {
   buildBaseStylesheet,

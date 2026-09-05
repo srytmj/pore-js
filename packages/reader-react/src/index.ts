@@ -20,6 +20,9 @@ export type {
   SearchHit,
   ReaderTransitions,
   TransitionContext,
+  TextSelection,
+  HighlightRecord,
+  HighlightRange,
 } from '@pore/reader-core';
 export { instantTransitions } from '@pore/reader-core';
 export { gsapAdapter } from './gsap-adapter.js';
@@ -42,6 +45,8 @@ export {
   useReaderChapters,
   useReaderError,
   useResumedFromPage,
+  useReaderHighlights,
+  useReaderSelection,
 } from './reader.js';
 export type {
   ReaderProps,
@@ -56,6 +61,7 @@ export type {
   EndPage,
   ReaderErrorInfo,
   UseReaderError,
+  ReaderSelectionApi,
 } from './reader.js';
 
 export { SettingsPanel, SettingsPanelBody } from './settings-panel.js';

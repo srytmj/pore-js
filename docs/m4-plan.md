@@ -69,32 +69,77 @@ pairing is F2's job.
 
 ---
 
-## F2 — Highlights & notes · L
+## F2 — Highlights & notes · L · done for EPUB (v0.7.0-annotate wip); PDF cut below
 
-- [ ] Selection bridge: `selectionchange` inside the sandboxed iframe →
-      debounced → a floating toolbar (copy / highlight / note / "search this
-      selection") positioned over the selection rect
-- [ ] `TextEngine.addHighlight(range, { color, note? })` /
-      `removeHighlight(id)` / `listHighlights(): Highlight[]`; persisted through
-      `ReaderSource` as a new `HighlightRecord[]` — **not** `Position`, a
-      parallel per-book collection (`loadHighlights`/`saveHighlights` on
-      `ReaderSource`, optional so existing sources don't need to implement it)
-- [ ] Render: CSS Custom Highlight API (`CSS.highlights.set(...)`) when
-      available; fall back to wrapping the range in `<mark>` (same fallback
-      shape as the in-book search highlight) — no DOM mutation of the book's
-      own markup when the native API is there
-- [ ] A highlights/notes panel (`reader-react` headless list + Radix
-      `ScrollArea`/`Popover` for the note editor; demo styles it) — jump to a
-      highlight like a search hit
-- [ ] Works for PDF too: a rect-based highlight (page + bounding boxes from
-      pdf.js's text layer) — simpler than EPUB's range problem, reuses F1's
-      CFI work not at all
-- [ ] Vitest: add/remove/list round-trip against a fake source; selection →
-      range → CFI → re-resolved highlight position; Playwright: select text,
-      highlight, reload, still there
+- [x] Selection bridge: `selectionchange` inside the sandboxed iframe →
+      debounced 150ms → `reader:selection` (`{ rect, text } | null`) — the
+      demo renders a floating "highlight this" toolbar off it (color swatches;
+      no note editor yet, see cut below)
+- [x] `TextEngine.addHighlight(opts?: { color?, note? })` / `removeHighlight(id)`
+      / `listHighlights(): HighlightRecord[]`; persisted through `ReaderSource`
+      as a new `HighlightRecord[]` — **not** `Position`, a parallel per-book
+      collection (`loadHighlights`/`saveHighlights`, optional so existing
+      sources don't need to implement it). `CachedSource` implements both
+      (mirrors its existing local-first `saveProgress` pattern), so the demo's
+      `CachedSource(DemoSource())` persists highlights for free.
+- [x] Highlight endpoints addressed the same way `Position['anchor']` is
+      (block ordinal + flattened-text offset), just with a start/end pair —
+      new `HighlightRange` type + `text/highlight.ts` (`locateOffset`/
+      `offsetOfPoint`/`rangeForHighlight`/`highlightRangeFromSelection`).
+      Each endpoint also gets its own `epubcfi(...)` via F1's `serializeCfi`,
+      stored as `HighlightRecord.cfi.{start,end}` for interchange.
+- [x] Render: CSS Custom Highlight API (`CSS.highlights.set(...)` +
+      `::highlight(...)` CSS) when available; `<mark>` fallback (wrapped via
+      `Range.surroundContents`, silently skipped — still persisted — for a
+      selection spanning more than one element, which `surroundContents`
+      can't wrap) otherwise.
+- [x] A highlights panel in the demo (`Chrome.tsx`) — list, jump-to (via
+      `goto({ type: 'anchor', ... })`), remove. Kept as plain demo markup
+      rather than a `reader-react` component, since a full editor UI (notes,
+      color re-pick) is deferred — see cut below.
+- [x] **Found and fixed while verifying jump-to in a real (wide) browser
+      window**: `pageForElement`/`resolveAnchor`/`generateAnchor` divided a
+      block's raw `getBoundingClientRect().left` by `pageStep` assuming page 0
+      starts at `left: 0` — true only when the reading column fills the whole
+      iframe. On a desktop-width window `#pore-viewport` is horizontally
+      centred, so every anchor resolved to the wrong page by however wide that
+      centring gap was. Fixed with `relRectOf`/`relRangeRectOf` in
+      `create-text-engine.ts` (subtract `#pore-viewport`'s own
+      `getBoundingClientRect().left` before dividing) — this was a **pre-existing
+      bug affecting the M0.5 resume-position feature and F1's `getCfi()` too**,
+      just invisible at narrow widths where the centring gap happens to be ~0
+      (like the ~800px browser tab F1 was verified in). Now correct at any
+      width; all 211 tests still pass (the jsdom suite never exercises real
+      layout, so it couldn't have caught this — browser verification did).
+- [x] Vitest: `highlight.test.ts` (7 tests — offset/range helpers against fake
+      documents, same pattern as `anchor.test.ts`/`cfi.test.ts`); `CachedSource`
+      highlight persistence (3 tests); `create-text-engine` highlight tests (2 —
+      no-selection returns `null`/never throws, and a full add→persist→reload→
+      remove round trip that self-skips its deep assertions when jsdom's
+      iframe selection isn't available, same documented limitation as
+      `getCfi`'s test). Browser-verified end-to-end: select → highlight →
+      painted → persisted across reload → listed in the panel → jump-to lands
+      on the right page → remove.
 
-**Done when:** select text in the demo EPUB or PDF, highlight it with a note,
-reload, it's still there and click-to-jump works.
+**Done when:** select text in the demo EPUB, highlight it, reload, it's still
+there and click-to-jump works. — met. Note-taking UI, PDF highlights, and a
+dedicated `reader-react` highlights-panel component are cut to a follow-up
+(below); the `HighlightRecord.note` field and engine API already support a
+note, so that follow-up is UI-only.
+
+**Cut from this pass (tracked, not blocking F1→F3/F4/F5/F6):**
+- **PDF rect-based highlights** — `createPdfEngine` doesn't get `addHighlight`
+  in this pass; it needs its own page+bbox addressing (via pdf.js's text
+  layer) distinct from the EPUB block/offset scheme, sized like its own
+  follow-up task rather than folded into F2's EPUB work.
+- **Note editor UI** — the API (`{ note?: string }`) and storage
+  (`HighlightRecord.note`) exist; the demo doesn't yet have a way to type one
+  in (would need a small popover/textarea, deferred to avoid a `window.prompt`
+  UX compromise).
+- **A `reader-react` highlights-panel component** — today it's plain markup in
+  the demo's `Chrome.tsx`; extracting a headless component (like
+  `<TableOfContents>`) is worth doing once the note editor exists too, so it's
+  one extraction instead of two.
 
 ---
 

@@ -7,8 +7,18 @@ import { parseEpub } from './epub/parse.js';
 import type { EpubBook, TocEntry } from './epub/types.js';
 import { dirOf, resolveHref, stripHash } from './epub/path.js';
 import { rewriteResources } from './rewrite.js';
-import { blockElements, generateAnchor, pageForElement, resolveAnchor } from './anchor.js';
+import {
+  blockElements,
+  generateAnchor,
+  pageForElement,
+  resolveAnchor,
+  type Rect,
+  type RectOf,
+  type RangeRectOf,
+} from './anchor.js';
 import { serializeCfi } from './cfi.js';
+import { highlightRangeFromSelection, rangeForHighlight } from './highlight.js';
+import type { HighlightRange, HighlightRecord } from '../source/types.js';
 import { SearchController } from '../search/search-controller.js';
 import type { SearchHit, SearchSection } from '../search/search-index.js';
 import { instantTransitions, type ReaderTransitions } from '../transitions.js';
@@ -73,6 +83,10 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   let objectUrls: string[] = [];
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   let resizeObserver: ResizeObserver | null = null;
+  let highlights: HighlightRecord[] = [];
+  let pendingSelectionRange: Range | null = null;
+  let selectionTimer: ReturnType<typeof setTimeout> | null = null;
+  let saveHlTimer: ReturnType<typeof setTimeout> | null = null;
 
   const root = doc.createElement('div');
   root.className = 'pore-text';
@@ -159,13 +173,18 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     if (!cdoc) {
       return { type: 'anchor', spine: spineIndex, block: 0, offset: 0, percent: bookPercent };
     }
-    return generateAnchor(cdoc, {
-      spine: spineIndex,
-      page,
-      spinePages: spinePageCount,
-      bookPercent,
-      pageWidth: layout().measure,
-    });
+    return generateAnchor(
+      cdoc,
+      {
+        spine: spineIndex,
+        page,
+        spinePages: spinePageCount,
+        bookPercent,
+        pageWidth: layout().measure,
+      },
+      relRectOf,
+      relRangeRectOf,
+    );
   };
 
   /** Portable `epubcfi(...)` for the current position, or `null` before the spine has rendered. */
@@ -222,11 +241,186 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     void source.saveProgress(bookId, anchorFor()).catch(() => {});
   };
 
+  const scheduleSaveHighlights = () => {
+    if (saveHlTimer) clearTimeout(saveHlTimer);
+    saveHlTimer = setTimeout(flushSaveHighlights, SAVE_DEBOUNCE_MS);
+  };
+  const flushSaveHighlights = () => {
+    if (saveHlTimer) clearTimeout(saveHlTimer);
+    saveHlTimer = null;
+    if (destroyed) return;
+    void source.saveHighlights?.(bookId, highlights).catch(() => {});
+  };
+
+  // ---- highlights -----------------------------------------------------------
+
+  const highlightName = (color: string): string => `pore-hl-${color.replace(/[^a-z0-9]/gi, '')}`;
+
+  /** Inject `::highlight(...)` rules for the CSS Custom Highlight API path. */
+  const ensureHighlightStyle = (cdoc: Document, colors: string[]) => {
+    let el = cdoc.getElementById('pore-highlight-style') as HTMLStyleElement | null;
+    if (!el) {
+      el = cdoc.createElement('style');
+      el.id = 'pore-highlight-style';
+      cdoc.head?.appendChild(el);
+    }
+    el.textContent = colors
+      .map((c) => `::highlight(${highlightName(c)}){background-color:${c};color:inherit;}`)
+      .join('\n');
+  };
+
+  const clearMarkFallback = (cdoc: Document) => {
+    cdoc.querySelectorAll('mark.pore-highlight').forEach((mark) => {
+      const parent = mark.parentNode;
+      if (!parent) return;
+      while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+      parent.removeChild(mark);
+    });
+  };
+
+  interface HighlightWindow {
+    CSS?: { highlights?: Map<string, unknown> };
+    Highlight?: new (...ranges: Range[]) => unknown;
+  }
+
+  /** Re-paint highlights for the currently rendered spine — CSS Custom Highlight API, `<mark>` fallback otherwise. */
+  const applyHighlights = () => {
+    const cdoc = frame.contentDocument;
+    if (!cdoc) return;
+    const blocks = blockElements(cdoc);
+    const visible = highlights.filter((h) => h.range.spine === spineIndex);
+    const win = cdoc.defaultView as unknown as HighlightWindow | null;
+    if (win?.CSS?.highlights && win.Highlight) {
+      win.CSS.highlights.clear();
+      const byColor = new Map<string, Range[]>();
+      for (const h of visible) {
+        const r = rangeForHighlight(cdoc, blocks, h.range);
+        if (!r) continue;
+        const list = byColor.get(h.color);
+        if (list) list.push(r);
+        else byColor.set(h.color, [r]);
+      }
+      ensureHighlightStyle(cdoc, [...byColor.keys()]);
+      for (const [color, ranges] of byColor) {
+        win.CSS.highlights.set(highlightName(color), new win.Highlight(...ranges));
+      }
+      return;
+    }
+    clearMarkFallback(cdoc);
+    for (const h of visible) {
+      const r = rangeForHighlight(cdoc, blocks, h.range);
+      if (!r) continue;
+      try {
+        const mark = cdoc.createElement('mark');
+        mark.className = 'pore-highlight';
+        mark.dataset['highlightId'] = h.id;
+        mark.style.backgroundColor = h.color;
+        r.surroundContents(mark);
+      } catch {
+        // a range spanning more than one element can't be wrapped in a single
+        // <mark> — the highlight stays persisted, just unpainted in this path.
+      }
+    }
+  };
+
+  const onSelectionChange = () => {
+    if (selectionTimer) clearTimeout(selectionTimer);
+    selectionTimer = setTimeout(() => {
+      const cdoc = frame.contentDocument;
+      const sel = cdoc?.getSelection?.();
+      if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+        pendingSelectionRange = null;
+        emitter.emit('reader:selection', null);
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      pendingSelectionRange = range.cloneRange();
+      let rect: Rect;
+      try {
+        rect = range.getBoundingClientRect();
+      } catch {
+        rect = { left: 0, right: 0, top: 0, bottom: 0 };
+      }
+      emitter.emit('reader:selection', { rect, text: sel.toString() });
+    }, 150);
+  };
+
+  const addHighlight = (opts?: { color?: string; note?: string }): HighlightRecord | null => {
+    const cdoc = frame.contentDocument;
+    if (!cdoc || !book || !pendingSelectionRange) return null;
+    const blocks = blockElements(cdoc);
+    const range = highlightRangeFromSelection(cdoc, blocks, pendingSelectionRange);
+    if (!range) return null;
+    const anchorRange: HighlightRange = { ...range, spine: spineIndex };
+    const startEl = blocks[anchorRange.startBlock];
+    const endEl = blocks[anchorRange.endBlock];
+    if (!startEl || !endEl) return null;
+    const idref = book.spine[spineIndex]?.idref ?? String(spineIndex);
+    const highlight: HighlightRecord = {
+      id: `hl_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+      range: anchorRange,
+      cfi: {
+        start: serializeCfi(cdoc, spineIndex, idref, startEl, anchorRange.startOffset),
+        end: serializeCfi(cdoc, spineIndex, idref, endEl, anchorRange.endOffset),
+      },
+      color: opts?.color ?? 'yellow',
+      ...(opts?.note !== undefined ? { note: opts.note } : {}),
+      text: pendingSelectionRange.toString(),
+      createdAt: Date.now(),
+    };
+    highlights = [...highlights, highlight];
+    pendingSelectionRange = null;
+    cdoc.getSelection?.()?.removeAllRanges();
+    emitter.emit('reader:selection', null);
+    applyHighlights();
+    scheduleSaveHighlights();
+    emitter.emit('reader:highlightschange', { highlights });
+    return highlight;
+  };
+
+  const removeHighlight = (id: string): void => {
+    const next = highlights.filter((h) => h.id !== id);
+    if (next.length === highlights.length) return;
+    highlights = next;
+    applyHighlights();
+    scheduleSaveHighlights();
+    emitter.emit('reader:highlightschange', { highlights });
+  };
+
+  const listHighlights = (): HighlightRecord[] => highlights;
+
   const flowEl = (): HTMLElement | null =>
     (frame.contentDocument?.getElementById(FLOW_ID) as HTMLElement | null) ?? null;
 
   const viewportEl = (): HTMLElement | null =>
     (frame.contentDocument?.getElementById(VIEWPORT_ID) as HTMLElement | null) ?? null;
+
+  /**
+   * `#pore-viewport` is centred inside the iframe whenever the reader window
+   * is wider than the reading column (common on desktop), so a bare
+   * `getBoundingClientRect().left` is offset by that centring gap — dividing
+   * it by `pageStep` (which assumes page 0 starts at `left: 0`) then lands on
+   * the wrong page. `relRectOf`/`relRangeRectOf` subtract that gap so anchor
+   * generation/resolution operate in the viewport's own coordinate space.
+   */
+  const viewportLeft = (): number => viewportEl()?.getBoundingClientRect().left ?? 0;
+
+  const relRectOf: RectOf = (el) => {
+    const r = el.getBoundingClientRect();
+    const off = viewportLeft();
+    return { left: r.left - off, right: r.right - off, top: r.top, bottom: r.bottom };
+  };
+
+  const relRangeRectOf: RangeRectOf = (range) => {
+    let r: Rect;
+    try {
+      r = range.getBoundingClientRect();
+    } catch {
+      return { left: 0, right: 0, top: 0, bottom: 0 };
+    }
+    const off = viewportLeft();
+    return { left: r.left - off, right: r.right - off, top: r.top, bottom: r.bottom };
+  };
 
   /** Move the spine body's content into a clipped viewport + multicol flow. */
   const wrapContent = () => {
@@ -326,7 +520,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
         page = layout().vertical
           ? Math.min(Math.round(fraction * last), last)
           : el
-            ? Math.min(pageForElement(el, layout().pageStep), last)
+            ? Math.min(pageForElement(el, layout().pageStep, relRectOf), last)
             : page;
       }
       renderView();
@@ -503,11 +697,17 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     pendingAnchor = null;
     const flow = flowEl();
     if (flow) flow.style.transform = 'translateX(0)';
-    const { page: resolved } = resolveAnchor(cdoc, anchor, {
-      spinePages: spinePageCount,
-      pageStep: layout().pageStep,
-      byPercent: layout().vertical || flowActive(),
-    });
+    const { page: resolved } = resolveAnchor(
+      cdoc,
+      anchor,
+      {
+        spinePages: spinePageCount,
+        pageStep: layout().pageStep,
+        byPercent: layout().vertical || flowActive(),
+      },
+      relRectOf,
+      relRangeRectOf,
+    );
     page = Math.min(Math.max(resolved, 0), spinePageCount - 1);
   };
 
@@ -537,6 +737,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
         page = atLastPage ? Math.max(0, spinePageCount - 1) : 0;
         resolvePendingAnchor();
         renderView();
+        applyHighlights();
         emitter.emit('reader:loadingstate', { spine: idx, state: 'loaded' });
         emitLocation();
         resolve();
@@ -652,6 +853,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     cdoc.addEventListener('wheel', onWheel, { passive: false });
     cdoc.addEventListener('click', onClick);
     cdoc.addEventListener('dblclick', onDblClick);
+    cdoc.addEventListener('selectionchange', onSelectionChange);
   };
 
   const item = () => book?.spine[spineIndex];
@@ -693,7 +895,10 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
         flow.style.transform = 'translateX(0)';
         pageOffset = 0;
       }
-        page = Math.min(pageForElement(el, layout().pageStep), Math.max(0, spinePageCount - 1));
+        page = Math.min(
+          pageForElement(el, layout().pageStep, relRectOf),
+          Math.max(0, spinePageCount - 1),
+        );
       } else {
         page = 0;
       }
@@ -845,6 +1050,13 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     emitter.emit('reader:resumed', { position: restore });
     emitter.emit('reader:toc', { toc: book.toc });
 
+    try {
+      highlights = (await source.loadHighlights?.(bookId)) ?? [];
+    } catch {
+      highlights = [];
+    }
+    emitter.emit('reader:highlightschange', { highlights });
+
     const startSpine =
       restore?.type === 'anchor' ? Math.min(restore.spine, book.spine.length - 1) : 0;
     if (restore?.type === 'anchor') pendingAnchor = restore;
@@ -867,6 +1079,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
 
   function destroy(): void {
     flushSave();
+    flushSaveHighlights();
     destroyed = true;
     root.removeEventListener('keydown', onKey);
     root.removeEventListener('wheel', onWheel);
@@ -874,6 +1087,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     root.removeEventListener('dblclick', onDblClick);
     resizeObserver?.disconnect();
     if (scrollSyncTimer) clearTimeout(scrollSyncTimer);
+    if (selectionTimer) clearTimeout(selectionTimer);
     scrollSyncEl?.removeEventListener('scroll', onFlowScroll);
     transitions.cancel();
     revokeUrls();
@@ -894,5 +1108,8 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     search: runSearch,
     gotoHit,
     getCfi,
+    addHighlight,
+    removeHighlight,
+    listHighlights,
   };
 }
