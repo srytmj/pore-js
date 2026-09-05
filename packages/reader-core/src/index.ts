@@ -108,13 +108,29 @@ export { resolvePath, resolveHref, dirOf, stripHash, fragmentOf } from './text/e
 export { createTextEngine } from './text/create-text-engine.js';
 export type { CreateTextEngineOptions } from './text/create-text-engine.js';
 export { DEFAULT_TEXT_SETTINGS } from './text/types.js';
-export type { TextEngine, TextEngineEvents, TextEngineSettings, TextSelection } from './text/types.js';
+export type {
+  TextEngine,
+  TextEngineEvents,
+  TextEngineSettings,
+  TextSelection,
+  TtsState,
+  TtsSentence,
+  TtsVoiceLike,
+} from './text/types.js';
 export {
   locateOffset,
   offsetOfPoint,
   rangeForHighlight,
   highlightRangeFromSelection,
 } from './text/highlight.js';
+export { segmentSentences, createTtsController } from './text/tts.js';
+export type {
+  SentenceSpan,
+  TtsSynthLike,
+  TtsUtteranceLike,
+  TtsController,
+  TtsControllerOptions,
+} from './text/tts.js';
 export { rewriteResources } from './text/rewrite.js';
 export {
   buildBaseStylesheet,

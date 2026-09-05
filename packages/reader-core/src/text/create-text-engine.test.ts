@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { strToU8, zipSync } from 'fflate';
 import { createTextEngine } from './create-text-engine.js';
 import type { ReaderSource } from '../source/types.js';
+import type { TtsSynthLike, TtsUtteranceLike } from './tts.js';
 
 let seq = 0;
 beforeEach(() => {
@@ -375,5 +376,130 @@ describe('createTextEngine — fixed-layout EPUB', () => {
     expect(engine.getCfi()).toBeDefined(); // null or a string, either way must not throw
     engine.destroy();
     container.remove();
+  });
+});
+
+function fakeTtsSynth() {
+  const spoken: string[] = [];
+  const synth: TtsSynthLike = {
+    speak: vi.fn((u: TtsUtteranceLike) => queueMicrotask(() => u.onend?.())),
+    pause: vi.fn(),
+    resume: vi.fn(),
+    cancel: vi.fn(),
+    getVoices: () => [],
+  };
+  const createUtterance = (text: string): TtsUtteranceLike => {
+    spoken.push(text);
+    return { rate: 1, voice: null, onend: null, onerror: null };
+  };
+  return { synth, createUtterance, spoken };
+}
+
+describe('createTextEngine — text-to-speech', () => {
+  it('is a safe no-op (no voices, ttsPlay does nothing) when the Web Speech API is unsupported', async () => {
+    const container = document.createElement('div');
+    const engine = createTextEngine({ container, source: source(), bookId: 'b' });
+    await engine.mount();
+    expect(engine.ttsListVoices()).toEqual([]);
+    expect(() => engine.ttsPlay()).not.toThrow();
+    expect(engine.ttsState().playing).toBe(false);
+    engine.destroy();
+  });
+
+  it('drives through every spine via advanceSpine() and stops at the end of the book without throwing', async () => {
+    // jsdom's iframe contentDocument is unreliable outside the initial render
+    // tick (the same standing limitation as the getCfi()/addHighlight() tests
+    // above), so `getSentences()` sees no blocks here and this exercises the
+    // "no sentences this spine -> advanceSpine() -> next spine -> ... -> stop
+    // at the last spine" path rather than real speech. Sentence-by-sentence
+    // playback against a fake DOM is covered in tts.test.ts; the real
+    // end-to-end behaviour is browser-verified manually.
+    const { synth, createUtterance } = fakeTtsSynth();
+    const container = document.createElement('div');
+    const engine = createTextEngine({
+      container,
+      source: source(),
+      bookId: 'b',
+      tts: { synth, createUtterance },
+    });
+    const states: boolean[] = [];
+    engine.on('reader:ttsstate', (s) => states.push(s.playing));
+    await engine.mount();
+    engine.ttsPlay();
+    expect(engine.ttsState().playing).toBe(true);
+    await new Promise((r) => setTimeout(r, 150));
+    await new Promise((r) => setTimeout(r, 150));
+
+    expect(engine.ttsState().playing).toBe(false);
+    expect(states.at(-1)).toBe(false);
+    engine.destroy();
+  });
+
+  it('ttsPause/ttsResume delegate to the injected synth; ttsStop cancels it', async () => {
+    const { synth, createUtterance } = fakeTtsSynth();
+    const container = document.createElement('div');
+    const engine = createTextEngine({
+      container,
+      source: source(),
+      bookId: 'b',
+      tts: { synth: { ...synth, speak: vi.fn() }, createUtterance }, // never auto-ends — stays on sentence 0
+    });
+    await engine.mount();
+    engine.ttsPlay();
+    expect(engine.ttsState().playing).toBe(true);
+
+    engine.ttsPause();
+    expect(synth.pause).toHaveBeenCalled();
+    expect(engine.ttsState().playing).toBe(false);
+
+    engine.ttsResume();
+    expect(synth.resume).toHaveBeenCalled();
+    expect(engine.ttsState().playing).toBe(true);
+
+    engine.ttsStop();
+    expect(synth.cancel).toHaveBeenCalled();
+    expect(engine.ttsState().playing).toBe(false);
+    engine.destroy();
+  });
+
+  it('ttsSetRate/ttsSetVoice never throw, called before or during playback', async () => {
+    // Applying rate/voice to the actual spoken utterance is exercised against
+    // a fake DOM in tts.test.ts ("applies rate/voice to subsequent
+    // utterances") — jsdom's iframe never exposes real sentences here (see
+    // the test above), so there'd be nothing for this engine-level test to
+    // observe on the utterance itself.
+    const { synth, createUtterance } = fakeTtsSynth();
+    const container = document.createElement('div');
+    const engine = createTextEngine({
+      container,
+      source: source(),
+      bookId: 'b',
+      tts: { synth: { ...synth, speak: vi.fn() }, createUtterance },
+    });
+    await engine.mount();
+    expect(() => engine.ttsSetRate(1.75)).not.toThrow();
+    expect(() => engine.ttsSetVoice({ voiceURI: 'v1', name: 'Voice One', lang: 'en-US' })).not.toThrow();
+    engine.ttsPlay();
+    expect(() => engine.ttsSetRate(0.5)).not.toThrow();
+    expect(() => engine.ttsSetVoice(null)).not.toThrow();
+    engine.destroy();
+  });
+
+  it('turn()/goto() interrupt an in-progress TTS playback', async () => {
+    const { synth, createUtterance } = fakeTtsSynth();
+    const container = document.createElement('div');
+    const engine = createTextEngine({
+      container,
+      source: source(),
+      bookId: 'b',
+      tts: { synth: { ...synth, speak: vi.fn() }, createUtterance },
+    });
+    await engine.mount();
+    engine.ttsPlay();
+    expect(engine.ttsState().playing).toBe(true);
+    engine.turn('forward');
+    expect(engine.ttsState().playing).toBe(false);
+    expect(synth.cancel).toHaveBeenCalled();
+    engine.destroy();
   });
 });

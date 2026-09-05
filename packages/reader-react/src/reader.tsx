@@ -28,6 +28,8 @@ import {
   type TextEngineSettings,
   type TextSelection,
   type HighlightRecord,
+  type TtsState,
+  type TtsVoiceLike,
   type TocEntry,
   type TurnDirection,
 } from '@pore/reader-core';
@@ -75,6 +77,14 @@ export interface ReaderHandle {
   addHighlight(opts?: { color?: string; note?: string }): HighlightRecord | null;
   removeHighlight(id: string): void;
   listHighlights(): HighlightRecord[];
+  /** Text-to-speech (stretch goal, EPUB-only) — safe to call on engines without one; it simply never plays. */
+  ttsPlay(): void;
+  ttsPause(): void;
+  ttsResume(): void;
+  ttsStop(): void;
+  ttsSetRate(rate: number): void;
+  ttsSetVoice(voice: TtsVoiceLike | null): void;
+  ttsListVoices(): TtsVoiceLike[];
 }
 
 interface EngineLike {
@@ -91,6 +101,13 @@ interface EngineLike {
   addHighlight?(opts?: { color?: string; note?: string }): HighlightRecord | null;
   removeHighlight?(id: string): void;
   listHighlights?(): HighlightRecord[];
+  ttsPlay?(): void;
+  ttsPause?(): void;
+  ttsResume?(): void;
+  ttsStop?(): void;
+  ttsSetRate?(rate: number): void;
+  ttsSetVoice?(voice: TtsVoiceLike | null): void;
+  ttsListVoices?(): TtsVoiceLike[];
   on(event: string, handler: (payload: never) => void): () => void;
   destroy(): void;
 }
@@ -114,6 +131,7 @@ interface ReaderCtx {
   handle: ReaderHandle;
   selection: TextSelection | null;
   highlights: HighlightRecord[];
+  ttsState: TtsState | null;
 }
 
 const RuntimeContext = createContext<ReaderCtx | null>(null);
@@ -182,6 +200,7 @@ export function Reader({
   const [error, setError] = useState<ReaderErrorInfo | null>(null);
   const [selection, setSelection] = useState<TextSelection | null>(null);
   const [highlights, setHighlights] = useState<HighlightRecord[]>([]);
+  const [ttsState, setTtsState] = useState<TtsState | null>(null);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -279,6 +298,7 @@ export function Reader({
         engine.on('reader:highlightschange', (p: never) =>
           setHighlights((p as { highlights: HighlightRecord[] }).highlights),
         ),
+        engine.on('reader:ttsstate', (p: never) => setTtsState(p as TtsState)),
       );
 
       await engine.mount();
@@ -290,6 +310,7 @@ export function Reader({
       engineRef.current?.destroy();
       engineRef.current = null;
       setSelection(null);
+      setTtsState(null);
     };
   }, [source, bookId]);
 
@@ -304,6 +325,13 @@ export function Reader({
       addHighlight: (opts) => engineRef.current?.addHighlight?.(opts) ?? null,
       removeHighlight: (id) => engineRef.current?.removeHighlight?.(id),
       listHighlights: () => engineRef.current?.listHighlights?.() ?? [],
+      ttsPlay: () => engineRef.current?.ttsPlay?.(),
+      ttsPause: () => engineRef.current?.ttsPause?.(),
+      ttsResume: () => engineRef.current?.ttsResume?.(),
+      ttsStop: () => engineRef.current?.ttsStop?.(),
+      ttsSetRate: (rate) => engineRef.current?.ttsSetRate?.(rate),
+      ttsSetVoice: (voice) => engineRef.current?.ttsSetVoice?.(voice),
+      ttsListVoices: () => engineRef.current?.ttsListVoices?.() ?? [],
       setSettings: (patch) => engineRef.current?.setSettings(patch as never),
       setKeymap: (patch) => engineRef.current?.setKeymap?.(patch),
       chapters: () => engineRef.current?.chapters?.() ?? [],
@@ -335,6 +363,7 @@ export function Reader({
       handle,
       selection,
       highlights,
+      ttsState,
     }),
     [
       kind,
@@ -355,6 +384,7 @@ export function Reader({
       handle,
       selection,
       highlights,
+      ttsState,
     ],
   );
 
@@ -542,5 +572,33 @@ export function useReaderSelection(): ReaderSelectionApi {
     selection,
     highlight: (opts) => handle.addHighlight(opts),
     removeHighlight: (id) => handle.removeHighlight(id),
+  };
+}
+
+export interface UseTts {
+  /** `null` before the engine reports any state (or on engines without TTS, e.g. image/PDF). */
+  state: TtsState | null;
+  play(): void;
+  pause(): void;
+  resume(): void;
+  stop(): void;
+  setRate(rate: number): void;
+  setVoice(voice: TtsVoiceLike | null): void;
+  /** `[]` when the Web Speech API is unsupported. */
+  listVoices(): TtsVoiceLike[];
+}
+
+/** Text-to-speech (stretch goal, EPUB-only) — safe to use on any engine; it's just inert without one. */
+export function useTts(): UseTts {
+  const { ttsState, handle } = useRuntime();
+  return {
+    state: ttsState,
+    play: () => handle.ttsPlay(),
+    pause: () => handle.ttsPause(),
+    resume: () => handle.ttsResume(),
+    stop: () => handle.ttsStop(),
+    setRate: (rate) => handle.ttsSetRate(rate),
+    setVoice: (voice) => handle.ttsSetVoice(voice),
+    listVoices: () => handle.ttsListVoices(),
   };
 }

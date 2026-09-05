@@ -254,24 +254,60 @@ follow-up, CORS permitting.
 
 ---
 
-## F5 — Text-to-speech (stretch) · M
+## F5 — Text-to-speech (stretch) · M · done (v0.7.0-annotate wip)
 
-- [ ] `TtsController` in `reader-core`: Web Speech API (`SpeechSynthesis`),
-      walks the current spine's block text, tracks sentence boundaries
-      (`Intl.Segmenter` if available, regex fallback)
-- [ ] Sentence-level highlight sync while speaking (reuses F2's highlight
-      renderer for the "currently spoken" span) + auto page-turn at spine end
-- [ ] Controls: play/pause/rate/voice picker; `reader-react`
-      `useTts()` hook, headless (demo renders play bar UI)
-- [ ] Explicitly out of scope: audio export, cloud TTS voices, sync across
-      devices — browser `SpeechSynthesis` only, and only for EPUB (not
-      image/PDF, no text layer worth reading)
-- [ ] Vitest: sentence segmentation on fixture text; Playwright: start/pause/
-      resume moves through at least two sentences (voice output itself isn't
-      assertable in CI — assert the tracked-position side effects only)
+Kept, rather than cut — the user asked to go through the plan in order
+("lanjut aja yang urut") instead of skipping straight to F6.
+
+- [x] `createTtsController` + `segmentSentences` in a standalone `text/tts.ts`
+      (mirrors `text/highlight.ts`'s split: pure logic file, engine wires it
+      up). `segmentSentences` uses `Intl.Segmenter` (sentence granularity)
+      where available, a punctuation regex fallback otherwise. The controller
+      itself is synth-agnostic — it's driven entirely by an injected
+      `TtsSynthLike`/`createUtterance`, which is exactly the DOM
+      `SpeechSynthesis`/`SpeechSynthesisUtterance` shape (no adapter needed,
+      just a structural-typing cast) but swappable for tests or unsupported
+      environments.
+- [x] Sentence-level highlight sync: `ttsOnSentence` reuses F2's
+      `rangeForHighlight` (a sentence is just a single-block highlight range)
+      and paints it via the same CSS Custom Highlight API / `<mark>` fallback
+      path, under its own `pore-tts` name so it doesn't collide with user
+      highlights. Auto page-turn: `ttsOnSentence` also computes the sentence's
+      block's page and turns to it if it isn't the one showing (works
+      mid-spine too, not just at spine boundaries); `ttsAdvanceSpine` calls
+      `renderSpine()` directly at the end of a spine's sentences, bypassing
+      `turn()`/`goto()` so it isn't mistaken for (and doesn't trigger) the
+      "stop TTS on manual navigation" guard those two add.
+- [x] Controls: `TextEngine.ttsPlay/ttsPause/ttsResume/ttsStop/ttsSetRate/
+      ttsSetVoice/ttsListVoices/ttsState`; `reader-react`'s `useTts()` hook
+      (headless: `{state, play, pause, resume, stop, setRate, setVoice,
+      listVoices}`); the demo renders a play-bar UI (▶/⏸/⏹, rate select,
+      voice select when any are available, current-sentence text) toggled
+      from a 🔊 button.
+- [x] Out of scope, as planned: audio export, cloud TTS voices, cross-device
+      sync, non-EPUB engines (image/PDF have no text layer worth reading).
+- [x] Vitest: `tts.test.ts` (9 tests — sentence segmentation + offsets, the
+      controller's play/advance-spine/stop-cancels-pending-advance/pause-
+      resume/rate-voice behavior against a fake synth) and 5 engine-level
+      tests in `create-text-engine.test.ts` (unsupported-API no-op, drives
+      through every spine via `advanceSpine()` and stops at the end,
+      pause/resume/stop delegate to the injected synth, rate/voice setters
+      never throw, `turn()`/`goto()` interrupt playback). The "drives through
+      every spine" test's real sentence text isn't observable in jsdom (same
+      standing `frame.contentDocument`-after-mount limitation as
+      `getCfi()`/`addHighlight()`), so it exercises the advance/stop state
+      machine only — sentence-level playback against a fake DOM is what
+      `tts.test.ts` covers, and the real thing is browser-verified.
+- [x] **Browser-verified for real** (not just the state machine): pressed
+      play on the demo EPUB with real `speechSynthesis` — it spoke sentence
+      by sentence, painted the live highlight correctly, the play bar's
+      voice picker listed actual system voices (e.g. "Microsoft George/
+      Hazel/Susan — English (UK)"), pause/resume worked, and the reader's
+      page auto-advanced as playback moved past the visible page (progress
+      moved from 0% to 21% during playback with no manual interaction).
 
 **Done when:** press play on the demo EPUB, hear it (manually verified — CI
-checks the state machine only), see the current sentence highlighted.
+checks the state machine only), see the current sentence highlighted. — met.
 
 ---
 
@@ -307,5 +343,5 @@ needed there).
 3. ~~**F4 scope for this portfolio**~~ — **settled**: OPDS 1.2 read-only, HTTP
    Basic + bearer auth, OPDS 2.0 cut. Done, see F4 (demo proof against a
    bundled fixture catalog rather than a real external host — CORS risk).
-4. **F5 priority** — explicitly a stretch goal in the design doc; fine to cut
-   entirely from `v0.7.0-annotate` and revisit later without blocking F1–F4/F6.
+4. ~~**F5 priority**~~ — **settled**: kept rather than cut (user: proceed
+   through the plan in order). Done, see F5.

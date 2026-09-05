@@ -23,6 +23,9 @@ export type {
   TextSelection,
   HighlightRecord,
   HighlightRange,
+  TtsState,
+  TtsSentence,
+  TtsVoiceLike,
 } from '@pore/reader-core';
 export { instantTransitions } from '@pore/reader-core';
 export { gsapAdapter } from './gsap-adapter.js';
@@ -47,6 +50,7 @@ export {
   useResumedFromPage,
   useReaderHighlights,
   useReaderSelection,
+  useTts,
 } from './reader.js';
 export type {
   ReaderProps,
@@ -62,6 +66,7 @@ export type {
   ReaderErrorInfo,
   UseReaderError,
   ReaderSelectionApi,
+  UseTts,
 } from './reader.js';
 
 export { SettingsPanel, SettingsPanelBody } from './settings-panel.js';

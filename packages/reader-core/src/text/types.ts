@@ -5,8 +5,10 @@ import type { Chapter, Locator, ReaderProgress } from '../reader-engine.js';
 import type { SearchHit } from '../search/search-index.js';
 import type { HighlightRecord } from '../source/types.js';
 import type { Rect } from './anchor.js';
+import type { TtsState, TtsVoiceLike } from './tts.js';
 
 export type { HighlightRecord } from '../source/types.js';
+export type { TtsState, TtsSentence, TtsVoiceLike } from './tts.js';
 
 export interface TextSelection {
   rect: Rect;
@@ -101,6 +103,8 @@ export interface TextEngineEvents {
   'reader:selection': TextSelection | null;
   /** Fired after `addHighlight`/`removeHighlight` and once on mount (with whatever was persisted). */
   'reader:highlightschange': { highlights: HighlightRecord[] };
+  /** Text-to-speech playback state — fired on play/pause/resume/stop and on every sentence advance. */
+  'reader:ttsstate': TtsState;
 }
 
 export interface TextEngine {
@@ -126,6 +130,19 @@ export interface TextEngine {
   addHighlight(opts?: { color?: string; note?: string }): HighlightRecord | null;
   removeHighlight(id: string): void;
   listHighlights(): HighlightRecord[];
+  /**
+   * Text-to-speech (stretch goal — browser `SpeechSynthesis` only). All
+   * methods are safe to call even when the API is unsupported: playback
+   * simply never starts and `ttsListVoices()` returns `[]`.
+   */
+  ttsPlay(): void;
+  ttsPause(): void;
+  ttsResume(): void;
+  ttsStop(): void;
+  ttsSetRate(rate: number): void;
+  ttsSetVoice(voice: TtsVoiceLike | null): void;
+  ttsListVoices(): TtsVoiceLike[];
+  ttsState(): TtsState;
   on<E extends keyof TextEngineEvents>(
     event: E,
     handler: (payload: TextEngineEvents[E]) => void,

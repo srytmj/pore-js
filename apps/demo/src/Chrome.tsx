@@ -17,10 +17,12 @@ import {
   useReaderSettings,
   useReaderHighlights,
   useReaderSelection,
+  useTts,
   useResumedFromPage,
   type ImageEngineSettings,
   type TextEngineSettings,
   type Position,
+  type TtsVoiceLike,
 } from '@pore/reader-react';
 import { useEffect, useState } from 'react';
 import { useTheme } from './theme.js';
@@ -71,6 +73,15 @@ export function Chrome({
   const [highlightsOpen, setHighlightsOpen] = useState(false);
   const { selection, highlight, removeHighlight } = useReaderSelection();
   const highlights = useReaderHighlights();
+  const tts = useTts();
+  const [ttsOpen, setTtsOpen] = useState(false);
+  const [voices, setVoices] = useState<TtsVoiceLike[]>([]);
+  useEffect(() => {
+    if (ttsOpen) setVoices(tts.listVoices());
+    else tts.stop();
+  }, [ttsOpen]);
+  const ttsPlaying = tts.state?.playing ?? false;
+  const ttsCanResume = !ttsPlaying && !!tts.state?.sentence;
 
   useReaderHistory({ mode: 'url-and-title' });
   useEffect(() => setDismissed(false), [bookId]);
@@ -178,6 +189,16 @@ export function Chrome({
           title="Highlights"
         >
           🖍{highlights.length > 0 ? ` ${highlights.length}` : ''}
+        </button>
+      )}
+      {isText && (
+        <button
+          className={ttsOpen ? 'active' : ''}
+          onClick={() => setTtsOpen((v) => !v)}
+          aria-label="Text to speech"
+          title="Listen (text-to-speech)"
+        >
+          🔊
         </button>
       )}
       <button
@@ -387,6 +408,54 @@ export function Chrome({
                 </li>
               ))}
             </ol>
+          )}
+        </div>
+      )}
+
+      {isText && ttsOpen && (
+        <div className="tts-bar" role="group" aria-label="Text to speech controls">
+          <button
+            onClick={() => {
+              if (ttsPlaying) tts.pause();
+              else if (ttsCanResume) tts.resume();
+              else tts.play();
+            }}
+            aria-label={ttsPlaying ? 'Pause' : ttsCanResume ? 'Resume' : 'Play'}
+          >
+            {ttsPlaying ? '⏸' : '▶'}
+          </button>
+          <button onClick={() => tts.stop()} aria-label="Stop" disabled={!tts.state?.sentence}>
+            ⏹
+          </button>
+          <select
+            value={tts.state?.rate ?? 1}
+            onChange={(e) => tts.setRate(Number(e.target.value))}
+            aria-label="Speech rate"
+          >
+            {[0.75, 1, 1.25, 1.5, 2].map((r) => (
+              <option key={r} value={r}>
+                {r}×
+              </option>
+            ))}
+          </select>
+          {voices.length > 0 && (
+            <select
+              value={tts.state?.voice?.voiceURI ?? ''}
+              onChange={(e) =>
+                tts.setVoice(voices.find((v) => v.voiceURI === e.target.value) ?? null)
+              }
+              aria-label="Voice"
+            >
+              <option value="">Default voice</option>
+              {voices.map((v) => (
+                <option key={v.voiceURI} value={v.voiceURI}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {tts.state?.sentence && (
+            <span className="tts-bar__sentence">{tts.state.sentence.text}</span>
           )}
         </div>
       )}

@@ -2,9 +2,19 @@
 
 ## Unreleased
 
-M4 F1–F4 — precise text ranges, highlights, fixed-layout EPUB, an OPDS source
-— plus post-`v0.6.0-ui` UI polish.
+M4 F1–F5 — precise text ranges, highlights, fixed-layout EPUB, an OPDS
+source, text-to-speech — plus post-`v0.6.0-ui` UI polish.
 
+- **Text-to-speech (EPUB)** — `TextEngine.ttsPlay/ttsPause/ttsResume/ttsStop/
+  ttsSetRate/ttsSetVoice/ttsListVoices/ttsState`, backed by a synth-agnostic
+  `createTtsController` + `Intl.Segmenter`-based sentence splitting
+  (`text/tts.ts`). Speaks sentence by sentence via the browser's
+  `SpeechSynthesis`, highlights the currently-spoken sentence (reusing F2's
+  highlight renderer under its own name), and auto-turns the page as
+  playback moves past what's showing. `reader-react`'s `useTts()` hook; the
+  demo adds a 🔊 play bar (play/pause/stop, rate, voice picker, current
+  sentence). Browser-verified with real system voices. See `docs/m4-plan.md`
+  F5.
 - **`OpdsSource`** — a read-only OPDS 1.2 (Atom) catalog client:
   `listCatalog()`/`acquire()`, HTTP Basic or bearer auth. Acquiring an entry
   downloads its acquisition link and wraps the bytes in a `LocalFileSource`,
