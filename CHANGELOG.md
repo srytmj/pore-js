@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- **Floating top bar** — the demo's top bar was `position: relative`, so
+  auto-hiding it left a dead strip where its layout slot used to be (in the
+  shell's colour, not the reader's). It's now an absolute overlay: the reader
+  content is always full-height, the bar floats over the top edge when shown.
+- **One-click sepia** — the reader has had light / sepia / dark / OLED themes
+  all along, but sepia lived in Settings → Theme. On an EPUB the top-bar theme
+  button now cycles the reader's own theme (light → sepia → dark, ☀ / ☕ / ☾);
+  OLED stays in Settings.
+- The progress bar and scrubber use the theme foreground instead of the orange
+  accent — white on dark, dark on light.
 - **Demo landing page** — the demo opens on a landing screen instead of
   auto-loading a sample: "open your own" (drop/pick an EPUB, PDF, CBZ/ZIP or
   image folder — all client-side) and "try every mode" (the seven sample
