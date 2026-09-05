@@ -1,6 +1,45 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
+test.describe('Pore.js demo — landing', () => {
+  test('bare / shows the landing page; a sample opens the reader and Home returns', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await expect(page.locator('.landing')).toBeVisible();
+    await expect(page.locator('iframe.pore-text__frame')).toHaveCount(0);
+
+    await page.locator('.landing__samples').getByRole('button', { name: /Novel/ }).click();
+    await expect(page.frameLocator('iframe.pore-text__frame').locator('h1')).toContainText(
+      'The Beginning',
+    );
+    await expect(page).toHaveURL(/[?&]book=demo-book/);
+
+    await page.getByRole('button', { name: 'Back to start' }).click();
+    await expect(page.locator('.landing')).toBeVisible();
+    await expect(page).not.toHaveURL(/book=/);
+  });
+
+  test('a deep link (?book=) skips the landing page', async ({ page }) => {
+    await page.goto('/?book=demo-manga');
+    await expect(page.locator('.landing')).toHaveCount(0);
+    await expect(page.locator('.loc')).toContainText('1/12');
+  });
+
+  test('landing page has no critical/serious axe violations', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('.landing').waitFor();
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa'])
+      .disableRules(['region'])
+      .analyze();
+    const serious = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    );
+    expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+  });
+});
+
 test.describe('Pore.js demo', () => {
   test('paged manga: turn, counter, resume across reload', async ({ page }) => {
     await page.goto('/?book=demo-manga');

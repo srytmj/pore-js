@@ -40,6 +40,7 @@ export function Chrome({
   books,
   bookId,
   onBook,
+  onHome,
   droppedName,
   opdsOpen,
   onToggleOpds,
@@ -47,6 +48,7 @@ export function Chrome({
   books: BookOpt[];
   bookId: string;
   onBook: (id: string) => void;
+  onHome: () => void;
   droppedName?: string | null;
   opdsOpen: boolean;
   onToggleOpds: () => void;
@@ -116,13 +118,15 @@ export function Chrome({
 
   const barControls = (
     <>
-      <strong>Pore.js</strong>
+      <button className="home" onClick={onHome} aria-label="Back to start" title="Back to start">
+        Pore.js
+      </button>
       <select
         aria-label="Book"
         value={droppedName ? '' : bookId}
-        onChange={(e) => onBook(e.target.value)}
+        onChange={(e) => e.target.value && onBook(e.target.value)}
       >
-        {droppedName && <option value="">{droppedName} (dropped)</option>}
+        {droppedName && <option value="">{droppedName}</option>}
         {books.map((b) => (
           <option key={b.id} value={b.id}>
             {b.label}

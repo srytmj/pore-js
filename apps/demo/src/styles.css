@@ -50,6 +50,68 @@
     @apply flex h-[100dvh] flex-col bg-canvas text-fg;
   }
 
+  /* --- landing (demo front door) ------------------------------------------- */
+  .landing {
+    @apply flex flex-1 items-center justify-center overflow-y-auto p-6;
+  }
+  .landing__inner {
+    @apply flex w-full max-w-xl flex-col gap-8 py-10;
+    animation: pore-fade-in 0.25s ease-out;
+  }
+  .landing__head {
+    @apply text-center;
+  }
+  .landing__title {
+    @apply text-4xl font-bold tracking-tight;
+  }
+  .landing__tagline {
+    @apply mt-1.5 text-muted;
+  }
+  .landing__section {
+    @apply flex flex-col gap-3;
+  }
+  .landing__h2 {
+    @apply text-[0.8rem] font-semibold tracking-wide text-muted uppercase;
+  }
+  .landing__drop {
+    @apply flex flex-col items-center gap-1.5 rounded-[var(--radius-panel)] border-2 border-dashed border-line bg-surface px-6 py-9 text-center transition-colors;
+  }
+  .landing__drop:hover {
+    @apply border-accent/60 bg-accent/5;
+  }
+  .landing__drop-icon {
+    @apply text-3xl text-muted;
+  }
+  .landing__drop-title {
+    @apply font-medium;
+  }
+  .landing__drop-hint {
+    @apply max-w-sm text-[0.8rem] text-muted;
+  }
+  .landing__file {
+    @apply hidden;
+  }
+  .landing__samples {
+    @apply m-0 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-3;
+  }
+  .landing__samples button {
+    @apply flex h-full w-full flex-col gap-0.5 rounded-[var(--radius-control)] border border-line bg-surface px-3 py-2.5 text-left transition-colors;
+  }
+  .landing__samples button:hover {
+    @apply border-accent/60 bg-accent/5;
+  }
+  .landing__sample-label {
+    @apply text-[0.9rem] font-semibold;
+  }
+  .landing__sample-blurb {
+    @apply text-[0.75rem] leading-snug text-muted;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .landing__inner {
+      animation: none;
+    }
+  }
+
   /* Reader renders directly into .shell: <header> <progress> <toast?> <host flex:1> */
 
   .bar {
@@ -73,6 +135,12 @@
   .bar button,
   .bar select {
     @apply rounded-[var(--radius-control)] border border-line bg-surface px-2 py-1 text-[0.8rem] text-fg;
+  }
+  .bar .home {
+    @apply border-transparent bg-transparent px-1 font-bold;
+  }
+  .bar .home:hover {
+    @apply text-accent;
   }
   @media (pointer: coarse) {
     .bar button,
@@ -237,8 +305,8 @@
   .endpage__menu {
     @apply flex max-w-2xl flex-wrap justify-center gap-2 rounded-[var(--radius-panel)] border border-line bg-surface px-3 py-2.5;
   }
-  .endpage__menu strong {
-    @apply self-center;
+  .endpage__menu .home {
+    @apply self-center border-transparent bg-transparent font-bold;
   }
   .endpage__menu button {
     @apply rounded-[var(--radius-control)] border border-line bg-surface px-3.5 py-1.5;
