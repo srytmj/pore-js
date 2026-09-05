@@ -198,7 +198,16 @@ painted on the right page.
 
 ---
 
-## F3b — Fixed-layout page spreads · S
+## F3b — Fixed-layout page spreads · S · **DEFERRED to a later milestone**
+
+Scoping during M5 showed this is not "S": the text engine renders through a
+single `<iframe>` and counts pages per-spine-item everywhere (`totalPages`,
+`goto` absolute-page, scrubber ticks, resume anchors, CFI). A real spread unit
+(two scaled iframes, turn-by-two, re-united page counting) is a medium reshape
+with real regression risk to the working fixed-layout + resume + CFI paths.
+Moved to the M5 cut list; pick up as its own focused task.
+
+<details><summary>Original plan</summary>
 
 Cut from F3. `rendition:page-spread-left|right` → two pre-paginated pages
 shown side by side.
@@ -219,23 +228,31 @@ shown side by side.
 **Done when:** a spread-marked fixed-layout book shows two facing pages and
 turns two at a time.
 
+</details>
+
 ---
 
-## F6 — hardening + release · S
+## F6 — hardening + release · S · **DONE**
 
-- [ ] a11y: the menu-bar settings, note editor, and highlights panel
-      keyboard-reachable + axe clean (with the M4 iframe-exclude in place).
-- [ ] Playwright: menu-bar dock/float/fullscreen, note round-trip, PDF
-      highlight round-trip, fixed-layout spread turn.
-- [ ] Perf: highlight overlay for PDF doesn't relayout on every scroll tick;
-      the hover hot-zone listener is passive and cheap.
-- [ ] CHANGELOG `v0.8.0-comfort`; README; `CLAUDE.md` pointer.
-- [ ] Tag `v0.8.0-comfort`.
+- [x] a11y: menu-bar settings, note editor, highlights panel keyboard-reachable
+      + axe clean (new e2e "M5 UI … is axe clean & keyboard-reachable"). Fixed
+      two contrast fails found doing it: `.menubar-settings__hint` (tiny muted
+      text) and `.bar button.active` (orange fill vs white label → now the
+      theme foreground, matching the progress bar).
+- [x] Playwright: menu-bar dock/float + pointer-wake, note round-trip, PDF
+      highlight round-trip. (Fullscreen + spread-turn dropped — fullscreen
+      isn't drivable headless; F3b deferred.)
+- [x] Perf: PDF highlight overlay repaints on turn / resize / image-load only,
+      never on a scroll tick; no hover hot-zone listener (deferred in G1).
+- [x] CHANGELOG `v0.8.0-comfort`; README; `CLAUDE.md` pointer.
+- [x] Tag `v0.8.0-comfort`.
 
 ---
 
 ## Cut from M5 (later)
 
+- **Fixed-layout two-page spreads (F3b)** — see above; needs a text-engine
+  reshape, own task.
 - **Bottom edge** for the menu bar — top/left/right covers the ask; bottom
   competes with the scrubber dock.
 - **Highlight export / import** (JSON or a CFI list) — portability is nice

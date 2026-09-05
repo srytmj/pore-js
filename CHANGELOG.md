@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## v0.8.0-comfort — 2026-09-06
+
+M5 — reading-comfort chrome + annotation polish. Menu bar you can place on any
+edge and auto-hide; highlight notes and a reusable `<HighlightsPanel>`; PDF
+highlights by Shift-drag. Fixed-layout two-page spreads (F3b) were deferred to
+a later milestone — the text engine's single-iframe / per-spine-item page model
+needs a wider reshape than M5's scope.
 
 - **PDF highlights (M5 F2c)** — **Shift-drag** over a page in the demo PDF to
   highlight a passage: the marquee is intersected with pdf.js's text runs, so
@@ -38,7 +44,8 @@
   button now cycles the reader's own theme (light → sepia → dark, ☀ / ☕ / ☾);
   OLED stays in Settings.
 - The progress bar and scrubber use the theme foreground instead of the orange
-  accent — white on dark, dark on light.
+  accent — white on dark, dark on light. Active toolbar toggles do too (the
+  orange fill also failed AA contrast against its white label).
 - **Demo landing page** — the demo opens on a landing screen instead of
   auto-loading a sample: "open your own" (drop/pick an EPUB, PDF, CBZ/ZIP or
   image folder — all client-side) and "try every mode" (the seven sample

@@ -36,7 +36,16 @@ pnpm --filter @pore/demo e2e           # end-to-end demo tests
 
 Requires Node >= 20.
 
-## Status — annotations (`v0.7.0-annotate`)
+## Status — reading comfort (`v0.8.0-comfort`)
+
+**Reading-comfort chrome + annotation polish (M5):** the demo's menu bar sits
+on the top, left or right edge for every engine and can auto-hide when idle
+(fullscreen forces it); `<SettingsPanel>` gained an `extraTabs` prop. Highlights
+now take a **note** — `updateHighlight()` on the handle / `useReaderSelection()`
+— edited in a reusable headless `<HighlightsPanel>`. PDF highlights: Shift-drag
+over a page to highlight a passage (`HighlightRecord` is now a `text | rect`
+union; `createPdfEngine` gained the highlight API). See `docs/m5-plan.md`.
+Fixed-layout two-page spreads were deferred.
 
 **Annotations & beyond (M4):** word-level anchor offsets + a portable
 `epubcfi(...)` position (`getCfi()`); text highlights with a floating
@@ -97,6 +106,10 @@ UI foundation: [`docs/ui-foundation-plan.md`](docs/ui-foundation-plan.md) — do
 RTL-horizontal / end-page follow-ups all landed on `main`).
 
 M4: [`docs/m4-plan.md`](docs/m4-plan.md) — done (F1–F6, `v0.7.0-annotate`).
+
+M5: [`docs/m5-plan.md`](docs/m5-plan.md) — done (G1 · F2b · F2c ·
+F6, `v0.8.0-comfort`; F3b deferred). Live status in
+[`docs/agent-worklog.md`](docs/agent-worklog.md).
 
 ## License
 

@@ -28,10 +28,25 @@ lives in a chat transcript but not in git history.
 
 ## Current focus
 
-M5 (`docs/m5-plan.md`), target tag `v0.8.0-comfort`. G1 done. Working through
-F2b → F2c → F3b → F6 in order (user: "all of it, in order").
+**M5 shipped — `v0.8.0-comfort`.** G1 (menu bar) · F2b (highlight notes +
+`<HighlightsPanel>`) · F2c (PDF Shift-drag highlights) · F6 (hardening). F3b
+(fixed-layout two-page spreads) deferred — needs a text-engine reshape, own
+task. Next milestone not yet scoped.
 
 ## Log
+
+## 2026-09-06 — F6 + release v0.8.0-comfort
+- **What:** a11y pass on the new UI (new e2e "M5 UI … axe clean &
+  keyboard-reachable") — fixed `.menubar-settings__hint` contrast and switched
+  `.bar button.active` off the orange accent to the theme foreground (accent vs
+  white label failed AA; also matches the progress-bar decision). CHANGELOG
+  heading → `v0.8.0-comfort`, README + CLAUDE.md pointers, m5-plan F6 done /
+  F3b moved to cut list.
+- **State:** committed + tagged `v0.8.0-comfort`, pushed. 256 unit + 37 e2e +
+  typecheck + lint green.
+- **Notes:** F3b deferred by user decision ("skip F3b, go to F6 + tag") after
+  scoping showed the single-iframe / per-spine-item page model needs a wider
+  reshape than "S".
 
 ## 2026-09-06 — worklog created + M5 scope confirmed
 - **What:** this file (`docs/agent-worklog.md`) + a pointer at the top of

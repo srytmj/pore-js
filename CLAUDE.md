@@ -42,6 +42,8 @@ engine code — the demo consumes the built `dist/`.
 See `docs/*-plan.md`. M0–M3 done (`v0.5.0-m3`); UI foundation done (`v0.6.0-ui`,
 plus scrubber/loading-error/PDF-search/RTL/end-page follow-ups on `main`);
 **M4 done** (`v0.7.0-annotate`) — CFI-precise anchors, text highlights,
-fixed-layout EPUB, `OpdsSource`, TTS (`docs/m4-plan.md`). **M5 in progress**
-(`docs/m5-plan.md`, target `v0.8.0-comfort`) — G1 menu bar done; F2b/F2c/F3b/F6
-next. See `docs/agent-worklog.md` for live status.
+fixed-layout EPUB, `OpdsSource`, TTS (`docs/m4-plan.md`). **M5 done**
+(`v0.8.0-comfort`) — menu-bar placement/auto-hide, highlight notes +
+`<HighlightsPanel>`, PDF Shift-drag highlights (`docs/m5-plan.md`); F3b
+(fixed-layout spreads) deferred. Next milestone not yet scoped. See
+`docs/agent-worklog.md` for live status.

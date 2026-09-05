@@ -551,6 +551,46 @@ test.describe('Pore.js demo — M3', () => {
     expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
   });
 
+  test('M5 UI (menu-bar settings, note editor, highlights panel) is axe clean & keyboard-reachable', async ({
+    page,
+  }) => {
+    await page.goto('/?book=demo-book');
+    const frame = page.frameLocator('iframe.pore-text__frame');
+    await frame.locator('h1').waitFor();
+
+    // add a highlight + note so the panel has an editable row
+    await frame.locator('h1').evaluate((el) => {
+      const doc = el.ownerDocument!;
+      const range = doc.createRange();
+      range.selectNodeContents(el);
+      const sel = doc.getSelection()!;
+      sel.removeAllRanges();
+      sel.addRange(range);
+      doc.dispatchEvent(new Event('selectionchange'));
+    });
+    await page.getByRole('button', { name: 'Highlight and add a note' }).click();
+    // the note textarea is keyboard-reachable and editable
+    const note = page.locator('[data-pore-hl-note]').first();
+    await note.focus();
+    await page.keyboard.type('keyboard note');
+    await expect(note).toHaveValue('keyboard note');
+
+    // open the Menu bar settings tab
+    await page.getByRole('button', { name: 'Reader settings' }).click();
+    await page.getByRole('tab', { name: 'Menu bar' }).click();
+    await expect(page.getByRole('button', { name: 'Right', exact: true })).toBeVisible();
+
+    const results = await new AxeBuilder({ page })
+      .exclude('iframe.pore-text__frame')
+      .withTags(['wcag2a', 'wcag2aa'])
+      .disableRules(['region'])
+      .analyze();
+    const serious = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    );
+    expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+  });
+
   test('reduced motion: page turns apply instantly', async ({ browser }) => {
     const context = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await context.newPage();
