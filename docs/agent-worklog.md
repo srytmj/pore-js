@@ -1,0 +1,105 @@
+# Agent worklog
+
+**Read this first if you are an AI agent picking up work and did NOT continue
+from the original chat session.** It is the running, append-only journal of what
+each agent session did, why, and what state things are in — the context that
+lives in a chat transcript but not in git history.
+
+## Rules for agents
+
+- **Append a new entry at the top of the Log** (reverse chronological) whenever
+  you finish a meaningful unit of work — a commit, a decision, a blocker hit, a
+  milestone step. One entry per unit; don't batch a whole session into one line
+  at the end.
+- Entry format:
+  ```
+  ## YYYY-MM-DD — <short title>
+  - **What:** what changed / what you did
+  - **Why:** the reason or the user's ask (paraphrased)
+  - **State:** committed (<hash>) / uncommitted / blocked on X / needs user decision
+  - **Notes:** gotchas, follow-ups, things the next agent should know
+  ```
+- Keep entries short. Deep detail belongs in `docs/*-plan.md` (milestone plans)
+  and code comments; this file is the index of *activity*.
+- Update the milestone plan (`docs/m5-plan.md` etc.) in the same commit when you
+  finish a plan item.
+- This file is committed like any other doc. It is not a substitute for
+  Conventional Commits or the changelog — it is the "narrative" layer above them.
+
+## Current focus
+
+M5 (`docs/m5-plan.md`), target tag `v0.8.0-comfort`. G1 done. Working through
+F2b → F2c → F3b → F6 in order (user: "all of it, in order").
+
+## Log
+
+## 2026-09-06 — worklog created + M5 scope confirmed
+- **What:** this file (`docs/agent-worklog.md`) + a pointer at the top of
+  `CLAUDE.md` making it mandatory reading for agents not continuing from the
+  original chat.
+- **Why:** user wants an automatic cross-session narrative another agent can
+  follow up from (git/changelog say "what", not "why / where stuck").
+- **State:** committed alongside F2b.
+- **Notes:** M5 scope confirmed with user — do F2b→F2c→F3b→F6 "all, in order".
+  F2c storage = `kind:'text'|'rect'` discriminated union. F3b spreads = two
+  iframes.
+
+## 2026-09-06 — F2b: highlight notes + headless `<HighlightsPanel>`
+- **What:** `TextEngine.updateHighlight(id, {color?, note?})`
+  (`create-text-engine.ts`, `text/types.ts`) — emits `reader:highlightschange`,
+  persists, `note:''` clears. Plumbed through `reader-react`
+  (`ReaderHandle`/`EngineLike`/`useReaderSelection().updateHighlight`). New
+  `<HighlightsPanel>` headless component (`highlights-panel.tsx`, exported) —
+  `<ol>` with `data-pore-hl-*` hooks (jump / colour re-pick / note `<textarea>`
+  commit-on-blur / remove), no dialog chrome. Demo `Chrome.tsx` swapped its
+  hand-rolled highlights list for it; selection toolbar got a ✎ "highlight +
+  note" button. Styles under `[data-pore-hl-*]`.
+- **Why:** F2 shipped a `note` field but no way to write one; the demo list was
+  ad-hoc markup.
+- **State:** committed. 255 unit + 35 e2e green (2 new e2e assertions/tests),
+  typecheck + lint clean. `docs/m5-plan.md` F2b marked done.
+- **Notes:** `HighlightRecord` stays single-shape here; the `kind:'text'|'rect'`
+  union lands in F2c. Note editor is inline-per-row (not a Radix Popover) —
+  simpler, panel reusable as-is. Rows remount on external colour/note change
+  via `key` rather than being controlled.
+
+## 2026-09-06 — M5 G1: menu bar placement + auto-hide
+- **What:** Bar placement (top/left/right, all engines) + Always-visible vs
+  Auto-hide behaviour, moved out of `TextEngineSettings` into demo-owned
+  `use-menu-bar.ts` / `use-fullscreen.ts` / `MenuBarSettings.tsx`. Fullscreen
+  forces auto-hide. `<SettingsPanel>`/`<TextSettingsPanel>` gained `extraTabs`.
+  Text engine forwards throttled iframe `pointermove` to host so auto-hide
+  wakes over the reading area. Side bars use symmetric explicit
+  `transform: translateX(0)` ↔ `±100%` endpoints (a frozen reveal transition
+  otherwise). 2 new e2e tests.
+- **Why:** user asked for movable menu bar + fullscreen behaviour + the
+  "dead strip when the top bar hides" bug.
+- **State:** committed `ddeeb52`, pushed. `docs/m5-plan.md` G1 marked done.
+- **Notes:** hover edge hot-zone deferred — `:hover`/`:focus-within` + the
+  forwarded iframe pointermove proved enough.
+
+## 2026-09-05 — demo polish (floating bar, sepia, progress colour, landing, bundle)
+- **What:** floating top bar as absolute overlay (no dead strip); top-bar theme
+  button cycles light→sepia→dark on EPUB; progress bar / scrubber use theme
+  foreground not the orange accent ("whitearchive"); demo opens on a landing
+  page (open-your-own-file + try-every-mode); pdf.js code-split via
+  `setPdfWorkerSrc()`; "Resumed from p.N" toast auto-dismisses after 15s.
+- **State:** committed `7c735da`, `3c2940f`, `329e63c`, `d15b258`, `065e28f`.
+  `CHANGELOG.md` Unreleased.
+
+## 2026-09-05 — e2e suite passes end-to-end for the first time
+- **What:** ran the full Playwright suite to completion (first time ever) and
+  fixed the 6+ pre-existing failures it surfaced: TOC nav double-resolving
+  hrefs, `role="tablist"` ARIA violation, offline download broken 3 ways,
+  settings focus not returning on Escape, `offsetOfPoint` not handling
+  `selectNodeContents` boundaries, stale glyph-based selectors.
+- **State:** committed `91f94d5`.
+- **Notes:** **run `pnpm --filter @pore/demo e2e` every milestone** — unit tests
+  + manual browser both missed all of these. Query buttons by aria-label.
+
+## 2026-09-05 — M4 F1–F6 shipped, tagged `v0.7.0-annotate`
+- **What:** F1 epubcfi-precise text ranges, F2 text highlights (storage via
+  optional `ReaderSource.loadHighlights`/`saveHighlights`), F3 fixed-layout
+  EPUB, F4 `OpdsSource` (OPDS 1.2 Atom), F5 TTS (EPUB, Web Speech), F6
+  hardening. See `docs/m4-plan.md` for the retro-notes on each.
+- **State:** committed `5236d0a`..`5195747`, tagged `v0.7.0-annotate`, pushed.

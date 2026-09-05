@@ -1,5 +1,14 @@
 # Contributor & agent guide
 
+## Agents: read the worklog first
+
+If you are an AI agent and did **not** continue directly from the original chat
+session, read [`docs/agent-worklog.md`](docs/agent-worklog.md) before doing
+anything — it is the append-only journal of what recent sessions did, why, and
+what is committed vs in-flight vs blocked. **Append an entry** there whenever you
+finish a meaningful unit of work (a commit, a decision, a blocker). It is the
+narrative layer above git history and the changelog.
+
 ## Commits
 
 - **Conventional Commits**, enforced by `commitlint` via the `.husky/commit-msg`
@@ -33,5 +42,6 @@ engine code — the demo consumes the built `dist/`.
 See `docs/*-plan.md`. M0–M3 done (`v0.5.0-m3`); UI foundation done (`v0.6.0-ui`,
 plus scrubber/loading-error/PDF-search/RTL/end-page follow-ups on `main`);
 **M4 done** (`v0.7.0-annotate`) — CFI-precise anchors, text highlights,
-fixed-layout EPUB, `OpdsSource`, TTS (`docs/m4-plan.md`). Next milestone not
-yet scoped.
+fixed-layout EPUB, `OpdsSource`, TTS (`docs/m4-plan.md`). **M5 in progress**
+(`docs/m5-plan.md`, target `v0.8.0-comfort`) — G1 menu bar done; F2b/F2c/F3b/F6
+next. See `docs/agent-worklog.md` for live status.
