@@ -207,7 +207,7 @@
   }
 
   .progress {
-    @apply h-[3px] flex-none bg-accent transition-[width] duration-200;
+    @apply h-[3px] flex-none bg-fg transition-[width] duration-200;
   }
   .progress--loading {
     @apply fixed inset-x-0 top-0 z-30 w-2/5;
@@ -235,13 +235,13 @@
     @apply relative h-[3px] grow overflow-visible rounded-full bg-fg/20;
   }
   .pore-scrubber__range {
-    @apply absolute h-full rounded-full bg-accent;
+    @apply absolute h-full rounded-full bg-fg;
   }
   .pore-scrubber__tick {
     @apply absolute top-1/2 h-2.5 w-px -translate-x-1/2 -translate-y-1/2 bg-fg/35;
   }
   .pore-scrubber__thumb {
-    @apply block size-3 rounded-full bg-accent shadow transition-transform;
+    @apply block size-3 rounded-full bg-fg shadow transition-transform;
   }
   .pore-scrubber__thumb:hover,
   .pore-scrubber__thumb:focus-visible,
@@ -599,7 +599,7 @@
     @apply relative h-1 grow rounded-full bg-fg/20;
   }
   .pore-slider__range {
-    @apply absolute h-full rounded-full bg-accent;
+    @apply absolute h-full rounded-full bg-fg;
   }
   .pore-slider__thumb {
     @apply block h-3.5 w-3.5 rounded-full border border-line bg-surface shadow;
