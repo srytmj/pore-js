@@ -24,14 +24,40 @@ export function locateOffset(
   return null;
 }
 
-/** Character offset (into `el`'s flattened `textContent`) of `node`+`nodeOffset`, or `null` when `node` isn't inside `el`. */
+/**
+ * A DOM `Range` boundary point's `node`/`offset` follows the spec: for a text
+ * node, `offset` is a character index; for anything else (e.g. an element —
+ * what `Range.selectNodeContents(el)` produces, and what some browsers give
+ * for a whole-block drag-selection), `offset` indexes into `node.childNodes`
+ * instead. Reduce either shape to an actual text node + local offset.
+ */
+function textBoundaryPoint(node: Node, offset: number): { node: Node; offset: number } {
+  if (node.nodeType === Node.TEXT_NODE) return { node, offset };
+  const children = node.childNodes;
+  if (offset < children.length) {
+    // "immediately before children[offset]" — descend into its first text node
+    let target: Node = children[offset]!;
+    while (target.nodeType !== Node.TEXT_NODE && target.firstChild) target = target.firstChild;
+    return target.nodeType === Node.TEXT_NODE ? { node: target, offset: 0 } : { node, offset };
+  }
+  // "immediately after the last child" — the end of node's own text content
+  let target: Node = node;
+  while (target.nodeType !== Node.TEXT_NODE && target.lastChild) target = target.lastChild;
+  return target.nodeType === Node.TEXT_NODE
+    ? { node: target, offset: target.textContent?.length ?? 0 }
+    : { node, offset };
+}
+
+/** Character offset (into `el`'s flattened `textContent`) of a Range boundary point (`node`/`nodeOffset`, element- or text-node-relative per DOM Range semantics), or `null` when it isn't inside `el`. */
 export function offsetOfPoint(el: Element, doc: Document, node: Node, nodeOffset: number): number | null {
   if (!el.contains(node)) return null;
+  const point = textBoundaryPoint(node, nodeOffset);
+  if (point.node.nodeType !== Node.TEXT_NODE) return el === point.node ? 0 : null;
   const walker = doc.createTreeWalker(el, NodeFilter.SHOW_TEXT);
   let base = 0;
   let n: Node | null;
   while ((n = walker.nextNode())) {
-    if (n === node) return base + nodeOffset;
+    if (n === point.node) return base + point.offset;
     base += n.textContent?.length ?? 0;
   }
   return null;

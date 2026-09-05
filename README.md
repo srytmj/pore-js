@@ -36,7 +36,16 @@ pnpm --filter @pore/demo e2e           # end-to-end demo tests
 
 Requires Node >= 20.
 
-## Status — UI foundation (`v0.6.0-ui`)
+## Status — annotations (`v0.7.0-annotate`)
+
+**Annotations & beyond (M4):** word-level anchor offsets + a portable
+`epubcfi(...)` position (`getCfi()`); text highlights with a floating
+selection toolbar, persisted via `ReaderSource.loadHighlights`/`saveHighlights`
+and rendered with the CSS Custom Highlight API; fixed-layout (pre-paginated)
+EPUB support, scaled to fit the window; a read-only `OpdsSource` (OPDS 1.2)
+catalog browser; text-to-speech (`useTts()`) with sentence-level highlight
+sync and auto page-turn, backed by the browser's `SpeechSynthesis`. See
+`docs/m4-plan.md`.
 
 **UI foundation:** Tailwind v4 + design tokens + dark mode in the demo; a
 headless Radix component layer in `reader-react` (`<SettingsPanel>` Dialog,
@@ -87,9 +96,7 @@ UI foundation: [`docs/ui-foundation-plan.md`](docs/ui-foundation-plan.md) — do
 (U1–U6, plus the scrubber / loading-skeleton+error / PDF-search /
 RTL-horizontal / end-page follow-ups all landed on `main`).
 
-Next: [`docs/m4-plan.md`](docs/m4-plan.md) — CFI-precise text ranges,
-highlights & notes, fixed-layout EPUB, an `OpdsSource`, TTS (stretch).
-**Scoped, not started** — a few open questions in that doc first.
+M4: [`docs/m4-plan.md`](docs/m4-plan.md) — done (F1–F6, `v0.7.0-annotate`).
 
 ## License
 

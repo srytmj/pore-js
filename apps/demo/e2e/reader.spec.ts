@@ -7,8 +7,8 @@ test.describe('Pore.js demo', () => {
     const counter = page.locator('.loc');
     await expect(counter).toContainText('1/12');
 
-    await page.getByRole('button', { name: '›' }).click();
-    await page.getByRole('button', { name: '›' }).click();
+    await page.getByRole('button', { name: 'Next page' }).click();
+    await page.getByRole('button', { name: 'Next page' }).click();
     await expect(counter).toContainText('/12');
     const reached = await counter.textContent();
 
@@ -35,16 +35,16 @@ test.describe('Pore.js demo', () => {
   test('RTL double spread renders two pages, left arrow goes back', async ({ page }) => {
     await page.goto('/?book=demo-manga');
     await expect(page.locator('.pore-image img')).toHaveCount(2);
-    await page.getByRole('button', { name: '›' }).click();
+    await page.getByRole('button', { name: 'Next page' }).click();
     await expect(page.locator('.loc')).toContainText('3/12');
-    await page.getByRole('button', { name: '‹' }).click();
+    await page.getByRole('button', { name: 'Previous page' }).click();
     await expect(page.locator('.loc')).toContainText('1/12');
   });
 
   test('resize keeps the reading position', async ({ page }) => {
     await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: '›' }).click();
-    await page.getByRole('button', { name: '›' }).click();
+    await page.getByRole('button', { name: 'Next page' }).click();
+    await page.getByRole('button', { name: 'Next page' }).click();
     const before = await page.locator('.loc').textContent();
     await page.setViewportSize({ width: 500, height: 900 });
     await expect(page.locator('.loc')).toHaveText(before!.trim());
@@ -52,8 +52,8 @@ test.describe('Pore.js demo', () => {
 
   test('url-and-title history: ?p= updates and back/forward paginate', async ({ page }) => {
     await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: '›' }).click();
-    await page.getByRole('button', { name: '›' }).click();
+    await page.getByRole('button', { name: 'Next page' }).click();
+    await page.getByRole('button', { name: 'Next page' }).click();
     await expect(page).toHaveURL(/[?&]p=\d+/);
     const reached = await page.locator('.loc').textContent();
     await page.goBack();
@@ -64,7 +64,7 @@ test.describe('Pore.js demo', () => {
 
   test('settings panel changes the fit mode live', async ({ page }) => {
     await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: '⚙' }).click();
+    await page.getByRole('button', { name: 'Reader settings' }).click();
     await page.getByRole('tab', { name: 'Image fit' }).click();
     await page.locator('[data-pore-tabpanel]:not([hidden]) select').first().selectOption('width');
     await expect(page.locator('.pore-image img').first()).toHaveAttribute('style', /width:\s*100%/);
@@ -72,7 +72,7 @@ test.describe('Pore.js demo', () => {
 
   test('continuous-horizontal reads and virtualizes', async ({ page }) => {
     await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: '⚙' }).click();
+    await page.getByRole('button', { name: 'Reader settings' }).click();
     await page.locator('[data-pore-tabpanel]:not([hidden]) select').first().selectOption('continuous-horizontal');
     const surface = page.locator('.pore-image');
     await expect(surface).toHaveCSS('overflow-x', 'auto');
@@ -92,7 +92,7 @@ test.describe('Pore.js demo — EPUB', () => {
     const frame = page.frameLocator('iframe.pore-text__frame');
     await expect(frame.locator('h1')).toContainText('The Beginning');
 
-    for (let i = 0; i < 4; i++) await page.getByRole('button', { name: '›' }).click();
+    for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Next page' }).click();
     const reached = await loc.textContent();
     await page.waitForTimeout(1000);
     await page.reload();
@@ -115,15 +115,15 @@ test.describe('Pore.js demo — EPUB', () => {
 
   test('progress line shows the current chapter for a chaptered book', async ({ page }) => {
     await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: '›' }).click();
-    await page.getByRole('button', { name: '›' }).click();
-    await page.getByRole('button', { name: '›' }).click();
+    await page.getByRole('button', { name: 'Next page' }).click();
+    await page.getByRole('button', { name: 'Next page' }).click();
+    await page.getByRole('button', { name: 'Next page' }).click();
     await expect(page.locator('.loc')).toContainText('Ch 2/3');
   });
 
   test('theme + font size restyle without losing the chapter', async ({ page }) => {
     await page.goto('/?book=demo-book');
-    await page.getByRole('button', { name: '⚙' }).click();
+    await page.getByRole('button', { name: 'Reader settings' }).click();
     await page.getByRole('tab', { name: 'Theme' }).click();
     await page.locator('[data-pore-tabpanel]:not([hidden]) select').first().selectOption('dark');
     const bg = await page
@@ -141,8 +141,8 @@ test.describe('Pore.js demo — PDF', () => {
     await expect(loc).toContainText('1/9');
     await expect(page.locator('.pore-image img')).toHaveCount(1);
 
-    await page.getByRole('button', { name: '›' }).click();
-    await page.getByRole('button', { name: '›' }).click();
+    await page.getByRole('button', { name: 'Next page' }).click();
+    await page.getByRole('button', { name: 'Next page' }).click();
     await expect(loc).toContainText('3/9');
 
     // cross-format switch: back to the EPUB
@@ -152,7 +152,7 @@ test.describe('Pore.js demo — PDF', () => {
 
   test('pinch/zoom controls work like the image reader', async ({ page }) => {
     await page.goto('/?book=demo-pdf');
-    await page.getByRole('button', { name: '⚙' }).click();
+    await page.getByRole('button', { name: 'Reader settings' }).click();
     await page.getByRole('tab', { name: 'Image fit' }).click();
     await page.locator('[data-pore-tabpanel]:not([hidden]) select').first().selectOption('width');
     await expect(page.locator('.pore-image img').first()).toHaveAttribute('style', /width:\s*100%/);
@@ -200,10 +200,10 @@ test.describe('Pore.js demo — M3', () => {
 
   test('flow mode turns the reader into a semantic scroller', async ({ page }) => {
     await page.goto('/?book=demo-book');
-    await page.getByRole('button', { name: '⚙' }).click();
+    await page.getByRole('button', { name: 'Reader settings' }).click();
     await page.getByRole('tab', { name: 'Navigation' }).click();
     await page.getByLabel('Reading mode').selectOption('flow');
-    await page.getByRole('button', { name: '⚙' }).click();
+    await page.getByRole('button', { name: 'Reader settings' }).click();
 
     const vp = page.frameLocator('iframe.pore-text__frame').locator('#pore-viewport');
     await expect(vp).toHaveCSS('overflow-y', 'auto');
@@ -233,7 +233,7 @@ test.describe('Pore.js demo — M3', () => {
     await context.setOffline(true);
     await page.reload();
     await expect(page.locator('.pore-image img').first()).toBeVisible();
-    await page.getByRole('button', { name: '›' }).click();
+    await page.getByRole('button', { name: 'Next page' }).click();
     await expect(page.locator('.loc')).toContainText('/12');
     await context.setOffline(false);
   });
@@ -253,7 +253,7 @@ test.describe('Pore.js demo — M3', () => {
 
   test('settings dialog: focus trap, Radix tabs, axe clean', async ({ page }) => {
     await page.goto('/?book=demo-book');
-    await page.getByRole('button', { name: '⚙' }).click();
+    await page.getByRole('button', { name: 'Reader settings' }).click();
     const dialog = page.getByRole('dialog', { name: 'Reader settings' });
     await expect(dialog).toBeVisible();
 
@@ -279,7 +279,7 @@ test.describe('Pore.js demo — M3', () => {
 
   test('bottom scrubber seeks and shows chapter ticks', async ({ page }) => {
     await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: '›' }).click(); // wake the chrome
+    await page.getByRole('button', { name: 'Next page' }).click(); // wake the chrome
     const slider = page.getByRole('slider', { name: 'Seek' });
     await expect(slider).toBeVisible();
     // demo-manga has 3 chapters → 2 interior ticks
@@ -290,6 +290,89 @@ test.describe('Pore.js demo — M3', () => {
     await page.mouse.click(box.x + box.width * 0.8, box.y + box.height / 2);
     await expect(page.locator('.loc')).toContainText('Ch 3/3');
     await expect(page.locator('.pore-scrubber__label')).toContainText('%');
+  });
+
+  test('highlight persists across reload and click-to-jump works', async ({ page }) => {
+    await page.goto('/?book=demo-book');
+    const frame = page.frameLocator('iframe.pore-text__frame');
+    const h1 = frame.locator('h1');
+    await h1.waitFor();
+    await h1.evaluate((el) => {
+      const doc = el.ownerDocument!;
+      const range = doc.createRange();
+      range.selectNodeContents(el);
+      const sel = doc.getSelection()!;
+      sel.removeAllRanges();
+      sel.addRange(range);
+      doc.dispatchEvent(new Event('selectionchange'));
+    });
+    const swatch = page.locator('.selection-toolbar__swatch').first();
+    await expect(swatch).toBeVisible();
+    await swatch.click();
+    await expect(page.getByRole('button', { name: 'Highlights' })).toContainText('1');
+
+    await page.waitForTimeout(1000); // debounced highlight save
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Highlights' })).toContainText('1');
+
+    await page.getByRole('button', { name: 'Highlights' }).click();
+    await page.locator('.highlights-panel__jump').first().click();
+    await expect(frame.locator('h1')).toContainText('The Beginning');
+  });
+
+  test('fixed-layout EPUB pages one spine per turn, scaled to fit the window', async ({ page }) => {
+    await page.goto('/?book=demo-fixed');
+    const frame = page.frameLocator('iframe.pore-text__frame');
+    await expect(frame.locator('h1')).toContainText('A Good Morning');
+    await page.getByRole('button', { name: 'Next page' }).click();
+    await expect(frame.locator('h1')).toContainText('The Long Walk');
+    const flow = frame.locator('#pore-flow');
+    await expect(flow).toHaveCSS('width', '750px');
+  });
+
+  test('OPDS catalog: browse the bundled fixture and open a book', async ({ page }) => {
+    await page.goto('/?book=demo-book');
+    await page.getByRole('button', { name: 'Browse OPDS catalog' }).click();
+    await page.getByRole('button', { name: 'Browse', exact: true }).click();
+    await expect(page.locator('.opds-browser__list li')).toHaveCount(3);
+    await page
+      .locator('.opds-browser__list li', { hasText: 'Fixed-Layout' })
+      .getByRole('button', { name: 'Open' })
+      .click();
+    await expect(page.frameLocator('iframe.pore-text__frame').locator('h1')).toContainText(
+      'A Good Morning',
+    );
+  });
+
+  test('text-to-speech: play shows the current sentence, pause/resume toggles', async ({
+    page,
+  }) => {
+    await page.goto('/?book=demo-book');
+    await page.getByRole('button', { name: 'Text to speech' }).click();
+    await page.getByRole('button', { name: 'Play' }).click();
+    await expect(page.locator('.tts-bar__sentence')).not.toHaveText('');
+    // pause/resume delegates to the browser's own SpeechSynthesis — assert the
+    // tracked state, not audio (per docs/m4-plan.md F5: not assertable in CI)
+    await page.getByRole('button', { name: 'Pause' }).click();
+    await expect(page.getByRole('button', { name: 'Resume' })).toBeVisible();
+  });
+
+  test('M4 UI (highlights, OPDS, TTS) has no critical/serious axe violations', async ({
+    page,
+  }) => {
+    await page.goto('/?book=demo-book');
+    await page.locator('iframe.pore-text__frame').waitFor();
+    await page.getByRole('button', { name: 'Highlights' }).click();
+    await page.getByRole('button', { name: 'Browse OPDS catalog' }).click();
+    await page.getByRole('button', { name: 'Text to speech' }).click();
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa'])
+      .disableRules(['region'])
+      .analyze();
+    const serious = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    );
+    expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
   });
 
   test('reduced motion: page turns apply instantly', async ({ browser }) => {

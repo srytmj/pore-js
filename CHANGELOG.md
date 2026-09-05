@@ -1,10 +1,21 @@
 # Changelog
 
-## Unreleased
+## v0.7.0-annotate — 2026-09-05
 
-M4 F1–F5 — precise text ranges, highlights, fixed-layout EPUB, an OPDS
-source, text-to-speech — plus post-`v0.6.0-ui` UI polish.
+M4 — precise text ranges, highlights, fixed-layout EPUB, an OPDS source,
+text-to-speech — plus post-`v0.6.0-ui` UI polish. See `docs/m4-plan.md`.
 
+- **F6 hardening** — added Playwright coverage for highlight persistence +
+  click-to-jump, fixed-layout page-turn, OPDS browse → open, and the TTS
+  state machine. Writing the highlight test found a real bug:
+  `highlight.ts`'s `offsetOfPoint` only handled a Range boundary point that
+  was already a text node, so a whole-block selection made via
+  `Range.selectNodeContents()` (element + child-index boundaries, per the DOM
+  Range spec) silently failed to highlight. Fixed. Also fixed the
+  pre-existing Playwright suite's button selectors, which queried by glyph
+  text (`'›'`/`'‹'`/`'⚙'`) instead of the `aria-label`s those buttons
+  actually carry — a stale mismatch that had apparently never been caught
+  because the suite had never been run end-to-end before this milestone.
 - **Text-to-speech (EPUB)** — `TextEngine.ttsPlay/ttsPause/ttsResume/ttsStop/
   ttsSetRate/ttsSetVoice/ttsListVoices/ttsState`, backed by a synth-agnostic
   `createTtsController` + `Intl.Segmenter`-based sentence splitting

@@ -23,6 +23,21 @@ describe('locateOffset / offsetOfPoint', () => {
     expect(offsetOfPoint(p, doc, point.node, point.offset)).toBe(target);
   });
 
+  it('offsetOfPoint resolves an element-relative boundary point, not just a text-node one', () => {
+    // Range.selectNodeContents(el) — and some browsers' whole-block drag
+    // selections — produce element/childIndex boundaries, not text-node ones.
+    const doc = docWith('<h1>The Beginning</h1>');
+    const h1 = doc.querySelector('h1')!;
+    const range = doc.createRange();
+    range.selectNodeContents(h1);
+    expect(range.startContainer).toBe(h1);
+    expect(range.endContainer).toBe(h1);
+    expect(offsetOfPoint(h1, doc, range.startContainer, range.startOffset)).toBe(0);
+    expect(offsetOfPoint(h1, doc, range.endContainer, range.endOffset)).toBe(
+      'The Beginning'.length,
+    );
+  });
+
   it('offsetOfPoint returns null for a node outside the element', () => {
     const doc = docWith('<p>one</p><p>two</p>');
     const [p1, p2] = doc.querySelectorAll('p');
@@ -62,6 +77,25 @@ describe('highlightRangeFromSelection / rangeForHighlight', () => {
 
     const resolved = rangeForHighlight(doc, blocks, anchorRange!);
     expect(resolved!.toString()).toBe('beta gamma');
+  });
+
+  it('round-trips a whole-block selection made via selectNodeContents (element-relative boundaries)', () => {
+    const doc = docWith('<h1>The Beginning</h1>');
+    const h1 = doc.querySelector('h1')!;
+    const blocks = blockElements(doc);
+    const sel = doc.createRange();
+    sel.selectNodeContents(h1);
+
+    const anchorRange = highlightRangeFromSelection(doc, blocks, sel);
+    expect(anchorRange).toEqual({
+      spine: 0,
+      startBlock: 0,
+      startOffset: 0,
+      endBlock: 0,
+      endOffset: 'The Beginning'.length,
+    });
+    const resolved = rangeForHighlight(doc, blocks, anchorRange!);
+    expect(resolved!.toString()).toBe('The Beginning');
   });
 
   it('round-trips a selection spanning two blocks', () => {
