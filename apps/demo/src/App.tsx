@@ -12,6 +12,7 @@ const BOOKS: { id: string; label: string; settings?: Record<string, unknown> }[]
   { id: 'demo-book', label: 'Demo Book (EPUB)' },
   { id: 'demo-vertical', label: 'Demo 縦書き (JP)' },
   { id: 'demo-rtl', label: 'Demo عربي (RTL)' },
+  { id: 'demo-fixed', label: 'Demo Fixed-Layout (beta)' },
   { id: 'demo-pdf', label: 'Demo PDF' },
 ];
 
@@ -48,7 +49,7 @@ export function App() {
     const local = new LocalFileSource(files);
     setDropped({ source: new CachedSource(local), bookId: local.bookId });
     void local.getManifest(local.bookId).then(() => {
-      if (local.fixedLayout) setNotice('Fixed-layout EPUB — reflow view (beta)');
+      if (local.fixedLayout) setNotice('Fixed-layout EPUB — pre-paginated view (beta)');
     });
   };
 

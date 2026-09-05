@@ -317,3 +317,63 @@ describe('createTextEngine', () => {
     engine.destroy();
   });
 });
+
+const FIXED_OPF = `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Fixed</dc:title><meta property="rendition:layout">pre-paginated</meta></metadata><manifest><item id="p1" href="p1.xhtml" media-type="application/xhtml+xml"/><item id="p2" href="p2.xhtml" media-type="application/xhtml+xml"/><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/></manifest><spine><itemref idref="p1"/><itemref idref="p2"/></spine></package>`;
+const FIXED_NAV = `<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><body><nav epub:type="toc"><ol><li><a href="p1.xhtml">Page 1</a></li><li><a href="p2.xhtml">Page 2</a></li></ol></nav></body></html>`;
+
+function fixedPageXhtml(n: number): string {
+  return `<html><head><meta name="viewport" content="width=750,height=1000"/></head><body><div style="position:absolute;top:0;left:0;">Page ${n}</div></body></html>`;
+}
+
+function fixedLayoutSource(): ReaderSource {
+  return {
+    getManifest: vi.fn(async () => ({ bookId: 'b', type: 'epub' as const, title: 'Fixed' })),
+    getPage: vi.fn(),
+    getFile: vi.fn(
+      async () =>
+        new Blob([
+          zipSync({
+            mimetype: strToU8('application/epub+zip'),
+            'META-INF/container.xml': strToU8(CONTAINER),
+            'OEBPS/content.opf': strToU8(FIXED_OPF),
+            'OEBPS/nav.xhtml': strToU8(FIXED_NAV),
+            'OEBPS/p1.xhtml': strToU8(fixedPageXhtml(1)),
+            'OEBPS/p2.xhtml': strToU8(fixedPageXhtml(2)),
+          }),
+        ]),
+    ),
+    loadProgress: vi.fn(async () => null),
+    saveProgress: vi.fn(async () => {}),
+  };
+}
+
+describe('createTextEngine — fixed-layout EPUB', () => {
+  it('detects pre-paginated layout and pages one spine item at a time', async () => {
+    const container = document.createElement('div');
+    const engine = createTextEngine({ container, source: fixedLayoutSource(), bookId: 'b' });
+    let ready: { metadata: { fixedLayout: boolean } } | null = null;
+    engine.on('reader:ready', (p) => (ready = p));
+    const locs: Array<{ chapter?: string }> = [];
+    engine.on('reader:locationchange', (p) => locs.push(p));
+    await engine.mount();
+    expect(ready?.metadata.fixedLayout).toBe(true);
+    expect(locs.at(-1)?.chapter).toBe('p1');
+
+    engine.turn('forward'); // one page per spine item -> straight to p2
+    await new Promise((r) => setTimeout(r, 90));
+    expect(locs.at(-1)?.chapter).toBe('p2');
+    expect(engine.chapters()).toHaveLength(2);
+    engine.destroy();
+  });
+
+  it('never throws resizing/reflowing or toggling settings on a fixed-layout page', async () => {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const engine = createTextEngine({ container, source: fixedLayoutSource(), bookId: 'b' });
+    await engine.mount();
+    expect(() => engine.setSettings({ fontSizePct: 150, publisherStyles: false })).not.toThrow();
+    expect(engine.getCfi()).toBeDefined(); // null or a string, either way must not throw
+    engine.destroy();
+    container.remove();
+  });
+});

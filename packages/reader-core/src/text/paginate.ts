@@ -193,3 +193,64 @@ ${forceFamily ? `body, body * { font-family:${family} !important; }` : ''}
 ${t.publisherStyles ? '' : `#${FLOW_ID} p { margin:0 0 1em; } #${FLOW_ID} h1, #${FLOW_ID} h2, #${FLOW_ID} h3 { margin:1.4em 0 .6em; }`}
 `.trim();
 }
+
+// ---- fixed-layout EPUB ------------------------------------------------------
+// A fixed-layout page is a pixel-precise canvas the author fully controls (no
+// reflow, no typography settings): we scale it to fit the viewport and centre
+// it, rather than paginating it like reflowable text. See docs/m4-plan.md F3.
+
+export interface FixedPageSize {
+  width: number;
+  height: number;
+}
+
+const DEFAULT_FIXED_PAGE_SIZE: FixedPageSize = { width: 768, height: 1024 };
+
+/** Parse a spine doc's `<meta name="viewport" content="width=W,height=H">`. */
+export function parseFixedViewportMeta(
+  content: string | null | undefined,
+  fallback: FixedPageSize = DEFAULT_FIXED_PAGE_SIZE,
+): FixedPageSize {
+  if (!content) return fallback;
+  const w = /width\s*=\s*([\d.]+)/i.exec(content)?.[1];
+  const h = /height\s*=\s*([\d.]+)/i.exec(content)?.[1];
+  const width = w ? parseFloat(w) : fallback.width;
+  const height = h ? parseFloat(h) : fallback.height;
+  return width > 0 && height > 0 ? { width, height } : fallback;
+}
+
+export interface FixedLayoutTransform {
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+}
+
+/** Scale + centre a fixed-size page inside a viewport, preserving aspect ratio. */
+export function fixedLayoutScale(
+  viewportWidth: number,
+  viewportHeight: number,
+  page: FixedPageSize,
+): FixedLayoutTransform {
+  const scale =
+    page.width > 0 && page.height > 0
+      ? Math.min(viewportWidth / page.width, viewportHeight / page.height) || 1
+      : 1;
+  return {
+    scale,
+    offsetX: (viewportWidth - page.width * scale) / 2,
+    offsetY: (viewportHeight - page.height * scale) / 2,
+  };
+}
+
+/** `#${VIEWPORT_ID}`/`#${FLOW_ID}` sized to the page's own pixels; `create-text-engine.ts` drives the scale via a live transform (viewport size changes on resize). */
+export function buildFixedLayoutStylesheet(page: FixedPageSize, background?: string): string {
+  // The reader window, not the author's own page pixels, should size html/body
+  // — a fixed-layout page's own <style> commonly pins body to its exact
+  // width/height (e.g. `width:750px`), which would otherwise cap #pore-viewport
+  // (width:100%) to that instead of the actual (usually larger) reader window.
+  return `
+html, body { margin:0 !important; width:100% !important; height:100% !important; overflow:hidden; ${background ? `background:${background};` : ''} }
+#${VIEWPORT_ID} { width:100%; height:100%; position:relative; overflow:hidden; }
+#${FLOW_ID} { position:absolute; top:0; left:0; width:${page.width}px; height:${page.height}px; transform-origin:top left; overflow:hidden; }
+`.trim();
+}

@@ -2,8 +2,16 @@
 
 ## Unreleased
 
-M4 F1–F2 — precise text ranges + highlights, plus post-`v0.6.0-ui` UI polish.
+M4 F1–F3 — precise text ranges, highlights, fixed-layout EPUB — plus
+post-`v0.6.0-ui` UI polish.
 
+- **Fixed-layout EPUB** — a `rendition:layout="pre-paginated"` book (previously
+  rejected with an error) now renders: one scaled, centred page per spine
+  item instead of reflowable text, driven by the page's own `<meta
+  name="viewport">` size. Kept as a live iframe (not a canvas snapshot) so
+  selection/highlighting keep working. New `demo-fixed` synthetic fixture
+  (a 4-page kids'-book-style EPUB) in the demo's book picker. Page-spread
+  pairing is not included — see `docs/m4-plan.md` F3.
 - **Text highlights (EPUB)** — `TextEngine.addHighlight`/`removeHighlight`/
   `listHighlights()`, driven by a debounced `reader:selection` event off the
   sandboxed iframe's own selection. Persisted via new optional

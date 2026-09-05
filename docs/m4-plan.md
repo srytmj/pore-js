@@ -143,26 +143,55 @@ note, so that follow-up is UI-only.
 
 ---
 
-## F3 — Fixed-layout EPUB · M
+## F3 — Fixed-layout EPUB · M · done (v0.7.0-annotate wip); spreads cut below
 
-- [ ] Detect `rendition:layout="pre-paginated"` (already sniffed in
-      `LocalFileSource.fixedLayout` / `EpubMetadata.fixedLayout` — currently
-      just a "beta" notice, never actually rendered specially)
-- [ ] A `FixedLayoutSource` adapter in the same spirit as `PdfImageSource`:
-      render each spine doc's fixed viewport (`<meta name="viewport"
-      content="width=…,height=…">`) into a canvas/image at a target
-      resolution (serialize to an `<img>`/`<foreignObject>` snapshot, or run it
-      through an offscreen iframe + `drawImage`), then feed the **image
-      engine** unchanged — same composition pattern PDF uses
-- [ ] Spread detection from `<spine><itemref properties="rendition:page-spread-
-      left|right">` → maps to the image engine's double-page pairing
-- [ ] A synthetic fixed-layout fixture (kids'-book-style: a couple of spreads,
-      short text blocks) for the demo and tests
-- [ ] Vitest: layout detection, viewport-size extraction, spread mapping;
-      browser-verified paging matches a real fixed-layout title
+Went with the **live-iframe** path from open question #2, not the
+snapshot-to-canvas/image-engine adapter originally sketched below — F2's
+highlight/selection mechanics are DOM-range-based, and a live iframe keeps
+those working on fixed-layout books for free (a canvas snapshot would have
+needed its own rect-based highlight scheme, duplicating F2). The `<meta
+name="viewport">`-driven scale-to-fit turned out simple enough that the
+adapter/image-engine detour wasn't worth it.
+
+- [x] Detect `rendition:layout="pre-paginated"` (`EpubMetadata.fixedLayout`,
+      already sniffed since M0.5/`LocalFileSource`) — `mount()` no longer
+      rejects it with an error; `create-text-engine.ts` branches on
+      `fixedLayoutActive()` throughout (`measure`/`applyPage`/`injectStyle`/
+      `anchorFor`/`resolvePendingAnchor`) instead of the reflow/multicol path.
+- [x] One page per spine item (no sub-paging — `estimateSpinePages` returns 1),
+      scaled + centred via a live `transform: translate(...) scale(...)` on
+      `#pore-flow` recomputed on resize; new pure helpers in `paginate.ts`:
+      `parseFixedViewportMeta` (reads the page's own `<meta name="viewport"
+      content="width=…,height=…">`), `fixedLayoutScale`,
+      `buildFixedLayoutStylesheet`. Author CSS is never stripped for a
+      fixed-layout book regardless of the `publisherStyles` setting —
+      positioning is entirely author-CSS-driven.
+- [x] A synthetic fixed-layout fixture (`demo-fixed`, kids'-book-style: 4
+      pages, absolutely-positioned panel + title, `pre-paginated` OPF meta) in
+      `scripts/gen-fixtures.mjs`, wired into the demo's book picker.
+- [x] Vitest: `paginate.test.ts` (+7: viewport-meta parsing, scale/centre math,
+      stylesheet shape) and `create-text-engine.test.ts` (+2: layout
+      detection + one-page-per-spine navigation, settings/resize don't throw).
+      Browser-verified at both desktop (1280px) and narrow (500px) widths —
+      correct centring and aspect-ratio-preserving scale at both.
+- [x] **Found and fixed while browser-verifying**: the first cut left body/html
+      unsized in `buildFixedLayoutStylesheet`, so a fixed-layout page's own
+      author CSS (routinely `body{width:750px;height:1000px}`, since it's
+      normally sized to the exact page) constrained `#pore-viewport`'s
+      `width:100%` to that instead of the actual (usually wider) reader
+      window. Fixed with an explicit `width:100% !important;height:100%
+      !important` on the injected `html, body` rule.
+
+**Cut from this pass:**
+- **Spread pairing** (`rendition:page-spread-left|right` → two-page display) —
+  needs either two iframes shown side-by-side or one iframe spanning two
+  spine items, real added complexity for a "beta" fixed-layout feature;
+  tracked as a follow-up once single-page fixed-layout has seen real use.
+- **`OpdsSource`/canvas-snapshot adapter** — superseded by the live-iframe
+  approach above; not needed.
 
 **Done when:** a fixed-layout EPUB opens and pages like a comic, not a broken
-reflow.
+reflow. — met, for single-page (non-spread) fixed-layout books.
 
 ---
 
@@ -232,17 +261,13 @@ Cross-device highlight sync (needs a real backend — `KavitaSource`/
 TTS), CFI for images/PDF (page index is already stable and simpler, no CFI
 needed there).
 
-## Open questions to settle before F1 starts
+## Open questions
 
-1. **Highlight storage** — a new `ReaderSource` method (`loadHighlights`/
-   `saveHighlights`), or fold into existing per-book settings? Leaning
-   toward a new optional method: highlights aren't a "setting" and every
-   `ReaderSource` (Kavita, demo, local file) needs its own persistence story.
-2. **F3 fixed-layout rendering path** — snapshot-to-canvas (simpler, works
-   offline, loses text selection) vs. keep it a live iframe sized to the fixed
-   viewport (keeps selection/highlight compatibility with F2, more moving
-   parts). Leaning toward the live-iframe path *if* F2 is expected to cover
-   fixed-layout books too; snapshot otherwise.
+1. ~~**Highlight storage**~~ — **settled** (user, before F2): new optional
+   `ReaderSource.loadHighlights`/`saveHighlights` methods. Done, see F2.
+2. ~~**F3 fixed-layout rendering path**~~ — **settled**: live iframe, to keep
+   F2's highlight/selection mechanics working on fixed-layout books. Done,
+   see F3.
 3. **F4 scope for this portfolio**: full OPDS 2.0 + auth flows are a lot of
    surface for uncertain payoff — could ship OPDS 1.2 read-only against Project
    Gutenberg's public catalog as the demo proof and call 2.0/auth a follow-up.

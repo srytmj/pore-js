@@ -19,7 +19,7 @@ export interface EpubMetadata {
   creator?: string;
   /** From `<spine page-progression-direction>`. */
   direction: 'ltr' | 'rtl';
-  /** `rendition:layout` === "pre-paginated" — fixed-layout, not supported in v1. */
+  /** `rendition:layout` === "pre-paginated" — each spine item renders as one scaled, pixel-precise page instead of reflowable text (see F3 in docs/m4-plan.md). */
   fixedLayout: boolean;
 }
 

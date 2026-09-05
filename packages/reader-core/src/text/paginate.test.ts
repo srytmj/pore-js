@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { buildBaseStylesheet, computeTextLayout, offsetForPage, pageCountFor } from './paginate.js';
+import {
+  buildBaseStylesheet,
+  buildFixedLayoutStylesheet,
+  computeTextLayout,
+  fixedLayoutScale,
+  offsetForPage,
+  pageCountFor,
+  parseFixedViewportMeta,
+} from './paginate.js';
 
 describe('computeTextLayout', () => {
   it('caps the measure and centres it on a wide viewport', () => {
@@ -197,5 +205,55 @@ describe('buildBaseStylesheet', () => {
     expect(on).not.toContain('!important');
     expect(off).toContain('font-family');
     expect(off).toContain('!important');
+  });
+});
+
+describe('parseFixedViewportMeta', () => {
+  it('reads width/height out of a viewport meta content string', () => {
+    expect(parseFixedViewportMeta('width=750, height=1000')).toEqual({ width: 750, height: 1000 });
+  });
+
+  it('falls back to the default when the tag is missing or malformed', () => {
+    expect(parseFixedViewportMeta(null)).toEqual({ width: 768, height: 1024 });
+    expect(parseFixedViewportMeta('nonsense')).toEqual({ width: 768, height: 1024 });
+    expect(parseFixedViewportMeta('width=0, height=1000')).toEqual({ width: 768, height: 1024 });
+  });
+
+  it('accepts a custom fallback', () => {
+    expect(parseFixedViewportMeta(undefined, { width: 600, height: 800 })).toEqual({
+      width: 600,
+      height: 800,
+    });
+  });
+});
+
+describe('fixedLayoutScale', () => {
+  it('scales down and centres a page wider than the viewport', () => {
+    const t = fixedLayoutScale(500, 1000, { width: 750, height: 1000 });
+    expect(t.scale).toBeCloseTo(500 / 750);
+    expect(t.offsetX).toBeCloseTo(0);
+    expect(t.offsetY).toBeGreaterThan(0); // extra vertical room after scaling
+  });
+
+  it('scales down and centres a page taller than the viewport', () => {
+    const t = fixedLayoutScale(1000, 500, { width: 750, height: 1000 });
+    expect(t.scale).toBeCloseTo(500 / 1000);
+    expect(t.offsetY).toBeCloseTo(0);
+    expect(t.offsetX).toBeGreaterThan(0);
+  });
+
+  it('picks the more constraining dimension when scaling up', () => {
+    const t = fixedLayoutScale(2000, 2000, { width: 750, height: 1000 });
+    expect(t.scale).toBeCloseTo(2000 / 1000); // height is the constraint here
+  });
+});
+
+describe('buildFixedLayoutStylesheet', () => {
+  it('sizes the flow element to the page pixels, not the column measure', () => {
+    const css = buildFixedLayoutStylesheet({ width: 750, height: 1000 }, '#111');
+    expect(css).toContain('width:750px');
+    expect(css).toContain('height:1000px');
+    expect(css).toContain('background:#111');
+    expect(css).not.toContain('column-width');
   });
 });

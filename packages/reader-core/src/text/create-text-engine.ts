@@ -24,11 +24,15 @@ import type { SearchHit, SearchSection } from '../search/search-index.js';
 import { instantTransitions, type ReaderTransitions } from '../transitions.js';
 import {
   buildBaseStylesheet,
+  buildFixedLayoutStylesheet,
   computeTextLayout,
+  fixedLayoutScale,
   FLOW_ID,
   offsetForPage,
   pageCountFor,
+  parseFixedViewportMeta,
   VIEWPORT_ID,
+  type FixedPageSize,
   type TextLayout,
 } from './paginate.js';
 import {
@@ -105,9 +109,12 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
 
   // ---- helpers -------------------------------------------------------------
 
+  /** A fixed-layout book renders one scaled page per spine item — no reflow, no columns, no vertical writing mode. */
+  const fixedLayoutActive = (): boolean => book?.metadata.fixedLayout === true;
+
   /** Resolve the `verticalText` setting against the book's metadata. */
   const verticalActive = (): boolean => {
-    if (flowActive()) return false; // flow mode is always horizontal-tb scroll
+    if (fixedLayoutActive() || flowActive()) return false; // flow mode is always horizontal-tb scroll
     if (settings.verticalText === 'on') return true;
     if (settings.verticalText === 'off') return false;
     return book?.metadata.direction === 'rtl' && /^ja/i.test(book?.metadata.language ?? '');
@@ -120,6 +127,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
 
   /** Single scrolling column (screen-reader friendly). */
   const flowActive = (): boolean => {
+    if (fixedLayoutActive()) return false;
     if (settings.flowMode === 'flow') return true;
     if (settings.flowMode === 'paged') return false;
     return mql('(forced-colors: active)');
@@ -159,6 +167,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   };
 
   const estimateSpinePages = (i: number): number => {
+    if (fixedLayoutActive()) return 1; // one page per spine item, always
     const href = book?.spine[i]?.href;
     const res = href ? book?.resource(href) : null;
     if (!res) return 1;
@@ -170,7 +179,8 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     const total = totalPages();
     const bookPercent = total > 0 ? (bookPageBefore(spineIndex) + page) / total : 0;
     const cdoc = frame.contentDocument;
-    if (!cdoc) {
+    // one page per spine item — no block/offset to resolve within it.
+    if (!cdoc || fixedLayoutActive()) {
       return { type: 'anchor', spine: spineIndex, block: 0, offset: 0, percent: bookPercent };
     }
     return generateAnchor(
@@ -395,6 +405,21 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   const viewportEl = (): HTMLElement | null =>
     (frame.contentDocument?.getElementById(VIEWPORT_ID) as HTMLElement | null) ?? null;
 
+  const fixedPageSizeFor = (cdoc: Document): FixedPageSize =>
+    parseFixedViewportMeta(cdoc.querySelector('meta[name="viewport"]')?.getAttribute('content'));
+
+  /** Scale + centre the current spine's fixed-size page inside the reader window. */
+  const applyFixedLayoutTransform = () => {
+    const cdoc = frame.contentDocument;
+    const flow = flowEl();
+    if (!cdoc || !flow) return;
+    const size = fixedPageSizeFor(cdoc);
+    const cw = root.clientWidth || size.width;
+    const ch = root.clientHeight || size.height;
+    const { scale, offsetX, offsetY } = fixedLayoutScale(cw, ch, size);
+    flow.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+  };
+
   /**
    * `#pore-viewport` is centred inside the iframe whenever the reader window
    * is wider than the reading column (common on desktop), so a bare
@@ -606,6 +631,10 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   };
 
   const applyPage = (dir: -1 | 0 | 1 = 0) => {
+    if (fixedLayoutActive()) {
+      applyFixedLayoutTransform();
+      return;
+    }
     const l = layout();
     if (flowActive()) {
       const vp = viewportEl();
@@ -624,6 +653,13 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   };
 
   const measure = () => {
+    if (fixedLayoutActive()) {
+      spinePageCount = 1;
+      spinePages[spineIndex] = 1;
+      page = Math.min(page, maxPage());
+      applyPage();
+      return;
+    }
     if (flowActive()) {
       const vp = viewportEl();
       const h = vp?.clientHeight || 1;
@@ -676,6 +712,10 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
       cdoc.head?.appendChild(el);
     }
     const theme = THEME_COLORS[settings.theme];
+    if (fixedLayoutActive()) {
+      el.textContent = buildFixedLayoutStylesheet(fixedPageSizeFor(cdoc), theme.background);
+      return;
+    }
     el.textContent = buildBaseStylesheet(layout(), {
       fontSizePct: settings.fontSizePct,
       lineHeight: settings.lineHeight,
@@ -695,6 +735,10 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     if (!cdoc || !pendingAnchor || pendingAnchor.spine !== spineIndex) return;
     const anchor = pendingAnchor;
     pendingAnchor = null;
+    if (fixedLayoutActive()) {
+      page = 0; // one page per spine item — nothing further to resolve
+      return;
+    }
     const flow = flowEl();
     if (flow) flow.style.transform = 'translateX(0)';
     const { page: resolved } = resolveAnchor(
@@ -722,7 +766,8 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     const res = book.resource(item.href);
     const source_ = res ? new TextDecoder().decode(res.bytes) : '<p>(missing chapter)</p>';
     const { html, urls } = rewriteResources(source_, book, item.href, parser, {
-      stripAuthorCss: !settings.publisherStyles,
+      // fixed-layout positioning is entirely author-CSS-driven — never strip it
+      stripAuthorCss: !fixedLayoutActive() && !settings.publisherStyles,
     });
     objectUrls = urls;
 
@@ -1020,11 +1065,6 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     }
     const blob = await source.getFile(bookId);
     book = parseEpub(new Uint8Array(await blob.arrayBuffer()), { domParser: parser });
-    if (book.metadata.fixedLayout) {
-      emitter.emit('reader:error', {
-        error: 'fixed-layout EPUB is not supported in this version',
-      });
-    }
     spinePages = new Array(book.spine.length).fill(undefined);
 
     container.replaceChildren(root);
