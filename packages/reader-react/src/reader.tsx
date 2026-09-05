@@ -76,6 +76,8 @@ export interface ReaderHandle {
   /** Highlight the current text selection — `null` on engines without one (image/PDF), or if there's no live selection. */
   addHighlight(opts?: { color?: string; note?: string }): HighlightRecord | null;
   removeHighlight(id: string): void;
+  /** Change a highlight's colour and/or note (`note: ''` clears it) — `null` on engines without highlights or an unknown id. */
+  updateHighlight(id: string, patch: { color?: string; note?: string }): HighlightRecord | null;
   listHighlights(): HighlightRecord[];
   /** Text-to-speech (stretch goal, EPUB-only) — safe to call on engines without one; it simply never plays. */
   ttsPlay(): void;
@@ -100,6 +102,7 @@ interface EngineLike {
   getCfi?(): string | null;
   addHighlight?(opts?: { color?: string; note?: string }): HighlightRecord | null;
   removeHighlight?(id: string): void;
+  updateHighlight?(id: string, patch: { color?: string; note?: string }): HighlightRecord | null;
   listHighlights?(): HighlightRecord[];
   ttsPlay?(): void;
   ttsPause?(): void;
@@ -324,6 +327,7 @@ export function Reader({
       getCfi: () => engineRef.current?.getCfi?.() ?? null,
       addHighlight: (opts) => engineRef.current?.addHighlight?.(opts) ?? null,
       removeHighlight: (id) => engineRef.current?.removeHighlight?.(id),
+      updateHighlight: (id, patch) => engineRef.current?.updateHighlight?.(id, patch) ?? null,
       listHighlights: () => engineRef.current?.listHighlights?.() ?? [],
       ttsPlay: () => engineRef.current?.ttsPlay?.(),
       ttsPause: () => engineRef.current?.ttsPause?.(),
@@ -563,6 +567,8 @@ export interface ReaderSelectionApi {
   /** Highlight the current selection; returns `null` if there's nothing selected. */
   highlight(opts?: { color?: string; note?: string }): HighlightRecord | null;
   removeHighlight(id: string): void;
+  /** Change an existing highlight's colour and/or note (`note: ''` clears it). */
+  updateHighlight(id: string, patch: { color?: string; note?: string }): HighlightRecord | null;
 }
 
 /** Selection-driven highlighting — pair with `selection` to position a floating toolbar. */
@@ -572,6 +578,7 @@ export function useReaderSelection(): ReaderSelectionApi {
     selection,
     highlight: (opts) => handle.addHighlight(opts),
     removeHighlight: (id) => handle.removeHighlight(id),
+    updateHighlight: (id, patch) => handle.updateHighlight(id, patch),
   };
 }
 

@@ -73,6 +73,8 @@ export { SettingsPanel, SettingsPanelBody } from './settings-panel.js';
 export type { SettingsPanelProps } from './settings-panel.js';
 export { TableOfContents } from './table-of-contents.js';
 export type { TableOfContentsProps } from './table-of-contents.js';
+export { HighlightsPanel } from './highlights-panel.js';
+export type { HighlightsPanelProps } from './highlights-panel.js';
 export { FootnotePopover } from './footnote-popover.js';
 export {
   Field,

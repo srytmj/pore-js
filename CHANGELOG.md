@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Highlight notes & a reusable highlights panel (M5 F2b)** —
+  `TextEngine.updateHighlight(id, { color?, note? })` (also on `ReaderHandle`
+  and `useReaderSelection()`); `note: ''` clears the note. New headless
+  `<HighlightsPanel>` in `@pore/reader-react` — renders the list with
+  `data-pore-hl-*` hooks (jump / recolour / note textarea / remove) and calls
+  the handle; the demo dropped its hand-rolled markup for it. The selection
+  toolbar gained a "highlight + note" action.
 - **Menu bar placement & behaviour (M5 G1)** — the demo's menu bar can now sit
   on the top, left or right edge for *every* engine (not just EPUB), set in
   Settings → Menu bar. A "Behaviour" choice picks "Always visible" (docks a side

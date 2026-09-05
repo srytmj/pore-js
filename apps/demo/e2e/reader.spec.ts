@@ -430,8 +430,43 @@ test.describe('Pore.js demo — M3', () => {
     await expect(page.getByRole('button', { name: 'Highlights' })).toContainText('1');
 
     await page.getByRole('button', { name: 'Highlights' }).click();
-    await page.locator('.highlights-panel__jump').first().click();
+    await page.locator('[data-pore-hl-jump]').first().click();
     await expect(frame.locator('h1')).toContainText('The Beginning');
+  });
+
+  test('highlight note: add via the panel, edit, survives reload', async ({ page }) => {
+    await page.goto('/?book=demo-book');
+    const frame = page.frameLocator('iframe.pore-text__frame');
+    await frame.locator('h1').waitFor();
+    await frame.locator('h1').evaluate((el) => {
+      const doc = el.ownerDocument!;
+      const range = doc.createRange();
+      range.selectNodeContents(el);
+      const sel = doc.getSelection()!;
+      sel.removeAllRanges();
+      sel.addRange(range);
+      doc.dispatchEvent(new Event('selectionchange'));
+    });
+    // the ✎ action highlights and opens the panel
+    await page.getByRole('button', { name: 'Highlight and add a note' }).click();
+    const note = page.locator('[data-pore-hl-note]').first();
+    await note.fill('remember this bit');
+    await note.blur();
+    await page.waitForTimeout(1000); // debounced save
+
+    await page.reload();
+    await page.getByRole('button', { name: 'Highlights' }).click();
+    await expect(page.locator('[data-pore-hl-note]').first()).toHaveValue('remember this bit');
+
+    // recolour and re-check it persists
+    await page.locator('[data-pore-hl-swatch]').nth(1).click();
+    await page.waitForTimeout(1000);
+    await page.reload();
+    await page.getByRole('button', { name: 'Highlights' }).click();
+    await expect(page.locator('[data-pore-hl-swatch]').nth(1)).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 
   test('fixed-layout EPUB pages one spine per turn, scaled to fit the window', async ({ page }) => {

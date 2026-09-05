@@ -95,7 +95,7 @@ export interface TextEngineEvents {
   'reader:error': { error: unknown };
   /** The live text selection inside the sandboxed iframe, debounced; `null` when it collapses. */
   'reader:selection': TextSelection | null;
-  /** Fired after `addHighlight`/`removeHighlight` and once on mount (with whatever was persisted). */
+  /** Fired after `addHighlight`/`removeHighlight`/`updateHighlight` and once on mount (with whatever was persisted). */
   'reader:highlightschange': { highlights: HighlightRecord[] };
   /** Text-to-speech playback state — fired on play/pause/resume/stop and on every sentence advance. */
   'reader:ttsstate': TtsState;
@@ -123,6 +123,11 @@ export interface TextEngine {
    */
   addHighlight(opts?: { color?: string; note?: string }): HighlightRecord | null;
   removeHighlight(id: string): void;
+  /**
+   * Change a highlight's colour and/or note. `note: ''` clears the note.
+   * Returns the updated record, or `null` when `id` is unknown.
+   */
+  updateHighlight(id: string, patch: { color?: string; note?: string }): HighlightRecord | null;
   listHighlights(): HighlightRecord[];
   /**
    * Text-to-speech (stretch goal — browser `SpeechSynthesis` only). All

@@ -411,6 +411,28 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     emitter.emit('reader:highlightschange', { highlights });
   };
 
+  const updateHighlight = (
+    id: string,
+    patch: { color?: string; note?: string },
+  ): HighlightRecord | null => {
+    const idx = highlights.findIndex((h) => h.id === id);
+    if (idx === -1) return null;
+    const prev = highlights[idx]!;
+    const next: HighlightRecord = {
+      ...prev,
+      ...(patch.color !== undefined ? { color: patch.color } : {}),
+    };
+    if (patch.note !== undefined) {
+      if (patch.note === '') delete next.note;
+      else next.note = patch.note;
+    }
+    highlights = highlights.map((h, i) => (i === idx ? next : h));
+    if (patch.color !== undefined) applyHighlights();
+    scheduleSaveHighlights();
+    emitter.emit('reader:highlightschange', { highlights });
+    return next;
+  };
+
   const listHighlights = (): HighlightRecord[] => highlights;
 
   // ---- text-to-speech (stretch goal) ----------------------------------------
@@ -1313,6 +1335,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     getCfi,
     addHighlight,
     removeHighlight,
+    updateHighlight,
     listHighlights,
     ttsPlay,
     ttsPause,

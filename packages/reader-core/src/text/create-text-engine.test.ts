@@ -213,6 +213,7 @@ describe('createTextEngine', () => {
     expect(engine.addHighlight()).toBeNull();
     expect(engine.listHighlights()).toEqual([]);
     expect(() => engine.removeHighlight('nope')).not.toThrow();
+    expect(engine.updateHighlight('nope', { note: 'x' })).toBeNull();
     engine.destroy();
   });
 
@@ -251,6 +252,15 @@ describe('createTextEngine', () => {
       await new Promise((r) => setTimeout(r, 900));
       expect(src.saveHighlights).toHaveBeenCalled();
       expect(stored).toEqual([hl]);
+
+      const edited = engine.updateHighlight(hl.id, { note: 'edited', color: 'cyan' });
+      expect(edited).toMatchObject({ id: hl.id, note: 'edited', color: 'cyan' });
+      expect(changes.at(-1)?.highlights).toEqual([edited]);
+      await new Promise((r) => setTimeout(r, 900));
+      expect(stored).toEqual([edited]);
+      // clearing the note drops the field
+      const cleared = engine.updateHighlight(hl.id, { note: '' });
+      expect(cleared && 'note' in cleared).toBe(false);
 
       engine.removeHighlight(hl.id);
       expect(engine.listHighlights()).toEqual([]);

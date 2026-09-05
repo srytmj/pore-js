@@ -1,5 +1,6 @@
 import {
   FootnotePopover,
+  HighlightsPanel,
   SettingsPanel,
   TableOfContents,
   useEndPage,
@@ -20,7 +21,6 @@ import {
   useResumedFromPage,
   type ImageEngineSettings,
   type TextEngineSettings,
-  type Position,
   type TtsVoiceLike,
 } from '@pore/reader-react';
 import { useEffect, useState } from 'react';
@@ -36,6 +36,7 @@ interface BookOpt {
 }
 
 const HIGHLIGHT_COLORS = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8'];
+const DEFAULT_HIGHLIGHT = HIGHLIGHT_COLORS[0]!;
 
 export function Chrome({
   books,
@@ -79,7 +80,7 @@ export function Chrome({
   const [panelOpen, setPanelOpen] = useState(false);
   const [posNotice, setPosNotice] = useState<string | null>(null);
   const [highlightsOpen, setHighlightsOpen] = useState(false);
-  const { selection, highlight, removeHighlight } = useReaderSelection();
+  const { selection, highlight } = useReaderSelection();
   const highlights = useReaderHighlights();
   const tts = useTts();
   const [ttsOpen, setTtsOpen] = useState(false);
@@ -406,6 +407,16 @@ export function Chrome({
               onClick={() => highlight({ color })}
             />
           ))}
+          <button
+            className="selection-toolbar__note"
+            aria-label="Highlight and add a note"
+            title="Highlight and add a note"
+            onClick={() => {
+              if (highlight({ color: DEFAULT_HIGHLIGHT })) setHighlightsOpen(true);
+            }}
+          >
+            ✎
+          </button>
         </div>
       )}
 
@@ -417,40 +428,11 @@ export function Chrome({
               ×
             </button>
           </div>
-          {highlights.length === 0 ? (
-            <p className="highlights-panel__empty">Select text in the book to highlight it.</p>
-          ) : (
-            <ol className="highlights-panel__list">
-              {highlights.map((h) => (
-                <li key={h.id}>
-                  <button
-                    className="highlights-panel__jump"
-                    style={{ borderLeftColor: h.color }}
-                    onClick={() => {
-                      const pos: Position = {
-                        type: 'anchor',
-                        spine: h.range.spine,
-                        block: h.range.startBlock,
-                        offset: h.range.startOffset,
-                        percent: 0,
-                      };
-                      reader.goto(pos);
-                      setHighlightsOpen(false);
-                    }}
-                  >
-                    {h.text.slice(0, 80)}
-                  </button>
-                  <button
-                    className="highlights-panel__remove"
-                    aria-label="Remove highlight"
-                    onClick={() => removeHighlight(h.id)}
-                  >
-                    ×
-                  </button>
-                </li>
-              ))}
-            </ol>
-          )}
+          <HighlightsPanel
+            className="highlights-panel__body"
+            colors={HIGHLIGHT_COLORS}
+            onJump={() => setHighlightsOpen(false)}
+          />
         </div>
       )}
 

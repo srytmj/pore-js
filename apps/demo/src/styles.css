@@ -374,6 +374,12 @@
   .selection-toolbar__swatch:hover {
     @apply scale-110;
   }
+  .selection-toolbar__note {
+    @apply h-6 w-6 shrink-0 cursor-pointer rounded-full border border-line bg-transparent text-[0.8rem] leading-none text-fg;
+  }
+  .selection-toolbar__note:hover {
+    @apply border-fg/40;
+  }
 
   .highlights-panel {
     @apply fixed top-[52px] right-3 z-[55] flex max-h-[60vh] w-[min(360px,calc(100vw-24px))] flex-col overflow-hidden rounded-[var(--radius-control)] border border-line bg-surface text-fg shadow-2xl;
@@ -382,26 +388,43 @@
   .highlights-panel__header {
     @apply flex items-center justify-between border-b border-line p-2 px-3;
   }
-  .highlights-panel__empty {
+  .highlights-panel__body {
+    @apply overflow-y-auto;
+  }
+  /* headless <HighlightsPanel> — data-pore-hl-* hooks */
+  [data-pore-hl-empty] {
     @apply p-4 text-center text-[0.85rem] text-muted;
   }
-  .highlights-panel__list {
-    @apply m-0 list-none overflow-y-auto p-0;
+  [data-pore-hl-list] {
+    @apply m-0 list-none p-0;
   }
-  .highlights-panel__list li {
-    @apply flex items-stretch border-b border-line/60;
+  [data-pore-hl-item] {
+    @apply grid gap-1.5 border-b border-line/60 p-2;
+    grid-template-columns: 1fr auto;
   }
-  .highlights-panel__jump {
-    @apply flex-1 border-0 border-l-4 border-solid bg-transparent p-2 text-left text-[0.85rem] leading-snug;
+  [data-pore-hl-jump] {
+    @apply col-start-1 border-0 border-l-4 border-solid bg-transparent py-1 pl-2 text-left text-[0.85rem] leading-snug text-fg;
   }
-  .highlights-panel__jump:hover {
+  [data-pore-hl-jump]:hover {
     @apply bg-fg/10;
   }
-  .highlights-panel__remove {
-    @apply w-9 shrink-0 border-0 bg-transparent text-muted;
+  [data-pore-hl-remove] {
+    @apply col-start-2 row-start-1 h-7 w-7 shrink-0 self-start border-0 bg-transparent text-muted;
   }
-  .highlights-panel__remove:hover {
+  [data-pore-hl-remove]:hover {
     @apply text-fg;
+  }
+  [data-pore-hl-colors] {
+    @apply col-span-2 flex gap-1.5;
+  }
+  [data-pore-hl-swatch] {
+    @apply h-4 w-4 shrink-0 cursor-pointer rounded-full border border-black/10;
+  }
+  [data-pore-hl-swatch][aria-pressed='true'] {
+    @apply ring-2 ring-fg/50;
+  }
+  [data-pore-hl-note] {
+    @apply col-span-2 resize-none rounded-[var(--radius-control)] border border-line bg-canvas p-1.5 text-[0.8rem] text-fg;
   }
 
   /* --- OPDS catalog browser (F4) --------------------------------------- */

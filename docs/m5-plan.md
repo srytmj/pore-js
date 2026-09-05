@@ -105,7 +105,20 @@ it without you touching settings.
 
 ---
 
-## F2b — Highlight notes + a headless `<HighlightsPanel>` · M
+## F2b — Highlight notes + a headless `<HighlightsPanel>` · M · **DONE**
+
+**Shipped (Unreleased).** `updateHighlight(id, {color?, note?})` on the text
+engine / `ReaderHandle` / `useReaderSelection()` (`note: ''` clears).
+`<HighlightsPanel>` is a headless `reader-react` component — `<ol>` with
+`data-pore-hl-*` hooks (jump / recolour swatches / note `<textarea>` committing
+on blur / remove); the demo styles it and dropped its hand-rolled list. The
+selection toolbar's ✎ button highlights + opens the panel. Note editor ended up
+inline-per-row rather than a Radix `Popover` — simpler, one editing surface, and
+the panel is reusable as-is. e2e: add note → reload → still there → recolour →
+reload → still there. Retro-note: the per-row `<textarea>` remounts on external
+colour/note change (`key`) rather than being controlled — fine for a list.
+
+<details><summary>Original plan</summary>
 
 F2 shipped highlights with a `note` field on `HighlightRecord` and the engine
 API, but no way to *write* a note, and the demo's highlights list is ad-hoc
@@ -128,6 +141,8 @@ markup in `Chrome.tsx`.
 
 **Done when:** select text, highlight, attach a note, reload — the note
 survives; the highlights panel is a reusable component, not demo glue.
+
+</details>
 
 ---
 
