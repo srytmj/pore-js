@@ -49,10 +49,6 @@ export interface TextEngineSettings {
    * - `auto`: `flow` when the OS reports forced colors (high-contrast), else `paged`
    */
   flowMode: 'paged' | 'flow' | 'auto';
-  /** Where the chrome/menu bar sits. */
-  menuPosition: 'top' | 'left' | 'right';
-  /** How a side menu is revealed (ignored when `menuPosition: 'top'`). */
-  menuReveal: 'hover' | 'click' | 'dblclick';
 }
 
 export const DEFAULT_TEXT_SETTINGS: TextEngineSettings = {
@@ -69,8 +65,6 @@ export const DEFAULT_TEXT_SETTINGS: TextEngineSettings = {
   endBehavior: 'continuous',
   verticalText: 'auto',
   flowMode: 'paged',
-  menuPosition: 'top',
-  menuReveal: 'click',
 };
 
 export interface TextEngineEvents {

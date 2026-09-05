@@ -2,7 +2,6 @@ import {
   FootnotePopover,
   SettingsPanel,
   TableOfContents,
-  useChromeVisible,
   useEndPage,
   useReader,
   useReaderHistory,
@@ -27,6 +26,8 @@ import {
 import { useEffect, useState } from 'react';
 import { useTheme } from './theme.js';
 import { useAutoHide } from './use-auto-hide.js';
+import type { MenuBar } from './use-menu-bar.js';
+import { MenuBarSettings } from './MenuBarSettings.js';
 
 
 interface BookOpt {
@@ -44,6 +45,9 @@ export function Chrome({
   droppedName,
   opdsOpen,
   onToggleOpds,
+  menu,
+  isFullscreen,
+  onToggleFullscreen,
 }: {
   books: BookOpt[];
   bookId: string;
@@ -52,6 +56,9 @@ export function Chrome({
   droppedName?: string | null;
   opdsOpen: boolean;
   onToggleOpds: () => void;
+  menu: MenuBar;
+  isFullscreen: boolean;
+  onToggleFullscreen: () => void;
 }) {
   const loc = useReaderLocation();
   const progress = useReaderProgress();
@@ -68,7 +75,6 @@ export function Chrome({
   const [textSettings, setTextSettings] = useReaderSettings<TextEngineSettings>();
   const resumed = useResumedFromPage();
   const endPage = useEndPage();
-  const chromeVisible = useChromeVisible();
   const [dismissed, setDismissed] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [posNotice, setPosNotice] = useState<string | null>(null);
@@ -112,12 +118,13 @@ export function Chrome({
   // search is only meaningful when there's a text layer, so key off the id.
   const isPdf = isImage && /\.pdf$|^demo-pdf$/i.test(bookId);
   const canSearch = isText || isPdf;
-  const menuPos = isText ? textSettings.menuPosition : 'top';
-  const menuReveal = isText ? textSettings.menuReveal : 'hover';
-  const side = menuPos === 'left' || menuPos === 'right';
+  const menuPos = menu.placement;
 
   const overlayOpen = panelOpen || searchOpen || endPage !== null;
-  const [autoHidden, pinChrome] = useAutoHide(2600, menuPos === 'top' && !overlayOpen);
+  // Auto-hide when the user chose it, or always in fullscreen. Panels pin it open.
+  const autoHiding = (isFullscreen || menu.behaviour === 'auto-hide') && !overlayOpen;
+  const [autoHidden, pinChrome] = useAutoHide(2600, autoHiding);
+  const barHidden = autoHiding && autoHidden;
   useEffect(() => {
     if (overlayOpen) pinChrome();
   }, [overlayOpen, pinChrome]);
@@ -234,6 +241,13 @@ export function Chrome({
         </button>
       )}
       <button
+        onClick={onToggleFullscreen}
+        aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+        title="Fullscreen"
+      >
+        {isFullscreen ? '⊗' : '⛶'}
+      </button>
+      <button
         className={panelOpen ? 'active' : ''}
         onClick={() => setPanelOpen((v) => !v)}
         aria-label="Reader settings"
@@ -284,11 +298,7 @@ export function Chrome({
 
   return (
     <>
-      <header
-        className={`bar bar--${menuPos}${side ? ` bar--${menuReveal}` : ''}${
-          side && chromeVisible ? ' bar--shown' : ''
-        }${!side && autoHidden ? ' bar--autohidden' : ''}`}
-      >
+      <header className={`bar bar--${menuPos}${barHidden ? ' bar--hidden' : ''}`}>
         {barControls}
       </header>
 
@@ -296,14 +306,20 @@ export function Chrome({
 
       {!(isImage && imgSettings.progressBar?.style === 'hidden') && (
         <div
-          className={`scrubber-dock${!side && autoHidden ? ' scrubber-dock--hidden' : ''}`}
+          className={`scrubber-dock${autoHiding && autoHidden ? ' scrubber-dock--hidden' : ''}`}
           onPointerEnter={pinChrome}
         >
           <ReaderScrubber />
         </div>
       )}
 
-      <SettingsPanel open={panelOpen} onOpenChange={setPanelOpen} />
+      <SettingsPanel
+        open={panelOpen}
+        onOpenChange={setPanelOpen}
+        extraTabs={[
+          { id: 'menubar', label: 'Menu bar', content: <MenuBarSettings menu={menu} /> },
+        ]}
+      />
 
       {searchOpen && canSearch && (
         <div className="search" role="search">

@@ -101,6 +101,45 @@ test.describe('Pore.js demo', () => {
     expect(box.y).toBeLessThanOrEqual(1);
   });
 
+  test('menu bar: Left placement docks the bar and insets the reader', async ({ page }) => {
+    await page.goto('/?book=demo-manga');
+    await page.getByRole('button', { name: 'Reader settings' }).click();
+    await page.getByRole('tab', { name: 'Menu bar' }).click();
+    await page.getByRole('button', { name: 'Left', exact: true }).click();
+    await page.getByRole('button', { name: /Always visible/ }).click();
+    await page.keyboard.press('Escape');
+
+    const bar = page.locator('.bar--left');
+    await expect(bar).toHaveCSS('position', 'fixed');
+    const barBox = (await bar.boundingBox())!;
+    expect(barBox.x).toBeLessThanOrEqual(1);
+    const hostBox = (await page.locator('.pore-image').boundingBox())!;
+    expect(hostBox.x).toBeGreaterThan(barBox.width - 1);
+  });
+
+  test('menu bar: Auto-hide slides the side bar away, pointer wakes it', async ({ page }) => {
+    await page.goto('/?book=demo-manga');
+    await page.getByRole('button', { name: 'Reader settings' }).click();
+    await page.getByRole('tab', { name: 'Menu bar' }).click();
+    await page.getByRole('button', { name: 'Right', exact: true }).click();
+    await page.getByRole('button', { name: /Auto-hide/ }).click();
+    await page.keyboard.press('Escape');
+    // move focus out of the bar (Escape returns it to the ⚙ trigger, which is
+    // inside the bar → :focus-within would pin it open)
+    await page.locator('.pore-image').first().click({ position: { x: 8, y: 8 } });
+
+    const bar = page.locator('.bar--right');
+    // move the pointer off any bar control and let the idle timer fire
+    await page.mouse.move(400, 300);
+    await expect(bar).toHaveClass(/bar--hidden/, { timeout: 6000 });
+    // slid fully off the right edge (no partial / frozen transform)
+    await expect(bar).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 192, 0)');
+    await page.mouse.move(410, 310);
+    await page.mouse.move(420, 320);
+    await expect(bar).not.toHaveClass(/bar--hidden/);
+    await expect(bar).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
+  });
+
   test('theme button on an EPUB cycles light → sepia → dark', async ({ page }) => {
     await page.goto('/?book=demo-book');
     await page.frameLocator('iframe.pore-text__frame').locator('h1').waitFor();

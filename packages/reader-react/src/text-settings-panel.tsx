@@ -4,7 +4,13 @@ import { useReaderSettings } from './reader.js';
 import { SelectField, SliderField, SwitchField, Tabs, type TabDef } from './primitives.js';
 
 /** The Text/Theme/Navigation tab set for an EPUB or PDF. Behaviour via Radix Tabs. */
-export function TextSettingsPanel({ trailing }: { trailing?: React.ReactNode }) {
+export function TextSettingsPanel({
+  trailing,
+  extraTabs = [],
+}: {
+  trailing?: React.ReactNode;
+  extraTabs?: TabDef[];
+}) {
   const [s, set] = useReaderSettings<TextEngineSettings>();
   const [tab, setTab] = useState('text');
 
@@ -133,30 +139,10 @@ export function TextSettingsPanel({ trailing }: { trailing?: React.ReactNode }) 
               { value: 'endpage', label: 'Show end page' },
             ]}
           />
-          <SelectField
-            label="Menu position"
-            value={s.menuPosition}
-            onValueChange={(menuPosition) => set({ menuPosition })}
-            options={[
-              { value: 'top', label: 'Top bar' },
-              { value: 'left', label: 'Left side' },
-              { value: 'right', label: 'Right side' },
-            ]}
-          />
-          <SelectField
-            label="Reveal side menu"
-            value={s.menuReveal}
-            disabled={s.menuPosition === 'top'}
-            onValueChange={(menuReveal) => set({ menuReveal })}
-            options={[
-              { value: 'hover', label: 'On hover' },
-              { value: 'click', label: 'Tap centre' },
-              { value: 'dblclick', label: 'Double-tap centre' },
-            ]}
-          />
         </>
       ),
     },
+    ...extraTabs,
   ];
 
   return <Tabs tabs={tabs} value={tab} onValueChange={setTab} {...(trailing ? { trailing } : {})} />;

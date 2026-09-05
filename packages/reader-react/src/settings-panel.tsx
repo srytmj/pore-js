@@ -63,7 +63,13 @@ function KeybindEditor() {
   );
 }
 
-function ImageSettingsPanel({ trailing }: { trailing?: ReactNode }) {
+function ImageSettingsPanel({
+  trailing,
+  extraTabs = [],
+}: {
+  trailing?: ReactNode;
+  extraTabs?: TabDef[];
+}) {
   const [s, set] = useReaderSettings<ImageEngineSettings>();
   const tabs: TabDef[] = [
     {
@@ -268,6 +274,7 @@ function ImageSettingsPanel({ trailing }: { trailing?: ReactNode }) {
       ),
     },
     { id: 'keys', label: 'Keybinds', content: <KeybindEditor /> },
+    ...extraTabs,
   ];
 
   const [tab, setTab] = useState('layout');
@@ -275,13 +282,17 @@ function ImageSettingsPanel({ trailing }: { trailing?: ReactNode }) {
 }
 
 /** The tab set for the current book kind — no dialog chrome. */
-export function SettingsPanelBody({ trailing }: { trailing?: ReactNode }) {
+export function SettingsPanelBody({
+  trailing,
+  extraTabs,
+}: {
+  trailing?: ReactNode;
+  /** Extra tabs appended after the built-in ones (e.g. an app's own settings). */
+  extraTabs?: TabDef[];
+}) {
   const kind = useReaderKind();
-  return kind === 'text' ? (
-    <TextSettingsPanel {...(trailing ? { trailing } : {})} />
-  ) : (
-    <ImageSettingsPanel {...(trailing ? { trailing } : {})} />
-  );
+  const props = { ...(trailing ? { trailing } : {}), ...(extraTabs ? { extraTabs } : {}) };
+  return kind === 'text' ? <TextSettingsPanel {...props} /> : <ImageSettingsPanel {...props} />;
 }
 
 export interface SettingsPanelProps {
@@ -292,6 +303,8 @@ export interface SettingsPanelProps {
   onClose?: () => void;
   /** Element that opens the dialog (wrapped in `Dialog.Trigger asChild`). */
   trigger?: ReactNode;
+  /** Extra tabs appended after the built-in ones. */
+  extraTabs?: TabDef[];
   className?: string;
 }
 
@@ -305,6 +318,7 @@ export function SettingsPanel({
   onOpenChange,
   onClose,
   trigger,
+  extraTabs,
   className,
 }: SettingsPanelProps) {
   const controlled = open !== undefined || onOpenChange !== undefined || trigger !== undefined;
@@ -330,6 +344,7 @@ export function SettingsPanel({
     return (
       <div className={className ?? 'pore-settings'} role="group" aria-label="Reader settings">
         <SettingsPanelBody
+          {...(extraTabs ? { extraTabs } : {})}
           trailing={
             onClose ? (
               <button
@@ -370,7 +385,7 @@ export function SettingsPanel({
           }}
         >
           <Dialog.Title className="pore-sr-only">Reader settings</Dialog.Title>
-          <SettingsPanelBody trailing={close} />
+          <SettingsPanelBody trailing={close} {...(extraTabs ? { extraTabs } : {})} />
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

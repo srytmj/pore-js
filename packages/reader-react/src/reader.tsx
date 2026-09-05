@@ -391,7 +391,7 @@ export function Reader({
   return (
     <RuntimeContext.Provider value={ctx}>
       {children}
-      <div ref={hostRef} className={className} style={{ flex: 1, minHeight: 0, width: '100%' }} />
+      <div ref={hostRef} className={className} style={{ flex: 1, minHeight: 0, minWidth: 0 }} />
     </RuntimeContext.Provider>
   );
 }

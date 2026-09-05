@@ -971,7 +971,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     });
   };
 
-  let chromeVisible = settings.menuPosition === 'top';
+  let chromeVisible = true;
   let lastWheel = 0;
 
   const toggleChrome = () => {
@@ -1022,9 +1022,6 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     turn(delta > 0 ? 'forward' : 'back');
   };
 
-  const centerToggleOnSingleClick = () =>
-    settings.menuPosition === 'top' || settings.menuReveal === 'click';
-
   const onClick = (ev: MouseEvent) => {
     if ((ev.target as Element | null)?.closest?.('a, button')) return;
     const rect = root.getBoundingClientRect();
@@ -1032,26 +1029,29 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     const rtl = book?.metadata.direction === 'rtl';
     if (r < 1 / 3) turn(rtl ? 'forward' : 'back');
     else if (r > 2 / 3) turn(rtl ? 'back' : 'forward');
-    else if (centerToggleOnSingleClick()) toggleChrome();
-  };
-
-  const onDblClick = (ev: MouseEvent) => {
-    if ((ev.target as Element | null)?.closest?.('a, button')) return;
-    if (centerToggleOnSingleClick()) return;
-    const rect = root.getBoundingClientRect();
-    const r = rect.width > 0 ? (ev.clientX - rect.left) / rect.width : 0.5;
-    if (r >= 1 / 3 && r <= 2 / 3) toggleChrome();
+    else toggleChrome();
   };
 
   /** Wire keyboard/wheel/click on the iframe doc (events don't bubble to the parent). */
+  // Pointer moves inside the sandboxed iframe don't reach the host page, so
+  // forward a throttled synthetic move — lets an auto-hiding chrome outside
+  // the reader wake up when the pointer is over the text.
+  let lastPointerFwd = 0;
+  const forwardPointerActivity = () => {
+    const now = Date.now();
+    if (now - lastPointerFwd < 400) return;
+    lastPointerFwd = now;
+    root.dispatchEvent(new Event('pointermove', { bubbles: true }));
+  };
+
   const wireInput = () => {
     const cdoc = frame.contentDocument;
     if (!cdoc) return;
     cdoc.addEventListener('keydown', onKey);
     cdoc.addEventListener('wheel', onWheel, { passive: false });
     cdoc.addEventListener('click', onClick);
-    cdoc.addEventListener('dblclick', onDblClick);
     cdoc.addEventListener('selectionchange', onSelectionChange);
+    cdoc.addEventListener('pointermove', forwardPointerActivity, { passive: true });
   };
 
   const item = () => book?.spine[spineIndex];
@@ -1201,10 +1201,6 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   function setSettings(patch: Partial<TextEngineSettings>): void {
     const prev = settings;
     settings = { ...settings, ...patch };
-    if (settings.menuPosition !== prev.menuPosition) {
-      chromeVisible = settings.menuPosition === 'top';
-      emitter.emit('reader:chrometoggle', { visible: chromeVisible });
-    }
     if (settings.publisherStyles !== prev.publisherStyles) {
       // author CSS is baked in at render time — re-render the spine
       void renderSpine(spineIndex);
@@ -1239,7 +1235,6 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     root.addEventListener('keydown', onKey);
     root.addEventListener('wheel', onWheel, { passive: false });
     root.addEventListener('click', onClick);
-    root.addEventListener('dblclick', onDblClick);
     if (typeof ResizeObserver !== 'undefined') {
       let raf = 0;
       resizeObserver = new ResizeObserver(() => {
@@ -1293,7 +1288,6 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     root.removeEventListener('keydown', onKey);
     root.removeEventListener('wheel', onWheel);
     root.removeEventListener('click', onClick);
-    root.removeEventListener('dblclick', onDblClick);
     resizeObserver?.disconnect();
     if (scrollSyncTimer) clearTimeout(scrollSyncTimer);
     if (selectionTimer) clearTimeout(selectionTimer);

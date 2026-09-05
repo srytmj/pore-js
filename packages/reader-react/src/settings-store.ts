@@ -16,7 +16,7 @@ const PER_BOOK_KEYS: Record<ReaderKind, readonly string[]> = {
     'maxWidth',
     'maxHeight',
   ],
-  text: ['columns', 'menuPosition'],
+  text: ['columns'],
 };
 
 const GLOBAL_KEY = 'pore:settings:global';

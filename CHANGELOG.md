@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **Menu bar placement & behaviour (M5 G1)** — the demo's menu bar can now sit
+  on the top, left or right edge for *every* engine (not just EPUB), set in
+  Settings → Menu bar. A "Behaviour" choice picks "Always visible" (docks a side
+  bar, insetting the reader; hides only in fullscreen) or "Auto-hide" (slides
+  away when idle, wakes on pointer/keyboard — including pointer moves over the
+  sandboxed text iframe, which are now forwarded to the host). Fullscreen always
+  forces auto-hide. `menuPosition` / `menuReveal` are gone from
+  `TextEngineSettings` (the demo owns bar placement now); `<SettingsPanel>` /
+  `<TextSettingsPanel>` gained an `extraTabs` prop.
 - **Floating top bar** — the demo's top bar was `position: relative`, so
   auto-hiding it left a dead strip where its layout slot used to be (in the
   shell's colour, not the reader's). It's now an absolute overlay: the reader

@@ -114,18 +114,29 @@
 
   /* Reader renders directly into .shell: <header> <progress> <toast?> <host flex:1> */
 
+  /* The menu bar always floats over the reader (never in flow) so hiding it
+     leaves no dead strip. `.reader-host--left/right` insets the content when a
+     side bar is docked (always-visible). */
+  .reader-host--left {
+    margin-left: 12rem;
+  }
+  .reader-host--right {
+    margin-right: 12rem;
+  }
+
   .bar {
-    @apply flex flex-none flex-wrap items-center gap-2 border-b border-line bg-canvas px-2.5 py-1.5;
+    @apply flex flex-wrap items-center gap-2 border-line bg-canvas px-2.5 py-1.5;
     padding-left: max(0.625rem, env(safe-area-inset-left));
     padding-right: max(0.625rem, env(safe-area-inset-right));
-  }
-  /* Top bar floats over the reader so hiding it leaves no dead strip — the
-     content always fills the page. */
-  .bar--top {
-    @apply absolute inset-x-0 top-0 z-30;
     transition: transform 0.3s ease;
   }
-  .bar--autohidden:not(:focus-within):not(:hover) {
+  .bar--top {
+    @apply absolute inset-x-0 top-0 z-30 border-b;
+    transform: translateY(0);
+  }
+  /* hidden → slid up; any pointer movement wakes it (useAutoHide), and it stays
+     while hovered or focused within */
+  .bar--top.bar--hidden:not(:focus-within):not(:hover) {
     transform: translateY(-100%);
   }
   .bar .loc {
@@ -161,13 +172,15 @@
   /* --- side menu positions ------------------------------------------------- */
   .bar--left,
   .bar--right {
-    @apply fixed inset-y-0 z-25 w-48 flex-col items-stretch gap-2 overflow-y-auto border-line bg-canvas p-3 transition-transform duration-200;
+    @apply fixed inset-y-0 z-30 w-48 flex-col items-stretch gap-2 overflow-y-auto border-line bg-canvas p-3;
   }
   .bar--left {
     @apply left-0 border-r;
+    transform: translateX(0);
   }
   .bar--right {
     @apply right-0 border-l;
+    transform: translateX(0);
   }
   .bar--left .loc,
   .bar--right .loc {
@@ -179,26 +192,11 @@
   .bar--right select {
     @apply w-full;
   }
-  .bar--left:not(.bar--shown) {
+  .bar--left.bar--hidden:not(:hover):not(:focus-within) {
     transform: translateX(-100%);
   }
-  .bar--right:not(.bar--shown) {
+  .bar--right.bar--hidden:not(:hover):not(:focus-within) {
     transform: translateX(100%);
-  }
-  .bar--hover:hover {
-    transform: none !important;
-  }
-  .bar--hover::before {
-    content: '';
-    position: fixed;
-    inset-block: 0;
-    width: 14px;
-  }
-  .bar--left.bar--hover::before {
-    left: 0;
-  }
-  .bar--right.bar--hover::before {
-    right: 0;
   }
 
   .bar .slider {
@@ -663,6 +661,32 @@
   .pore-settings__row select,
   .pore-settings__row input[type='range'] {
     @apply max-w-40;
+  }
+
+  /* menu-bar settings tab (demo extraTab) */
+  .menubar-settings {
+    @apply flex flex-col gap-3 px-3 py-2;
+  }
+  .menubar-settings fieldset {
+    @apply m-0 border-0 p-0;
+  }
+  .menubar-settings legend {
+    @apply mb-1.5 p-0 text-[0.8rem] font-semibold text-muted;
+  }
+  .menubar-settings__row {
+    @apply grid grid-cols-3 gap-1.5;
+  }
+  .menubar-settings__col {
+    @apply flex flex-col gap-1.5;
+  }
+  .menubar-settings button {
+    @apply flex flex-col gap-0.5 rounded-[var(--radius-control)] border border-line bg-canvas px-2.5 py-2 text-left text-[0.85rem];
+  }
+  .menubar-settings button.active {
+    @apply border-accent bg-accent/10;
+  }
+  .menubar-settings__hint {
+    @apply text-[0.72rem] text-muted;
   }
   .pore-settings__keys {
     @apply flex flex-wrap items-center gap-1;

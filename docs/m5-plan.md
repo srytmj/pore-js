@@ -31,7 +31,27 @@ independent and could reorder or drop.
 
 ---
 
-## G1 — Menu bar: dock on any edge, or float and auto-hide · M
+## G1 — Menu bar: dock on any edge, or float and auto-hide · M · **DONE**
+
+**Shipped (Unreleased).** `menuPosition`/`menuReveal` deleted from
+`TextEngineSettings`; placement + behaviour now live in the demo shell
+(`use-menu-bar.ts`, persisted `pore:demo:menubar`). `use-fullscreen.ts` forces
+auto-hide while fullscreen. `<SettingsPanel>`/`<TextSettingsPanel>` gained
+`extraTabs`; the demo adds a "Menu bar" tab (`MenuBarSettings.tsx`). The text
+engine forwards throttled `pointermove` from the sandboxed iframe to the host
+so auto-hide wakes over the reading area. Side bars use symmetric explicit
+`transform: translateX(0)` ↔ `translateX(±100%)` endpoints — fixes a frozen
+transition seen in browser verification. E2e: two menu-bar tests (dock insets
+the reader, auto-hide slides away + pointer wakes it). Retro-notes:
+
+- Hover hot-zone deferred — `:hover`/`:focus-within` on the bar itself plus the
+  forwarded iframe pointermove proved enough; a dedicated edge hot-zone can come
+  back if reveal feels unreliable in practice.
+- Behaviour labels ended up "Always visible" / "Auto-hide" (not "docked").
+
+---
+
+<details><summary>Original plan</summary>
 
 Today: the demo bar is always at the top; auto-hide (2.6 s idle) only applies
 to the top position; `menuPosition`/`menuReveal` live on `TextEngineSettings`
@@ -80,6 +100,8 @@ and only take effect for EPUB. Bugs the user reported:
 **Done when:** you can put the bar on any edge, choose "always visible" (and
 the page truly fills — no empty strip) or "auto-hide", and fullscreen hides
 it without you touching settings.
+
+</details>
 
 ---
 

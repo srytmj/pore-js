@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Chrome } from './Chrome.js';
 import { OpdsBrowser } from './OpdsBrowser.js';
 import { Landing, type SampleBook } from './Landing.js';
+import { useMenuBar } from './use-menu-bar.js';
+import { useFullscreen } from './use-fullscreen.js';
 
 const transitions = gsapAdapter(gsap);
 
@@ -46,6 +48,13 @@ export function App() {
   const [dragging, setDragging] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [opdsOpen, setOpdsOpen] = useState(false);
+  const menu = useMenuBar();
+  const [isFullscreen, toggleFullscreen] = useFullscreen();
+  // A docked side bar takes real width — inset the reader so it isn't covered.
+  const sideDocked =
+    (menu.placement === 'left' || menu.placement === 'right') &&
+    menu.behaviour === 'always' &&
+    !isFullscreen;
 
   useEffect(() => {
     const url = new URL(location.href);
@@ -104,6 +113,7 @@ export function App() {
             key={activeBook}
             bookId={activeBook}
             transitions={transitions}
+            className={sideDocked ? `reader-host reader-host--${menu.placement}` : 'reader-host'}
             {...(sample?.settings ? { initialSettings: sample.settings } : {})}
           >
             <ReaderAnnouncer />
@@ -115,6 +125,9 @@ export function App() {
               droppedName={view.kind === 'file' ? view.name : null}
               opdsOpen={opdsOpen}
               onToggleOpds={() => setOpdsOpen((v) => !v)}
+              menu={menu}
+              isFullscreen={isFullscreen}
+              onToggleFullscreen={toggleFullscreen}
             />
           </Reader>
           <OpdsBrowser
