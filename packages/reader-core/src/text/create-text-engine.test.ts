@@ -247,6 +247,7 @@ describe('createTextEngine', () => {
     }
     const hl = engine.addHighlight({ color: 'lime', note: 'nice line' });
     if (hl) {
+      expect(hl.kind).toBe('text');
       expect(engine.listHighlights()).toEqual([hl]);
       expect(changes.at(-1)?.highlights).toEqual([hl]);
       await new Promise((r) => setTimeout(r, 900));

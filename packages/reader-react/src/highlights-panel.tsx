@@ -15,7 +15,8 @@ export interface HighlightsPanelProps {
 
 const DEFAULT_COLORS = ['#ffd54a', '#7bd88f', '#7cc4ff', '#ff9db1'] as const;
 
-function anchorOf(h: HighlightRecord): Position {
+function jumpTargetOf(h: HighlightRecord): number | Position {
+  if (h.kind === 'rect') return h.page;
   return {
     type: 'anchor',
     spine: h.range.spine,
@@ -60,7 +61,7 @@ export function HighlightsPanel({
             data-pore-hl-jump
             style={{ borderInlineStartColor: h.color }}
             onClick={() => {
-              goto(anchorOf(h));
+              goto(jumpTargetOf(h));
               onJump?.(h);
             }}
           >

@@ -51,18 +51,47 @@ export interface HighlightRange {
   endOffset: number;
 }
 
-/** A persisted text highlight (+ optional note). Not a `Position` — a parallel per-book collection. */
-export interface HighlightRecord {
+/** A normalized (0–1, page-relative) rectangle — how a PDF highlight is anchored. */
+export interface NormRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** Fields every highlight carries, regardless of how it's anchored. */
+interface HighlightBase {
   id: string;
-  range: HighlightRange;
-  /** Portable `epubcfi(...)` endpoints, for interchange (see `text/cfi.ts`). */
-  cfi: { start: string; end: string };
   color: string;
   note?: string;
   /** Snapshot of the highlighted text, so a highlights panel can list them before resolving. */
   text: string;
   createdAt: number;
 }
+
+/** A highlight anchored to a DOM text range (EPUB / reflowable). */
+export interface TextHighlightRecord extends HighlightBase {
+  kind: 'text';
+  range: HighlightRange;
+  /** Portable `epubcfi(...)` endpoints, for interchange (see `text/cfi.ts`). */
+  cfi: { start: string; end: string };
+}
+
+/** A highlight anchored to page-relative rectangles (PDF / fixed pages). */
+export interface RectHighlightRecord extends HighlightBase {
+  kind: 'rect';
+  /** 0-based page index. */
+  page: number;
+  /** One or more normalized boxes covering the highlighted run. */
+  rects: NormRect[];
+}
+
+/**
+ * A persisted highlight (+ optional note). Not a `Position` — a parallel
+ * per-book collection. Discriminated on `kind`: `'text'` for range-anchored
+ * (EPUB), `'rect'` for page-box-anchored (PDF).
+ */
+export type HighlightRecord = TextHighlightRecord | RectHighlightRecord;
 
 /**
  * The seam between the reader and its data. Everything above this is

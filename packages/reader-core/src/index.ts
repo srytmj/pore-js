@@ -19,6 +19,9 @@ export type {
   GetFileOpts,
   HighlightRange,
   HighlightRecord,
+  TextHighlightRecord,
+  RectHighlightRecord,
+  NormRect,
 } from './source/types.js';
 
 export type { Position } from './position/types.js';

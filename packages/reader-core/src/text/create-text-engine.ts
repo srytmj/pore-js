@@ -312,7 +312,10 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     const cdoc = frame.contentDocument;
     if (!cdoc) return;
     const blocks = blockElements(cdoc);
-    const visible = highlights.filter((h) => h.range.spine === spineIndex);
+    const visible = highlights.filter(
+      (h): h is Extract<HighlightRecord, { kind: 'text' }> =>
+        h.kind === 'text' && h.range.spine === spineIndex,
+    );
     const win = cdoc.defaultView as unknown as HighlightWindow | null;
     if (win?.CSS?.highlights && win.Highlight) {
       win.CSS.highlights.clear();
@@ -381,6 +384,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     if (!startEl || !endEl) return null;
     const idref = book.spine[spineIndex]?.idref ?? String(spineIndex);
     const highlight: HighlightRecord = {
+      kind: 'text',
       id: `hl_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
       range: anchorRange,
       cfi: {
