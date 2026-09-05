@@ -65,8 +65,19 @@ export class CachedSource implements ReaderSource {
     if (typeof addEventListener === 'function') addEventListener('online', this.#onOnline);
   }
 
-  getManifest(bookId: string): Promise<Manifest> {
-    return this.#inner.getManifest(bookId);
+  /** Live manifest when online; the copy saved by {@link download} when the wrapped source is unreachable (offline). */
+  async getManifest(bookId: string): Promise<Manifest> {
+    try {
+      const manifest = await this.#inner.getManifest(bookId);
+      await this.#store.set(this.#manifestKey(bookId), manifest).catch(() => {});
+      return manifest;
+    } catch (err) {
+      const cached = await this.#store
+        .get<Manifest>(this.#manifestKey(bookId))
+        .catch(() => null);
+      if (cached) return cached;
+      throw err;
+    }
   }
 
   /** Cached blob first (once downloaded), then the wrapped source. */
@@ -88,7 +99,7 @@ export class CachedSource implements ReaderSource {
    */
   async download(bookId: string, opts: DownloadOptions = {}): Promise<void> {
     if (!this.#media) throw new Error('CachedSource: media cache is disabled');
-    const manifest = await this.#inner.getManifest(bookId);
+    const manifest = await this.getManifest(bookId); // also persists it for offline getManifest()
 
     if (manifest.type === 'image') {
       const total = manifest.pageCount;
@@ -218,6 +229,10 @@ export class CachedSource implements ReaderSource {
 
   #hlKey(bookId: string): string {
     return `${this.#ns}:highlights:${bookId}`;
+  }
+
+  #manifestKey(bookId: string): string {
+    return `${this.#ns}:manifest:${bookId}`;
   }
 }
 

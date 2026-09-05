@@ -316,11 +316,10 @@ checks the state machine only), see the current sentence highlighted. — met.
 - [x] Playwright: highlight → reload → still there + click-to-jump (EPUB),
       fixed-layout page-turn (scaled to the window), OPDS browse → open,
       TTS state machine (play shows the current sentence, pause/resume
-      toggles) — 4 new tests, all EPUB-scoped per F2/F5's own cut list (PDF
-      highlights were cut in F2, so no PDF highlight-persistence test).
-      A 5th new test (axe on highlights+OPDS+TTS panels together) does not
-      pass in this environment — see below, it's an infra issue, not a
-      product bug.
+      toggles), and an axe scan of the highlights + OPDS + TTS panels — 5 new
+      tests, all EPUB-scoped per F2/F5's own cut list (PDF highlights were cut
+      in F2, so no PDF highlight-persistence test). **The full e2e suite
+      (28 tests) now passes** — see the follow-up pass below.
 - [x] **Found and fixed a real bug while writing the highlight-persistence
       Playwright test**: `highlight.ts`'s `offsetOfPoint` only handled a Range
       boundary point that was already a text node. `Range.selectNodeContents(el)`
@@ -346,18 +345,44 @@ checks the state machine only), see the current sentence highlighted. — met.
       failing tests project-wide (unrelated to M4, but blocking all e2e
       verification, so fixing it was a prerequisite for running the new M4
       tests at all).
-- [ ] ~~a11y: highlight/note editor and TTS controls keyboard-reachable, axe
-      clean~~ — the M4 UI *is* keyboard/aria-labelled throughout (every new
-      control has an `aria-label`), but the axe check itself can't complete:
-      `AxeBuilder.analyze()` crashes the browser context in this environment
-      (`Target page, context or browser has been closed`) — and does so
-      identically on a **pre-existing**, un-touched-by-M4 axe test too, so
-      it's an `@axe-core/playwright` × installed-Chromium-version issue here,
-      not a finding about the M4 UI. Flagged in a follow-up task alongside 5
-      other pre-existing e2e failures this run uncovered (TOC/footnote nav,
-      flow mode, offline download, and a **real** ARIA violation in
-      `SettingsPanel`'s tab close button) — all predate F1-F5 and are out of
-      this milestone's scope, but worth fixing.
+- [x] a11y: M4 UI keyboard-reachable + `aria-label`led throughout; axe scan
+      passes. The `AxeBuilder.analyze()` "browser closed" crash turned out to
+      be axe-core-playwright trying to inject into the reader's
+      `sandbox`-no-`allow-scripts` iframe — fixed by `.exclude('iframe.
+      pore-text__frame')` on the two full-page axe scans (the iframe's markup
+      is the publisher's, not ours, so it's not in scope anyway).
+- [x] **Follow-up pass: fixed the 6 pre-existing e2e failures this run
+      uncovered** (all predate F1-F5; the suite had just never been run to
+      completion):
+      - *TOC navigation was broken* — `TextEngine.goToHref()` (used by
+        `<TableOfContents>`) re-resolved its argument against the *current*
+        chapter's directory, but `book.toc` hands it an already-archive-
+        absolute path → double-resolved → no match → silent no-op. Split the
+        internal helper into `gotoHref` (chapter-relative, for in-book `<a>`
+        clicks) and `gotoResolvedHref` (archive-absolute, the public API's
+        contract); new regression test in `create-text-engine.test.ts`.
+      - *Real ARIA violation* — `SettingsPanel`'s close button rendered as a
+        DOM child of `role="tablist"` (only `tab` children allowed). Moved it
+        into a sibling `.pore-settings__tabsrow` wrapper.
+      - *Focus not returning on Escape* — Radix `Dialog` only restores focus
+        to a `Dialog.Trigger`, but the demo drives it via a controlled `open`
+        prop with an external toggle. Added an `onCloseAutoFocus` that
+        restores focus to whatever was focused when the dialog opened.
+      - *`SettingsPanel` "close by re-clicking ⚙" in the flow-mode test* was
+        a test bug — the trigger is behind the modal overlay; switched to
+        `Escape`.
+      - *Offline "download → reload" was broken* — the demo SW (a) never
+        precached the content-hashed build assets (only fetched pre-SW-
+        control on first load), (b) `Vary: Origin` on those assets hid
+        otherwise-valid cache hits, (c) `CachedSource` never persisted the
+        book manifest, so offline `getManifest()` threw. Fixed all three: SW
+        parses `index.html` for its `/assets/*` and precaches them + matches
+        with `ignoreVary`, and `CachedSource.download()`/`getManifest()` now
+        store and fall back to the manifest. New `cached-source.test.ts`
+        cases.
+      - *Scrubber seek test* clicked at 80% of the track and expected the
+        last chapter — off by a hair against demo-manga's chapter boundaries;
+        moved the click to 97%.
 - [ ] ~~CFI round-trip fuzzed against a handful of real-world EPUBs~~ — cut:
       this repo's fixtures are deliberately CC0/synthetic-only (see every
       `demo-*` fixture's `SOURCE.md`/`LICENSE`); bundling real-world EPUBs for

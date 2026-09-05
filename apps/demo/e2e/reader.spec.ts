@@ -203,7 +203,7 @@ test.describe('Pore.js demo — M3', () => {
     await page.getByRole('button', { name: 'Reader settings' }).click();
     await page.getByRole('tab', { name: 'Navigation' }).click();
     await page.getByLabel('Reading mode').selectOption('flow');
-    await page.getByRole('button', { name: 'Reader settings' }).click();
+    await page.keyboard.press('Escape'); // close the modal (its trigger is behind the overlay)
 
     const vp = page.frameLocator('iframe.pore-text__frame').locator('#pore-viewport');
     await expect(vp).toHaveCSS('overflow-y', 'auto');
@@ -242,6 +242,9 @@ test.describe('Pore.js demo — M3', () => {
     await page.goto('/?book=demo-book');
     await page.locator('iframe.pore-text__frame').waitFor();
     const results = await new AxeBuilder({ page })
+      // the book renders in a `sandbox` iframe with no `allow-scripts`, so axe
+      // can't inject into it — and its markup is the publisher's, not ours
+      .exclude('iframe.pore-text__frame')
       .withTags(['wcag2a', 'wcag2aa'])
       .disableRules(['region']) // demo shell, not the library
       .analyze();
@@ -287,7 +290,8 @@ test.describe('Pore.js demo — M3', () => {
 
     const track = page.locator('.pore-scrubber__track');
     const box = (await track.boundingBox())!;
-    await page.mouse.click(box.x + box.width * 0.8, box.y + box.height / 2);
+    // near the far end — chapter 3 of demo-manga starts at page index 9 of 12
+    await page.mouse.click(box.x + box.width * 0.97, box.y + box.height / 2);
     await expect(page.locator('.loc')).toContainText('Ch 3/3');
     await expect(page.locator('.pore-scrubber__label')).toContainText('%');
   });
@@ -366,6 +370,7 @@ test.describe('Pore.js demo — M3', () => {
     await page.getByRole('button', { name: 'Browse OPDS catalog' }).click();
     await page.getByRole('button', { name: 'Text to speech' }).click();
     const results = await new AxeBuilder({ page })
+      .exclude('iframe.pore-text__frame')
       .withTags(['wcag2a', 'wcag2aa'])
       .disableRules(['region'])
       .analyze();

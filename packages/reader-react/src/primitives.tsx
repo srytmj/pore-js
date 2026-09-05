@@ -165,19 +165,23 @@ export function Tabs({
 }) {
   return (
     <RTabs.Root value={value} onValueChange={onValueChange} className={className} data-pore-tabs>
-      <RTabs.List className="pore-settings__tabs" data-pore-tablist>
-        {tabs.map((t) => (
-          <RTabs.Trigger
-            key={t.id}
-            value={t.id}
-            data-pore-tab
-            className={value === t.id ? 'active' : ''}
-          >
-            {t.label}
-          </RTabs.Trigger>
-        ))}
+      {/* `trailing` (a close button) sits alongside the tablist, not inside it —
+          ARIA's `tablist` role only permits `tab` children. */}
+      <div className="pore-settings__tabsrow">
+        <RTabs.List className="pore-settings__tabs" data-pore-tablist>
+          {tabs.map((t) => (
+            <RTabs.Trigger
+              key={t.id}
+              value={t.id}
+              data-pore-tab
+              className={value === t.id ? 'active' : ''}
+            >
+              {t.label}
+            </RTabs.Trigger>
+          ))}
+        </RTabs.List>
         {trailing}
-      </RTabs.List>
+      </div>
       {tabs.map((t) => (
         <RTabs.Content
           key={t.id}

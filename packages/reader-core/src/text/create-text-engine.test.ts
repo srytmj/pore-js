@@ -62,6 +62,21 @@ describe('createTextEngine', () => {
     engine.destroy();
   });
 
+  it('goToHref (public API) navigates using a TOC-style archive-absolute path, not one relative to the current chapter', async () => {
+    // book.toc entries (and thus <TableOfContents>) hand goToHref an
+    // already-resolved archive path like "OEBPS/ch02.xhtml" — distinct from
+    // the chapter-relative hrefs wireLinks() resolves for in-book <a> clicks.
+    const container = document.createElement('div');
+    const engine = createTextEngine({ container, source: source(), bookId: 'b' });
+    const locs: Array<{ chapter?: string }> = [];
+    engine.on('reader:locationchange', (p) => locs.push(p));
+    await engine.mount();
+    engine.goToHref('OEBPS/ch02.xhtml');
+    await new Promise((r) => setTimeout(r, 90));
+    expect(locs.at(-1)?.chapter).toBe('c2');
+    engine.destroy();
+  });
+
   it('rejects a non-EPUB book', async () => {
     const stub = {
       ...source(),

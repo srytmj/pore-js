@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased
+
+Post-`v0.7.0-annotate` — fixes from running the full Playwright e2e suite to
+completion for the first time (it now passes, 28 tests). All of these predate
+M4:
+
+- **TOC navigation was silently broken** — `TextEngine.goToHref()` (what
+  `<TableOfContents>` calls) re-resolved its argument against the current
+  chapter's directory, but the TOC hands it an already-archive-absolute path,
+  so it double-resolved and matched nothing. Split into `gotoHref`
+  (chapter-relative, for in-book links) and `gotoResolvedHref` (the public
+  API's actual contract).
+- **Settings dialog a11y** — the close button was a DOM child of
+  `role="tablist"` (an ARIA violation — only `tab` children allowed); moved it
+  to a sibling wrapper. Escape now also returns focus to the control that
+  opened the dialog (Radix only does this for a `Dialog.Trigger`, but the demo
+  drives it with a controlled `open` prop).
+- **Offline "download a book, then reload" was broken** — the demo service
+  worker never precached the content-hashed build assets, a `Vary: Origin`
+  header hid valid cache hits, and `CachedSource` didn't persist the book
+  manifest. Fixed all three; `CachedSource.download()`/`getManifest()` now
+  save and fall back to the manifest for genuine offline reads.
+- Fixed the e2e suite's own stale selectors (querying chrome buttons by glyph
+  text instead of their `aria-label`s) and a couple of brittle test
+  assumptions.
+
 ## v0.7.0-annotate — 2026-09-05
 
 M4 — precise text ranges, highlights, fixed-layout EPUB, an OPDS source,

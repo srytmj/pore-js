@@ -93,6 +93,40 @@ describe('CachedSource', () => {
     expect(src.pendingWrites).toBe(1);
   });
 
+  it('falls back to the manifest saved by download() when the inner source is offline', async () => {
+    let online = true;
+    const inner = innerSource({
+      getManifest: vi.fn(async () => {
+        if (!online) throw new Error('offline');
+        return {
+          bookId: 'b',
+          type: 'image' as const,
+          title: 'Offline Book',
+          direction: 'ltr' as const,
+          pageCount: 2,
+          pages: [{ index: 0 }, { index: 1 }],
+        };
+      }),
+      getPage: vi.fn(async (_b: string, i: number) => new Blob([new Uint8Array([i])])),
+    });
+    const src = new CachedSource(inner, { store: memStore(), cache: { store: memStore() } });
+    await src.download('b'); // caches pages + persists the manifest
+
+    online = false;
+    const offlineManifest = await src.getManifest('b');
+    expect(offlineManifest).toMatchObject({ title: 'Offline Book', pageCount: 2 });
+  });
+
+  it('re-throws when the inner source fails and nothing was ever cached', async () => {
+    const inner = innerSource({
+      getManifest: vi.fn(async () => {
+        throw new Error('offline');
+      }),
+    });
+    const src = new CachedSource(inner, { store: memStore(), cache: false });
+    await expect(src.getManifest('b')).rejects.toThrow(/offline/);
+  });
+
   it('saves highlights locally and mirrors to the inner source', async () => {
     const saveHighlights = vi.fn(async () => {});
     const inner = innerSource({ saveHighlights });

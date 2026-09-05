@@ -1072,11 +1072,9 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     if (noteHtml) emitter.emit('reader:footnote', { html: noteHtml, href });
   };
 
-  const gotoHref = (href: string, fromHref: string) => {
+  /** Jump to an archive-absolute spine path (+ optional `#fragment`), already resolved. */
+  const jumpToResolvedHref = (targetPath: string, frag: string | undefined) => {
     if (!book) return;
-    const [pathPart, frag] = href.split('#');
-    const resolved = pathPart ? resolveHref(dirOf(fromHref), pathPart) : fromHref;
-    const targetPath = stripHash(resolved);
     const idx = book.spine.findIndex((s) => s.href === targetPath);
     if (idx === -1) return;
     const jump = () => {
@@ -1105,6 +1103,21 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     };
     if (idx === spineIndex) jump();
     else void renderSpine(idx).then(jump);
+  };
+
+  /** `href` is relative to the chapter it was clicked from (e.g. an in-chapter `<a>` or footnote link). */
+  const gotoHref = (href: string, fromHref: string) => {
+    if (!book) return;
+    const [pathPart, frag] = href.split('#');
+    const resolved = pathPart ? resolveHref(dirOf(fromHref), pathPart) : fromHref;
+    jumpToResolvedHref(stripHash(resolved), frag);
+  };
+
+  /** `href` is already an archive-absolute spine path (e.g. from `book.toc`, resolved against the nav doc's own directory) — the shape `goToHref()`'s public API takes. */
+  const gotoResolvedHref = (href: string) => {
+    if (!book) return;
+    const [pathPart, frag] = href.split('#');
+    jumpToResolvedHref(stripHash(pathPart || item()?.href || ''), frag);
   };
 
   const revokeUrls = () => {
@@ -1295,7 +1308,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   return {
     mount,
     goto,
-    goToHref: (href: string) => gotoHref(href, item()?.href ?? ''),
+    goToHref: gotoResolvedHref,
     turn,
     setSettings,
     on,

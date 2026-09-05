@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { DEFAULT_KEYMAP, type ActionId, type ImageEngineSettings } from '@pore/reader-core';
 import { useReaderKeymap, useReaderKind, useReaderSettings } from './reader.js';
@@ -308,6 +308,13 @@ export function SettingsPanel({
   className,
 }: SettingsPanelProps) {
   const controlled = open !== undefined || onOpenChange !== undefined || trigger !== undefined;
+  // Restore focus to whatever opened the dialog on close — Radix does this
+  // for its own `Dialog.Trigger`, but the common case here is a controlled
+  // `open` prop with an external toggle button and no trigger.
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (open) restoreFocusRef.current = document.activeElement as HTMLElement | null;
+  }, [open]);
   const close = (
     <Dialog.Close
       className="pore-settings__close"
@@ -355,6 +362,12 @@ export function SettingsPanel({
           className={className ?? 'pore-settings'}
           data-pore-dialog
           aria-label="Reader settings"
+          onCloseAutoFocus={(e) => {
+            if (!trigger && restoreFocusRef.current?.isConnected) {
+              e.preventDefault();
+              restoreFocusRef.current.focus();
+            }
+          }}
         >
           <Dialog.Title className="pore-sr-only">Reader settings</Dialog.Title>
           <SettingsPanelBody trailing={close} />

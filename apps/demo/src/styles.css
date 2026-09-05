@@ -563,8 +563,11 @@
   .pore-tabs {
     @apply flex flex-col;
   }
+  .pore-settings__tabsrow {
+    @apply sticky top-0 flex items-center gap-1 border-b border-line bg-surface p-1.5;
+  }
   .pore-settings__tabs {
-    @apply sticky top-0 flex gap-1 border-b border-line bg-surface p-1.5;
+    @apply flex gap-1;
   }
   [data-pore-tab] {
     @apply rounded-[6px] px-2 py-1 text-[0.8rem];
