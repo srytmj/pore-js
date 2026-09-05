@@ -65,7 +65,7 @@ export function Chrome({
   const reader = useReader();
   const kind = useReaderKind();
   const [imgSettings, setImgSettings] = useReaderSettings<ImageEngineSettings>();
-  const [textSettings] = useReaderSettings<TextEngineSettings>();
+  const [textSettings, setTextSettings] = useReaderSettings<TextEngineSettings>();
   const resumed = useResumedFromPage();
   const endPage = useEndPage();
   const chromeVisible = useChromeVisible();
@@ -212,12 +212,27 @@ export function Chrome({
           🔊
         </button>
       )}
-      <button
-        onClick={toggleTheme}
-        aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-      >
-        {theme === 'dark' ? '☀' : '☾'}
-      </button>
+      {isText ? (
+        <button
+          onClick={() => {
+            const t = textSettings.theme;
+            const next = t === 'light' ? 'sepia' : t === 'sepia' ? 'dark' : 'light';
+            setTextSettings({ theme: next });
+            if ((next === 'dark') !== (theme === 'dark')) toggleTheme(); // keep the chrome in step
+          }}
+          aria-label={`Reading theme: ${textSettings.theme}. Click to cycle (light, sepia, dark).`}
+          title="Reading theme — light · sepia · dark"
+        >
+          {textSettings.theme === 'sepia' ? '☕' : textSettings.theme === 'light' ? '☀' : '☾'}
+        </button>
+      ) : (
+        <button
+          onClick={toggleTheme}
+          aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+        >
+          {theme === 'dark' ? '☀' : '☾'}
+        </button>
+      )}
       <button
         className={panelOpen ? 'active' : ''}
         onClick={() => setPanelOpen((v) => !v)}

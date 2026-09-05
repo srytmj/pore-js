@@ -47,7 +47,7 @@
 
 @layer components {
   .shell {
-    @apply flex h-[100dvh] flex-col bg-canvas text-fg;
+    @apply relative flex h-[100dvh] flex-col bg-canvas text-fg;
   }
 
   /* --- landing (demo front door) ------------------------------------------- */
@@ -119,8 +119,10 @@
     padding-left: max(0.625rem, env(safe-area-inset-left));
     padding-right: max(0.625rem, env(safe-area-inset-right));
   }
+  /* Top bar floats over the reader so hiding it leaves no dead strip — the
+     content always fills the page. */
   .bar--top {
-    @apply relative z-30;
+    @apply absolute inset-x-0 top-0 z-30;
     transition: transform 0.3s ease;
   }
   .bar--autohidden:not(:focus-within):not(:hover) {

@@ -89,6 +89,38 @@ test.describe('Pore.js demo', () => {
     await expect(page.locator('.loc')).toHaveText(before!.trim());
   });
 
+  test('the top bar floats — hiding it leaves no dead strip, content is full-height', async ({
+    page,
+  }) => {
+    await page.goto('/?book=demo-manga');
+    const bar = page.locator('.bar--top');
+    await expect(bar).toHaveCSS('position', 'absolute');
+    // the reader host starts at y=0, not pushed down by the bar
+    const host = page.locator('.pore-image');
+    const box = (await host.boundingBox())!;
+    expect(box.y).toBeLessThanOrEqual(1);
+  });
+
+  test('theme button on an EPUB cycles light → sepia → dark', async ({ page }) => {
+    await page.goto('/?book=demo-book');
+    await page.frameLocator('iframe.pore-text__frame').locator('h1').waitFor();
+    const style = page.frameLocator('iframe.pore-text__frame').locator('#pore-base-style');
+    const btn = page.getByRole('button', { name: /Reading theme/ });
+    const bg = () => style.textContent().then((t) => t?.match(/background:(#[0-9a-f]+)/i)?.[1]);
+
+    // drive to 'light' first (persisted theme could be anything)
+    for (let i = 0; i < 4; i++) {
+      if (/light/.test((await btn.getAttribute('aria-label')) ?? '')) break;
+      await btn.click();
+      await page.waitForTimeout(150);
+    }
+    await expect.poll(bg).toBe('#fdfdfb'); // light
+    await btn.click();
+    await expect.poll(bg).toBe('#f4ecd8'); // sepia
+    await btn.click();
+    await expect.poll(bg).toBe('#1a1a1a'); // dark
+  });
+
   test('url-and-title history: ?p= updates and back/forward paginate', async ({ page }) => {
     await page.goto('/?book=demo-manga');
     await page.getByRole('button', { name: 'Next page' }).click();
