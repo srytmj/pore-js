@@ -2,9 +2,18 @@
 
 ## Unreleased
 
-M4 F1–F3 — precise text ranges, highlights, fixed-layout EPUB — plus
-post-`v0.6.0-ui` UI polish.
+M4 F1–F4 — precise text ranges, highlights, fixed-layout EPUB, an OPDS source
+— plus post-`v0.6.0-ui` UI polish.
 
+- **`OpdsSource`** — a read-only OPDS 1.2 (Atom) catalog client:
+  `listCatalog()`/`acquire()`, HTTP Basic or bearer auth. Acquiring an entry
+  downloads its acquisition link and wraps the bytes in a `LocalFileSource`,
+  reusing its existing EPUB/PDF/CBZ sniffing. The demo adds a 📚 catalog
+  browser (URL input, entry list, pagination) against a bundled fixture
+  catalog (`/opds/catalog.xml`) — a real external host (e.g. Project
+  Gutenberg's) works too if it allows CORS, just isn't the default given a
+  portfolio demo shouldn't depend on a third party's uptime/CORS policy.
+  OPDS 2.0 is out of scope. See `docs/m4-plan.md` F4.
 - **Fixed-layout EPUB** — a `rendition:layout="pre-paginated"` book (previously
   rejected with an error) now renders: one scaled, centred page per spine
   item instead of reflowable text, driven by the page's own `<meta

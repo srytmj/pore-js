@@ -336,6 +336,45 @@
     @apply text-fg;
   }
 
+  /* --- OPDS catalog browser (F4) --------------------------------------- */
+  .opds-browser {
+    @apply fixed top-[52px] left-3 z-[55] flex max-h-[70vh] w-[min(420px,calc(100vw-24px))] flex-col overflow-hidden rounded-[var(--radius-control)] border border-line bg-surface text-fg shadow-2xl;
+    animation: pore-panel-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .opds-browser__header {
+    @apply flex items-center justify-between border-b border-line p-2 px-3;
+  }
+  .opds-browser__row {
+    @apply flex items-center gap-1.5 border-b border-line p-2;
+  }
+  .opds-browser__row input {
+    @apply min-w-0 flex-1 rounded-[6px] border border-line bg-canvas px-2 py-1.5 text-[0.85rem];
+  }
+  .opds-browser__error {
+    @apply m-0 border-b border-line bg-red-500/10 p-2 px-3 text-[0.8rem] text-red-600;
+  }
+  .opds-browser__title {
+    @apply m-0 border-b border-line px-3 py-2 text-[0.8rem] font-semibold text-muted;
+  }
+  .opds-browser__list {
+    @apply m-0 list-none overflow-y-auto p-0;
+  }
+  .opds-browser__list li {
+    @apply flex flex-col gap-1 border-b border-line/60 p-3;
+  }
+  .opds-browser__entry-title {
+    @apply text-[0.9rem] font-semibold;
+  }
+  .opds-browser__entry-summary {
+    @apply text-[0.8rem] text-muted;
+  }
+  .opds-browser__list li button {
+    @apply mt-1 self-start rounded-[var(--radius-control)] border border-accent bg-accent px-3 py-1 text-[0.8rem] text-accent-fg;
+  }
+  .opds-browser > button {
+    @apply m-2 self-center rounded-[var(--radius-control)] border border-line bg-canvas px-3 py-1.5 text-[0.85rem];
+  }
+
   .search {
     @apply fixed top-[52px] right-3 z-[55] flex max-h-[60vh] w-[min(360px,calc(100vw-24px))] flex-col overflow-hidden rounded-[var(--radius-control)] border border-line bg-surface text-fg shadow-2xl;
     animation: pore-panel-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);

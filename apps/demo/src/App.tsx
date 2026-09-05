@@ -3,6 +3,7 @@ import { Reader, ReaderAnnouncer, ReaderProvider, gsapAdapter } from '@pore/read
 import gsap from 'gsap';
 import { useEffect, useMemo, useState } from 'react';
 import { Chrome } from './Chrome.js';
+import { OpdsBrowser } from './OpdsBrowser.js';
 
 const transitions = gsapAdapter(gsap);
 
@@ -39,6 +40,7 @@ export function App() {
   }, [bookId, dropped]);
 
   const [notice, setNotice] = useState<string | null>(null);
+  const [opdsOpen, setOpdsOpen] = useState(false);
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -82,8 +84,19 @@ export function App() {
               setBookId(id);
             }}
             droppedName={dropped?.bookId ?? null}
+            opdsOpen={opdsOpen}
+            onToggleOpds={() => setOpdsOpen((v) => !v)}
           />
         </Reader>
+        <OpdsBrowser
+          open={opdsOpen}
+          onClose={() => setOpdsOpen(false)}
+          onOpen={(opdsSource, id) => {
+            setNotice(null);
+            setDropped({ source: new CachedSource(opdsSource), bookId: id });
+            setOpdsOpen(false);
+          }}
+        />
         {dragging && (
           <div className="dropzone">
             <div className="dropzone__card">

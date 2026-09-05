@@ -39,11 +39,15 @@ export function Chrome({
   bookId,
   onBook,
   droppedName,
+  opdsOpen,
+  onToggleOpds,
 }: {
   books: BookOpt[];
   bookId: string;
   onBook: (id: string) => void;
   droppedName?: string | null;
+  opdsOpen: boolean;
+  onToggleOpds: () => void;
 }) {
   const loc = useReaderLocation();
   const progress = useReaderProgress();
@@ -114,6 +118,15 @@ export function Chrome({
           </option>
         ))}
       </select>
+
+      <button
+        className={opdsOpen ? 'active' : ''}
+        onClick={onToggleOpds}
+        aria-label="Browse OPDS catalog"
+        title="Browse an OPDS catalog"
+      >
+        📚
+      </button>
 
       <TableOfContents />
 

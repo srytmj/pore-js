@@ -84,6 +84,11 @@ export {
 } from './source/kavita-source.js';
 export type { KavitaSourceOptions } from './source/kavita-source.js';
 
+export { OpdsSource } from './source/opds-source.js';
+export type { OpdsAuth, OpdsSourceOptions } from './source/opds-source.js';
+export { parseOpdsFeed, acquisitionLink, guessFilename } from './source/opds-parse.js';
+export type { OpdsFeed, OpdsEntry, OpdsLink } from './source/opds-parse.js';
+
 export { loadPdf } from './pdf/parse.js';
 export type { PdfDoc } from './pdf/parse.js';
 export { PdfImageSource } from './pdf/pdf-source.js';

@@ -195,26 +195,62 @@ reflow. — met, for single-page (non-spread) fixed-layout books.
 
 ---
 
-## F4 — `OpdsSource` · M
+## F4 — `OpdsSource` · M · done (v0.7.0-annotate wip); OPDS 2.0 cut below
 
-- [ ] `OpdsSource(baseUrl, { auth? })` implementing a **catalog + acquisition**
-      surface distinct from `ReaderSource` (OPDS is a *library* protocol, not a
-      per-book one) — `listCatalog(url?) → { entries, next? }`,
-      `acquire(entry) → ReaderSource` for whichever entry the user opens
-      (delegates to `LocalFileSource`-style handling once the acquisition link
-      resolves to bytes)
-- [ ] Auth: HTTP Basic (OPDS's common case) + an escape hatch for a bearer
-      token, since Kavita's own OPDS endpoint also speaks this
-- [ ] Parse Atom/OPDS 1.2 XML (feeds, `<link rel="acquisition">`,
-      pagination `rel="next"`); OPDS 2.0 (JSON) as a stretch if time allows
-- [ ] A minimal demo catalog browser (list → tap → opens in `<Reader>`) —
-      reuses `<TableOfContents>`-style headless list patterns from U3
-- [ ] Vitest against a recorded OPDS feed fixture (no live server, same policy
-      as `KavitaSource`); the demo can optionally point at a real OPDS URL the
-      user supplies
+Went with the plan's own "leaning" answer to open question #3 (no further
+discussion needed): OPDS 1.2 (Atom) read-only, HTTP Basic + bearer auth, no
+OPDS 2.0.
 
-**Done when:** browse a real OPDS catalog (e.g. Project Gutenberg's) in the
-demo and open a book from it.
+- [x] `OpdsSource(baseUrl, { auth?, fetch?, domParser? })` — a **catalog +
+      acquisition** surface distinct from `ReaderSource` (OPDS is a *library*
+      protocol, not a per-book one): `listCatalog(url?) → OpdsFeed` (`{title?,
+      entries, next?}`), `acquire(entry) → LocalFileSource` — downloads the
+      entry's acquisition link and wraps the bytes in a fresh
+      `LocalFileSource` (as `File`), reusing its existing EPUB/PDF/CBZ/image
+      sniffing rather than duplicating it.
+- [x] Auth: HTTP Basic (`{type:'basic', username, password}`) and a bearer
+      token (`{type:'bearer', token}`) escape hatch, since Kavita's own OPDS
+      endpoint speaks bearer too.
+- [x] Atom/OPDS 1.2 XML parsing in a standalone `opds-parse.ts` (mirrors
+      `epub/parse.ts`'s split of pure parsing from the stateful class):
+      `parseOpdsFeed` (feed title, entries, `rel="next"` pagination — correctly
+      scoped to the feed's own direct-child `<link>`s, not leaking a
+      same-named `<link>` nested inside an `<entry>`), `acquisitionLink`
+      (prefers `.../acquisition/open-access` over borrow/sample/subscribe
+      variants), `guessFilename` (href extension, falling back to the link's
+      mime type, so `LocalFileSource` can sniff the right book kind).
+- [x] A minimal demo catalog browser (`OpdsBrowser.tsx` in the demo, toggled
+      from a 📚 button in `Chrome.tsx`): URL input, entry list with
+      title/summary, `Open` acquires and hands the result to the same
+      `dropped`-source path the file drop-zone uses, `next` pagination.
+      Plain markup rather than a `reader-react` component — like F2's
+      highlights panel, this is book-*selection* UI (outside `<Reader>`), not
+      reader chrome.
+- [x] Vitest: `opds-parse.test.ts` (10 tests: feed/entry parsing, the
+      entry-link-leak guard, acquisition-link preference, filename guessing)
+      and `opds-source.test.ts` (6 tests: catalog + pagination, `acquire()`
+      round-tripping into a working `LocalFileSource`, missing-link and HTTP-
+      failure errors, both auth headers) against a fake `fetch` — same policy
+      as `KavitaSource`'s tests, no live server. Browser-verified end-to-end
+      against a same-origin fixture catalog (`apps/demo/public/opds/
+      catalog.xml`, listing the `demo-book`/`demo-fixed`/`demo-pdf` fixtures)
+      — browse → open → the fixed-layout demo book renders correctly.
+
+**Cut from this pass:**
+- **A real external catalog (e.g. Project Gutenberg's) as the demo's default**
+  — the plan's original "done when" language. Skipped because a browser
+  automation environment can't rely on a public OPDS host's CORS policy, and
+  a flaky external dependency in the demo's default flow isn't worth it for a
+  portfolio piece. The demo ships a same-origin fixture catalog instead
+  (`/opds/catalog.xml`) that exercises the exact same code path; the URL
+  field is a plain input, so pointing it at a real external catalog is one
+  paste away and works if that host's CORS allows it — just not verified here.
+- **OPDS 2.0 (JSON)** — not implemented; `OpdsSource` throws on non-XML feeds
+  same as any malformed-XML input would.
+
+**Done when:** browse a catalog in the demo and open a book from it. — met
+against the bundled fixture catalog; a real external OPDS host is a
+follow-up, CORS permitting.
 
 ---
 
@@ -268,8 +304,8 @@ needed there).
 2. ~~**F3 fixed-layout rendering path**~~ — **settled**: live iframe, to keep
    F2's highlight/selection mechanics working on fixed-layout books. Done,
    see F3.
-3. **F4 scope for this portfolio**: full OPDS 2.0 + auth flows are a lot of
-   surface for uncertain payoff — could ship OPDS 1.2 read-only against Project
-   Gutenberg's public catalog as the demo proof and call 2.0/auth a follow-up.
+3. ~~**F4 scope for this portfolio**~~ — **settled**: OPDS 1.2 read-only, HTTP
+   Basic + bearer auth, OPDS 2.0 cut. Done, see F4 (demo proof against a
+   bundled fixture catalog rather than a real external host — CORS risk).
 4. **F5 priority** — explicitly a stretch goal in the design doc; fine to cut
    entirely from `v0.7.0-annotate` and revisit later without blocking F1–F4/F6.
