@@ -39,8 +39,8 @@ but has zero knowledge of it otherwise.
 | [`integration.md`](integration.md) | how to *consume* the packages in an app — `<Reader>`, sources, hooks, headless components, custom `ReaderSource`, styling model |
 | [`reader-engine-design.md`](reader-engine-design.md) | the original RFC — goals/non-goals, the source seam, position model, milestone history |
 | [`image-engine-spec.md`](image-engine-spec.md) | deep spec for the image engine specifically |
-| `m0-plan.md` … `m6-plan.md` | per-milestone task breakdowns with retro-notes on what was actually built and why |
-| [`m6-plan.md`](m6-plan.md) | **the current milestone** — an editorial UI redesign of the demo |
+| `m0-plan.md` … `m8-plan.md` | per-milestone task breakdowns with retro-notes on what was actually built and why |
+| [`m8-plan.md`](m8-plan.md) | **the current milestone** — hardening, npm publish, demo deploy (→ `v1.0.0`) |
 
 ---
 
@@ -174,30 +174,33 @@ pnpm --filter @pore/demo e2e           # the full demo e2e suite
 
 ---
 
-## 7. Current focus — M6: editorial UI redesign
+## 7. Current focus — M8: hardening, publish, deploy (→ `v1.0.0`)
 
-**[`docs/m6-plan.md`](m6-plan.md).** A *design pass, not a feature milestone*.
-The demo works but doesn't look finished: the reader bar is icon-soup with raw
-`<select>`s, status is shown twice, the settings panel is a bare form, the
-landing is thin, and the orange accent is half-removed.
+**[`docs/m8-plan.md`](m8-plan.md).** *Not a feature milestone.* M0–M7 got the
+engines feature-complete (`v0.10.0-library`); M8 makes it dependable and
+public. H0 package identity + Changesets → H1 freeze/document the public API →
+H2 real-content corpus (`scripts/fetch-corpus.mjs`, `pnpm test:corpus`) → H3
+robustness/fuzz → H4 Firefox + WebKit + e2e de-flake → H5 perf/size budgets →
+H6 iframe security + a11y → H7 CI/CD + `npm publish --provenance` → H8 deploy
+the demo (Cloudflare Pages / `pore.suryatmaja.dev`, PWA) → H9 per-package
+quickstarts + tag `v1.0.0`.
 
-Decisions already made with the owner:
+**Scope boundary for M8:** no new reader features. The one allowed product
+change is re-homing the offline-download control (removed from the rail
+post-M7). F3b spreads stay deferred.
 
-- **Aesthetic: quiet / editorial** — reading-first, warm paper tones, strong
-  typography, generous whitespace, chrome that recedes.
-- **Accent-less** — remove `--color-accent`; one functional colour for
-  focus/error only.
-- **Bundle fonts** — self-host an open-licence pair (Literata + Hanken Grotesk
-  proposed); also gives the reader a real font menu.
+**Open questions (see plan §Open questions):** the npm name (`@pore` may be
+unclaimable → `@surytmj/*` or unscoped), `1.0.0` now vs `1.0.0-rc`, ESM-only,
+deploy host, the offline-download UI, corpus in-repo vs fetched. H8 needs the
+owner for host account + DNS.
 
-Sequence: **D0** design tokens/palette/fonts (the gate) → **D1** reader chrome →
-**D2** panels → **D3** landing → **D4** reading surface + font menu → **D5**
-motion/states → **D6** responsive → **D7** hardening + tag `v0.9.0-editorial`.
+<details><summary>earlier focus — M6 editorial redesign (done, <code>v0.9.0-editorial</code>)</summary>
 
-**Scope boundary for M6:** do not change `reader-core` engine logic or
-`reader-react` component behaviour. The only core file M6 touches is
-`THEME_COLORS`. Features (bookmarks, library, export, F3b spreads) stay
-deferred.
+Quiet/editorial aesthetic, accent-less, bundled Literata + Hanken Grotesk.
+D0 tokens → D1 chrome → D2 panels → D3 landing → D4 font menu → D5 motion →
+D6 responsive → D7 tag. `docs/design-language.md` is the token reference.
+
+</details>
 
 **UI / styling map** (what to edit for a visual change):
 
@@ -219,8 +222,10 @@ M0–M0.5 image engine · M1 text engine · M2 PDF + shared shell · M3 integrat
 (offline, search, vertical-JP, a11y flow mode) · UI foundation (`v0.6.0-ui`) ·
 M4 annotations (`v0.7.0-annotate` — CFI, highlights, fixed-layout EPUB, OPDS,
 TTS) · M5 reading comfort (`v0.8.0-comfort` — menu-bar placement/auto-hide,
-highlight notes + `<HighlightsPanel>`, PDF Shift-drag highlights) · **M6
-editorial redesign — current**.
+highlight notes + `<HighlightsPanel>`, PDF Shift-drag highlights) · M6 editorial
+redesign (`v0.9.0-editorial`) · M7 library & portability (`v0.10.0-library` —
+bookmarks, home shelf, annotations review, export/import, `?cfi=` deep links) ·
+**M8 hardening + publish + deploy — current** (→ `v1.0.0`).
 
 Deferred: fixed-layout two-page spreads (F3b), bookmarks/library/export,
 bottom-edge menu bar, OPDS 2.0, cross-device sync, `WhiteArchiveSource`.

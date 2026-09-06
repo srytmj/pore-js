@@ -43,7 +43,16 @@ portability (a feature milestone): L0 engine groundwork (`goToCfi` +
 `<BookmarksPanel>`) → L2 library/home (a `useLibrary()` shelf) → L3 annotations
 review → L4 export/import (versioned JSON, `docs/portability-format.md`) → L5
 share-a-passage (`?cfi=` deep links) → L6 release. Open questions decided
-(see plan). All L0–L6 done, tagged `v0.10.0-library`.
+(see plan). All L0–L6 done, tagged `v0.10.0-library`. Post-M7: trimmed the
+reader rail (removed Prev/Next, Download, Fullscreen buttons — user request).
+
+**M8 scoped, not started — `docs/m8-plan.md`, target `v1.0.0`.** Hardening +
+publish + deploy (not a feature milestone): H0 package identity + Changesets →
+H1 freeze/document the public API → H2 real-content corpus → H3 robustness/fuzz
+→ H4 cross-browser + e2e de-flake → H5 perf/size budgets → H6 security + a11y →
+H7 CI/CD + npm publish pipeline → H8 deploy the demo (needs owner: host + DNS)
+→ H9 docs + `v1.0.0`. 6 open questions in the plan (npm name, 1.0-vs-0.x,
+ESM-only, deploy host, offline-download UI, corpus in-repo).
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -60,6 +69,23 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-06 — M8 scoped: hardening, deploy, publish
+- **What:** `docs/m8-plan.md` — the road to `v1.0.0`. Not features: freeze +
+  document the public API (H1), prove the engines against real books not just
+  `gen-fixtures` output (H2), fuzz the failure modes (H3), pass on Firefox +
+  WebKit and de-flake e2e (H4), set perf/size budgets (H5), harden the iframe
+  threat model + a11y (H6), Changesets + `npm publish --provenance` pipeline
+  (H7), deploy the demo to `pore.suryatmaja.dev` as a PWA (H8), per-package
+  quickstarts + tag `v1.0.0` (H9).
+- **Why:** M0–M7 got it feature-complete; nothing is published, deployed, or
+  tested against real-world content, and the API is still `0.0.0`.
+- **State:** plan committed. Not started. 6 open questions listed with
+  recommendations (npm name is the load-bearing one — `@pore` may not be
+  claimable).
+- **Notes:** H8 needs the owner (host account + DNS). The offline-download UI
+  removed in the rail trim is an open question for H8 (re-add in Settings vs
+  cut).
 
 ## 2026-09-06 — demo: trim the reader rail (user request)
 - **What:** removed the Prev/Next, Download-for-offline and Fullscreen buttons

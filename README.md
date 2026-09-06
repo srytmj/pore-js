@@ -19,7 +19,7 @@ CBZ). Custom rendering + pagination engine, not a wrapper.
 [`docs/integration.md`](docs/integration.md) ·
 [`docs/reader-engine-design.md`](docs/reader-engine-design.md) (RFC) ·
 [`docs/image-engine-spec.md`](docs/image-engine-spec.md) ·
-[`docs/m6-plan.md`](docs/m6-plan.md) (current milestone) ·
+[`docs/m8-plan.md`](docs/m8-plan.md) (current milestone) ·
 [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Workspace
@@ -178,6 +178,10 @@ reference.
 M7: [`docs/m7-plan.md`](docs/m7-plan.md) — done (L0–L6, `v0.10.0-library`) —
 bookmarks, home shelf, annotations review, export / import, `?cfi=` deep
 links. `docs/portability-format.md` is the bundle schema.
+
+M8: [`docs/m8-plan.md`](docs/m8-plan.md) — **scoped, not started** (H0–H9,
+target `v1.0.0`) — hardening (real-content corpus, robustness, cross-browser,
+perf, security/a11y), npm publish, demo deploy.
 
 Live status: [`docs/agent-worklog.md`](docs/agent-worklog.md).
 

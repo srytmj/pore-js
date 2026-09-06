@@ -58,5 +58,7 @@ collapsible menu rail with an inline settings accordion, new landing
 (`v0.10.0-library`) — bookmarks (`useBookmarks`, `<BookmarksPanel>`, optional
 `ReaderSource.loadBookmarks?`/`saveBookmarks?`, `goToCfi`), library shelf,
 annotations review, versioned export/import (`docs/portability-format.md`),
-`?cfi=` deep links (`docs/m7-plan.md`). Next milestone not yet scoped. See
-`docs/agent-worklog.md` for live status.
+`?cfi=` deep links (`docs/m7-plan.md`). **M8 scoped, not started**
+(`docs/m8-plan.md`, target `v1.0.0`) — hardening (real-content corpus,
+robustness, cross-browser, perf, security/a11y), publish `@pore/*` to npm,
+deploy the demo. See `docs/agent-worklog.md` for live status.
