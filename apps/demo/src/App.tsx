@@ -29,19 +29,36 @@ const BOOKS: SampleBook[] = [
     id: 'demo-manga',
     label: 'Manga',
     blurb: 'Right-to-left, double-page spreads',
+    glyph: 'spread',
     settings: { layout: 'paged-double', direction: 'rtl' },
   },
   {
     id: 'demo-webtoon',
     label: 'Webtoon',
     blurb: 'One long, continuous vertical strip',
+    glyph: 'strip',
     settings: { layout: 'continuous-vertical' },
   },
-  { id: 'demo-book', label: 'Novel (EPUB)', blurb: 'Reflowable text, adjustable typography' },
-  { id: 'demo-vertical', label: '縦書き', blurb: 'Vertical Japanese (tategaki)' },
-  { id: 'demo-rtl', label: 'عربي', blurb: 'Right-to-left prose (Arabic)' },
-  { id: 'demo-fixed', label: 'Fixed-layout', blurb: 'Pre-paginated EPUB, scaled to fit' },
-  { id: 'demo-pdf', label: 'PDF', blurb: 'Rendered pages + a searchable text layer' },
+  {
+    id: 'demo-book',
+    label: 'Novel (EPUB)',
+    blurb: 'Reflowable text, adjustable typography',
+    glyph: 'text',
+  },
+  { id: 'demo-vertical', label: '縦書き', blurb: 'Vertical Japanese (tategaki)', glyph: 'vertical' },
+  { id: 'demo-rtl', label: 'عربي', blurb: 'Right-to-left prose (Arabic)', glyph: 'rtl' },
+  {
+    id: 'demo-fixed',
+    label: 'Fixed-layout',
+    blurb: 'Pre-paginated EPUB, scaled to fit',
+    glyph: 'page',
+  },
+  {
+    id: 'demo-pdf',
+    label: 'PDF',
+    blurb: 'Rendered pages + a searchable text layer',
+    glyph: 'pdf',
+  },
 ];
 
 type View =

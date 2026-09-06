@@ -183,7 +183,16 @@ them look like a raw form.
 
 ---
 
-## D3 — Landing / home · M
+## D3 — Landing / home · M · **DONE**
+
+Rebuilt `Landing.tsx`: left-aligned serif masthead + a two-line statement
+("built from scratch … no backend"), a calmer drop zone, the seven sample
+cards each with a small inline-SVG layout diagram (`<Glyph>`) — even heights,
+hover-lift — and a real footer (GitHub, the Project A / B story, MIT).
+`SampleBook` gained a `glyph` field. The entrance animation is transform-only
+now (an a11y scan mid-fade was catching low-contrast text).
+
+<details><summary>Original notes</summary>
 
 `apps/demo/src/Landing.tsx`. Today: centred wordmark, generic tagline, a dashed
 drop zone, a grid of cramped equal-but-uneven cards, dead vertical space, no
@@ -204,6 +213,8 @@ footer.
 
 **Done when:** the landing page has an identity and a footer, and the mode
 cards are legible and even.
+
+</details>
 
 ---
 

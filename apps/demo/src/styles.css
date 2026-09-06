@@ -64,60 +64,69 @@
 
   /* --- landing (demo front door) ------------------------------------------- */
   .landing {
-    @apply flex flex-1 items-center justify-center overflow-y-auto p-6;
+    @apply flex flex-1 justify-center overflow-y-auto px-6 py-12 sm:py-20;
   }
   .landing__inner {
-    @apply flex w-full max-w-xl flex-col gap-8 py-10;
-    animation: pore-fade-in 0.25s ease-out;
+    @apply flex w-full max-w-2xl flex-col gap-12;
+    animation: pore-rise 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .landing__head {
-    @apply text-center;
+    @apply flex flex-col gap-3;
   }
   .landing__title {
-    @apply text-4xl font-bold tracking-tight;
+    @apply text-5xl font-semibold tracking-tight sm:text-6xl;
     font-family: var(--font-serif);
   }
   .landing__tagline {
-    @apply mt-1.5 text-muted;
+    @apply max-w-md text-[0.95rem] leading-relaxed text-muted;
   }
   .landing__section {
-    @apply flex flex-col gap-3;
+    @apply flex flex-col gap-4;
   }
   .landing__h2 {
-    @apply text-[0.8rem] font-semibold tracking-wide text-muted uppercase;
+    @apply text-[0.72rem] font-semibold tracking-[0.08em] text-muted uppercase;
   }
   .landing__drop {
-    @apply flex flex-col items-center gap-1.5 rounded-[var(--radius-panel)] border-2 border-dashed border-line bg-surface px-6 py-9 text-center transition-colors;
+    @apply flex flex-col items-center gap-2 rounded-[var(--radius-panel)] border border-dashed border-line bg-surface px-6 py-12 text-center transition-colors;
   }
   .landing__drop:hover {
-    @apply border-fg/40 bg-fg/5;
+    @apply border-fg/40 bg-fg/[0.03];
   }
   .landing__drop-icon {
-    @apply text-3xl text-muted;
+    @apply flex size-9 items-center justify-center rounded-full border border-line text-lg text-muted;
   }
   .landing__drop-title {
     @apply font-medium;
   }
   .landing__drop-hint {
-    @apply max-w-sm text-[0.8rem] text-muted;
+    @apply max-w-sm text-[0.8rem] leading-relaxed text-muted;
   }
   .landing__file {
     @apply hidden;
   }
   .landing__samples {
-    @apply m-0 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-3;
+    @apply m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3;
   }
   .landing__samples button {
-    @apply flex h-full w-full flex-col gap-0.5 rounded-[var(--radius-control)] border border-line bg-surface px-3 py-2.5 text-left transition-colors;
+    @apply flex h-full w-full flex-col items-start gap-2 rounded-[var(--radius-panel)] border border-line bg-surface p-4 text-left transition-all;
   }
   .landing__samples button:hover {
-    @apply border-fg/40 bg-fg/5;
+    @apply -translate-y-0.5 border-fg/30 shadow-[var(--shadow-popover)];
+  }
+  .landing__glyph {
+    @apply mb-1 text-fg;
   }
   .landing__sample-label {
-    @apply text-[0.9rem] font-semibold;
+    @apply text-[0.92rem] font-semibold;
   }
   .landing__sample-blurb {
-    @apply text-[0.75rem] leading-snug text-muted;
+    @apply text-[0.78rem] leading-snug text-muted;
+  }
+  .landing__footer {
+    @apply flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-line pt-6 text-[0.78rem] leading-relaxed text-muted;
+  }
+  .landing__footer a {
+    @apply font-medium text-fg underline decoration-line underline-offset-2 hover:decoration-fg;
   }
   @media (prefers-reduced-motion: reduce) {
     .landing__inner {
@@ -906,6 +915,13 @@
   @keyframes pore-fade-in {
     from {
       opacity: 0;
+    }
+  }
+  /* transform-only — no opacity, so a mid-animation a11y scan still sees full
+     text contrast */
+  @keyframes pore-rise {
+    from {
+      transform: translateY(8px);
     }
   }
   @keyframes pore-fade-out {
