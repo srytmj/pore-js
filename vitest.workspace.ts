@@ -10,4 +10,12 @@ export default defineWorkspace([
       environment: 'node',
     },
   },
+  {
+    test: {
+      name: 'demo',
+      root: './apps/demo',
+      include: ['src/**/*.test.ts'],
+      environment: 'node',
+    },
+  },
 ]);

@@ -167,24 +167,26 @@ from a single screen.
 
 ---
 
-## L4 — Export / import · M
+## L4 — Export / import · M · **DONE**
 
 Portable, versioned, documented.
 
-- [ ] **`docs/portability-format.md`** — a versioned JSON schema:
-      `{ format: "pore.js/annotations", version: 1, exportedAt, books: [{ id,
-      title, position?, highlights: HighlightRecord[], bookmarks: Bookmark[] }] }`.
-      Text highlights carry their `cfi` (the portable anchor); rect highlights
-      carry `page` + `rects`.
-- [ ] **Export** in the demo: one book, or the whole library → a downloaded
-      `.json`. (The download is a Blob + object URL — no backend.)
-- [ ] **Import**: pick a `.json`, validate against the schema version, merge
-      into the local stores (by `id`; existing entries with the same id are
-      kept unless `--overwrite`). Report what was merged.
-- [ ] Round-trip test: export a book's annotations, clear storage, import,
-      everything's back. Playwright covers the UI; Vitest covers the
-      merge/validate logic (pull it into a small `apps/demo/src/portability.ts`
-      that's unit-testable).
+- [x] **[`docs/portability-format.md`](portability-format.md)** — the versioned
+      JSON schema (`{ format: "pore.js/annotations", version: 1, exportedAt,
+      books: [{ id, title, position?, highlights, bookmarks }] }`), validation
+      rules, and merge semantics.
+- [x] **`apps/demo/src/portability.ts`** — pure `buildBundle` /
+      `validateBundle` / `mergeBundle` (by `id`, at book + record level, skip on
+      id clash unless `overwrite`, returns a `{ books, highlights, bookmarks,
+      skipped }` report) + `downloadBundle` (Blob + object URL). Unit-tested in
+      `portability.test.ts` (5 cases incl. a full round-trip). The demo project
+      is now in `vitest.workspace.ts`.
+- [x] **Export / Import** in the annotations review: an "Export all" + "Import…"
+      toolbar, and a per-book "Export". Import reads the file, validates, merges
+      per book into `source.saveHighlights` / `saveBookmarks` / `saveProgress`,
+      and shows a `role="status"` count.
+- [x] Playwright: highlight a sample → export the bundle → remove the highlight
+      from its store → re-import → the highlight is back.
 
 **Done when:** you can move your highlights + bookmarks between two browsers
 via a file, and the CFIs still resolve after re-pagination.

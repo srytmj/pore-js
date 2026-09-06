@@ -106,6 +106,53 @@ test.describe('Pore.js demo — landing', () => {
     await expect(frame.locator('h1')).toContainText('The Beginning');
   });
 
+  test('export / import: a highlight survives a wipe via the JSON bundle', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('.landing__samples').getByRole('button', { name: /Novel/ }).click();
+    const frame = page.frameLocator('iframe.pore-text__frame');
+    await frame.locator('h1').waitFor();
+    await frame.locator('h1').evaluate((el) => {
+      const doc = el.ownerDocument!;
+      const range = doc.createRange();
+      range.selectNodeContents(el);
+      const sel = doc.getSelection()!;
+      sel.removeAllRanges();
+      sel.addRange(range);
+      doc.dispatchEvent(new Event('selectionchange'));
+    });
+    await page.locator('.selection-toolbar__swatch').first().click();
+    await expect(page.getByRole('button', { name: 'Highlights' })).toContainText('1');
+    await page.waitForTimeout(1000);
+
+    await page.getByRole('button', { name: 'Back to start' }).click();
+    await page.getByRole('button', { name: 'My annotations' }).click();
+    const review = page.getByRole('dialog', { name: 'My annotations' });
+
+    await expect(review.locator('.review__group-export')).toBeVisible();
+    const downloadPromise = page.waitForEvent('download');
+    await review.getByRole('button', { name: 'Export', exact: true }).click();
+    const download = await downloadPromise;
+    const path = await download.path();
+
+    // wipe the highlight from its store
+    await review.getByRole('button', { name: 'Close' }).click();
+    await page.goto('/?book=demo-book');
+    await page.getByRole('button', { name: 'Highlights' }).click();
+    await page.locator('[data-pore-hl-remove]').first().click();
+    await page.waitForTimeout(1000);
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Highlights' })).not.toContainText('1');
+
+    // re-import
+    await page.getByRole('button', { name: 'Back to start' }).click();
+    await page.getByRole('button', { name: 'My annotations' }).click();
+    await review.locator('input[type="file"]').setInputFiles(path!);
+    await expect(review.locator('.review__notice')).toContainText('1 highlight');
+
+    await page.goto('/?book=demo-book');
+    await expect(page.getByRole('button', { name: 'Highlights' })).toContainText('1');
+  });
+
   test('landing page has no critical/serious axe violations', async ({ page }) => {
     await page.goto('/');
     await page.locator('.landing').waitFor();

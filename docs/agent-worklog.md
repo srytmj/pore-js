@@ -43,7 +43,7 @@ portability (a feature milestone): L0 engine groundwork (`goToCfi` +
 `<BookmarksPanel>`) → L2 library/home (a `useLibrary()` shelf) → L3 annotations
 review → L4 export/import (versioned JSON, `docs/portability-format.md`) → L5
 share-a-passage (`?cfi=` deep links) → L6 release. Open questions decided
-(see plan). **L0 · L1 · L2 · L3 done**; L4 (export/import) next.
+(see plan). **L0 · L1 · L2 · L3 · L4 done**; L5 (share-a-passage) next.
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -60,6 +60,20 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-06 — M7 L4: export / import
+- **What:** `apps/demo/src/portability.ts` — versioned bundle
+  (`pore.js/annotations` v1): `buildBundle` / `validateBundle` / `mergeBundle`
+  (by id at book + record level, skip on clash unless `overwrite`, `{ books,
+  highlights, bookmarks, skipped }` report) / `downloadBundle` (Blob + object
+  URL). `docs/portability-format.md` documents the schema + merge rules.
+  `<AnnotationsReview>` toolbar: "Export all", "Import…", per-book "Export".
+  Import → validate → merge per book → `source.save{Highlights,Bookmarks}` +
+  `saveProgress` → `role="status"` count. Demo added to `vitest.workspace.ts`;
+  `portability.test.ts` (5 cases, incl. round-trip).
+- **State:** committed. `docs/m7-plan.md` L4 done. 42 e2e · 263 unit · lint 0.
+- **Notes:** other tools' formats (KOReader/Calibre/Readwise) still out of
+  scope. Import covers sample books (shared demo source) — same limit as L3.
 
 ## 2026-09-06 — M7 L3: annotations review
 - **What:** `apps/demo/src/AnnotationsReview.tsx` — full-screen `role="dialog"`

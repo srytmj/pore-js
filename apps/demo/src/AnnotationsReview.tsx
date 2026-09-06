@@ -1,6 +1,13 @@
 import type { Bookmark, HighlightRecord, Position, ReaderSource } from '@pore/reader-core';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { LibraryEntry } from './use-library.js';
+import {
+  buildBundle,
+  downloadBundle,
+  mergeBundle,
+  validateBundle,
+  type PortableBook,
+} from './portability.js';
 
 export interface JumpTarget {
   bookId: string;
@@ -37,6 +44,9 @@ export function AnnotationsReview({
   const [groups, setGroups] = useState<BookGroup[]>([]);
   const [filter, setFilter] = useState('');
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [notice, setNotice] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const samples = useMemo(() => entries.filter((e) => e.kind === 'sample'), [entries]);
 
@@ -56,7 +66,63 @@ export function AnnotationsReview({
     return () => {
       live = false;
     };
-  }, [open, samples, source]);
+  }, [open, samples, source, reloadKey]);
+
+  const gather = async (ids: string[]): Promise<PortableBook[]> =>
+    Promise.all(
+      ids.map(async (id) => ({
+        id,
+        title: entries.find((e) => e.id === id)?.title ?? id,
+        position: (await source.loadProgress(id)) ?? null,
+        highlights: (await source.loadHighlights?.(id)) ?? [],
+        bookmarks: (await source.loadBookmarks?.(id)) ?? [],
+      })),
+    );
+
+  const exportBooks = async (ids: string[], filename: string) => {
+    const books = await gather(ids);
+    downloadBundle(buildBundle(books), filename);
+  };
+
+  const importFile = async (file: File) => {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(await file.text());
+    } catch {
+      setNotice('That file isn’t valid JSON.');
+      return;
+    }
+    const v = validateBundle(parsed);
+    if (!v.ok) {
+      setNotice(`Import failed — ${v.error}`);
+      return;
+    }
+    let report = { books: 0, highlights: 0, bookmarks: 0, skipped: 0 };
+    for (const book of v.bundle.books) {
+      const existing = await gather([book.id]);
+      const { merged, report: r } = mergeBundle(existing, {
+        ...v.bundle,
+        books: [book],
+      });
+      const out = merged.find((m) => m.id === book.id);
+      if (out) {
+        await source.saveHighlights?.(book.id, out.highlights);
+        await source.saveBookmarks?.(book.id, out.bookmarks);
+        if (out.position) await source.saveProgress(book.id, out.position);
+      }
+      report = {
+        books: report.books + r.books,
+        highlights: report.highlights + r.highlights,
+        bookmarks: report.bookmarks + r.bookmarks,
+        skipped: report.skipped + r.skipped,
+      };
+    }
+    setNotice(
+      `Imported ${report.highlights} highlight(s), ${report.bookmarks} bookmark(s)` +
+        (report.skipped ? ` · ${report.skipped} already present` : ''),
+    );
+    setReloadKey((k) => k + 1);
+  };
 
   if (!open) return null;
 
@@ -83,6 +149,45 @@ export function AnnotationsReview({
           </button>
         </header>
 
+        <div className="review__toolbar">
+          <button
+            type="button"
+            className="review__tool"
+            disabled={groups.length === 0}
+            onClick={() =>
+              void exportBooks(
+                groups.map((g) => g.entry.id),
+                `pore-annotations-${new Date().toISOString().slice(0, 10)}.json`,
+              )
+            }
+          >
+            Export all
+          </button>
+          <button
+            type="button"
+            className="review__tool"
+            onClick={() => fileRef.current?.click()}
+          >
+            Import…
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            hidden
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = '';
+              if (f) void importFile(f);
+            }}
+          />
+          {notice && (
+            <span className="review__notice" role="status">
+              {notice}
+            </span>
+          )}
+        </div>
+
         <div className="review__body">
           {total === 0 && (
             <p className="review__empty">
@@ -98,19 +203,30 @@ export function AnnotationsReview({
             const isCollapsed = collapsed[g.entry.id] ?? false;
             return (
               <section className="review__group" key={g.entry.id}>
-                <button
-                  type="button"
-                  className="review__group-head"
-                  aria-expanded={!isCollapsed}
-                  onClick={() =>
-                    setCollapsed((c) => ({ ...c, [g.entry.id]: !isCollapsed }))
-                  }
-                >
-                  <span className="review__group-title">{g.entry.title}</span>
-                  <span className="review__group-count">
-                    {g.highlights.length + g.bookmarks.length}
-                  </span>
-                </button>
+                <div className="review__group-bar">
+                  <button
+                    type="button"
+                    className="review__group-head"
+                    aria-expanded={!isCollapsed}
+                    onClick={() =>
+                      setCollapsed((c) => ({ ...c, [g.entry.id]: !isCollapsed }))
+                    }
+                  >
+                    <span className="review__group-title">{g.entry.title}</span>
+                    <span className="review__group-count">
+                      {g.highlights.length + g.bookmarks.length}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="review__group-export"
+                    onClick={() =>
+                      void exportBooks([g.entry.id], `${g.entry.id}-annotations.json`)
+                    }
+                  >
+                    Export
+                  </button>
+                </div>
                 {!isCollapsed && (
                   <ul className="review__list">
                     {hs.map((h) => (
