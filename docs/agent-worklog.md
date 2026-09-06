@@ -37,13 +37,13 @@ collapsible menu rail with an inline settings accordion (D1, a new headless
 dark-axe test + tag (D7). 38 e2e · 256 unit · lint 0 · all green.
 `docs/design-language.md` is the token reference.
 
-**M7 scoped — `docs/m7-plan.md`, target `v0.10.0-library`.** Library &
+**M7 shipped — `v0.10.0-library`.** Library &
 portability (a feature milestone): L0 engine groundwork (`goToCfi` +
 `loadBookmarks`/`saveBookmarks`) → L1 bookmarks (`useBookmarks` +
 `<BookmarksPanel>`) → L2 library/home (a `useLibrary()` shelf) → L3 annotations
 review → L4 export/import (versioned JSON, `docs/portability-format.md`) → L5
 share-a-passage (`?cfi=` deep links) → L6 release. Open questions decided
-(see plan). **L0 · L1 · L2 · L3 · L4 · L5 done**; L6 (hardening + release) next.
+(see plan). All L0–L6 done, tagged `v0.10.0-library`.
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -60,6 +60,21 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-06 — M7 L6: hardening + release `v0.10.0-library`
+- **What:** annotations-review axe + keyboard e2e (light + dark). Removing a
+  shelf entry now also `removeDownload`s the offline copy (annotations kept —
+  documented divergence from the plan's "clear the stores"). Docs:
+  `integration.md` (bookmark source methods, `goToCfi`, `useBookmarks`,
+  `<BookmarksPanel>`), `architecture.md` (CFI inverse, bookmarks/portability
+  section), `CHANGELOG` `v0.10.0-library`, `README` status + milestone list,
+  `CLAUDE.md`.
+- **State:** committed + tagged `v0.10.0-library`. 44 e2e · 263 unit ·
+  typecheck · lint 0 — all green. **M7 done.**
+- **Notes:** deferred past M7 — F3b fixed-layout spreads; File System Access
+  API for re-openable dropped files; real cross-device sync (export/import is
+  the offline stand-in); importing other tools' formats. Next milestone not
+  scoped.
 
 ## 2026-09-06 — M7 L5: share a passage
 - **What:** `apps/demo/src/share.ts` — `deepLink(bookId, cfi)` →

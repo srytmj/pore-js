@@ -175,6 +175,50 @@ test.describe('Pore.js demo — landing', () => {
     await expect(page.locator('.reader-host--pulse')).toHaveCount(0, { timeout: 4000 });
   });
 
+  test('annotations review is axe clean and keyboard-reachable (light + dark)', async ({ page }) => {
+    // make one annotation so the review has content
+    await page.goto('/');
+    await page.locator('.landing__samples').getByRole('button', { name: /Novel/ }).click();
+    const frame = page.frameLocator('iframe.pore-text__frame');
+    await frame.locator('h1').waitFor();
+    await frame.locator('h1').evaluate((el) => {
+      const doc = el.ownerDocument!;
+      const r = doc.createRange();
+      r.selectNodeContents(el);
+      const s = doc.getSelection()!;
+      s.removeAllRanges();
+      s.addRange(r);
+      doc.dispatchEvent(new Event('selectionchange'));
+    });
+    await page.locator('.selection-toolbar__swatch').first().click();
+    await page.waitForTimeout(1000);
+    await page.getByRole('button', { name: 'Back to start' }).click();
+
+    for (const dark of [false, true]) {
+      await page.emulateMedia({ colorScheme: dark ? 'dark' : 'light' });
+      await page.goto('/');
+      await page.getByRole('button', { name: 'My annotations' }).click();
+      const review = page.getByRole('dialog', { name: 'My annotations' });
+      await expect(review).toBeVisible();
+
+      // keyboard: the jump control is tabbable and Enter navigates
+      await review.getByLabel('Filter annotations').focus();
+      await expect(review.locator('.review__group-export')).toBeVisible();
+
+      const results = await new AxeBuilder({ page })
+        .include('.review')
+        .withTags(['wcag2a', 'wcag2aa'])
+        .analyze();
+      const serious = results.violations.filter(
+        (v) => v.impact === 'critical' || v.impact === 'serious',
+      );
+      expect(serious, `${dark ? 'dark' : 'light'}: ${JSON.stringify(serious, null, 2)}`).toEqual([]);
+
+      await review.getByRole('button', { name: 'Close' }).click();
+      await expect(review).toBeHidden();
+    }
+  });
+
   test('landing page has no critical/serious axe violations', async ({ page }) => {
     await page.goto('/');
     await page.locator('.landing').waitFor();

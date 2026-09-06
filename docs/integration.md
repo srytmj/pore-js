@@ -70,8 +70,16 @@ interface ReaderSource {
   // optional — annotation persistence
   loadHighlights?(bookId: string): Promise<HighlightRecord[]>;
   saveHighlights?(bookId: string, highlights: HighlightRecord[]): Promise<void>;
+  loadBookmarks?(bookId: string): Promise<Bookmark[]>;
+  saveBookmarks?(bookId: string, bookmarks: Bookmark[]): Promise<void>;
 }
 ```
+
+`HighlightRecord` is a discriminated union: `kind: 'text'` (EPUB / reflowable —
+carries a DOM `range` + portable `cfi: { start, end }`) or `kind: 'rect'` (PDF /
+fixed pages — carries `page` + normalised `rects`). A `Bookmark` is
+`{ id, position, cfi?, page, percent, label, text?, createdAt }`. Both are
+per-book collections, parallel to the single `Position` resume checkpoint.
 
 `Manifest` is `ImageManifest` (`type: 'image'`, a page list) or `TextManifest`
 (`type: 'epub' | 'pdf' | 'cbz'`). `getFile` returns the archive for text
@@ -83,7 +91,7 @@ formats; `getPage` returns per-page blobs/URLs for image books.
 |---|---|
 | `new DemoSource()` | bundled fixtures, zero backend |
 | `new LocalFileSource(files)` | a `File[]` / `FileList` the user dropped — `.epub`, `.pdf`, `.cbz`/`.zip`, or loose images. Detects the type. |
-| `new CachedSource(inner, opts?)` | wraps any source: local-first manifests + resume + `MediaCache` full-book download for offline. Implements `loadHighlights`/`saveHighlights` (local-first). Use `useDownload()` for the download UI. |
+| `new CachedSource(inner, opts?)` | wraps any source: local-first manifests + resume + `MediaCache` full-book download for offline. Implements `loadHighlights`/`saveHighlights` **and `loadBookmarks`/`saveBookmarks`** (local-first). Use `useDownload()` for the download UI. |
 | `new KavitaSource(opts)` | a live [Kavita](https://kavitareader.com) server (HTTP, bearer auth) |
 | `new OpdsSource(url, opts?)` | a read-only OPDS 1.2 catalog. `.acquire(entry)` → a `LocalFileSource` for the picked book. |
 | `new PdfImageSource(inner, opts?)` | used internally by the PDF engine; you rarely construct it |
@@ -138,6 +146,7 @@ ref.current.setSettings({ theme: 'sepia', columns: 'one' });
 ref.current.chapters();                          // Chapter[]
 ref.current.search(query);                       // Promise<SearchHit[]>
 ref.current.getCfi();                            // portable epubcfi(...) | null
+ref.current.goToCfi('epubcfi(/6/8!/4/2)');       // navigate to one (text engine)
 ref.current.addHighlight({ color, note });       // from the current selection
 ref.current.updateHighlight(id, { color?, note? });
 ref.current.removeHighlight(id);
@@ -146,7 +155,8 @@ ref.current.ttsPlay() / ttsPause() / ttsResume() / ttsStop() / ttsSetRate(n) / t
 ```
 
 Methods that don't apply to the active engine are safe no-ops (`getCfi()` on a
-PDF returns `null`, TTS on an image book never plays).
+PDF returns `null`, `goToCfi()` on image/PDF does nothing, TTS on an image book
+never plays).
 
 ---
 
@@ -164,6 +174,7 @@ PDF returns `null`, TTS on an image book never plays).
 | `useReaderKeymap()` | `[keymap, setKeymap]` |
 | `useReaderSearch()` | `{ query, setQuery, hits, activeIndex, go, next, prev, clear, busy }` |
 | `useReaderHighlights()` | `HighlightRecord[]` |
+| `useBookmarks()` | `{ bookmarks, isBookmarkedHere, supported, add(label?), remove(id), rename(id, label), goTo(bm), toggle() }` — over the handle + `source.load/saveBookmarks` |
 | `useReaderSelection()` | `{ selection, highlight(opts), removeHighlight(id), updateHighlight(id, patch) }` |
 | `useTts()` | `{ state, play, pause, resume, stop, setRate, setVoice, listVoices }` |
 | `useFootnote()` | the footnote/endnote currently opened by a link tap |
@@ -187,6 +198,7 @@ All render `data-pore-*` markup + Radix; you style them.
 | `<SettingsPanelBody>` | the tabs without the dialog shell |
 | `<TableOfContents className? placeholder?>` | a native `<select>` bound to `goToHref` (`data-pore-toc`) |
 | `<HighlightsPanel className? colors? emptyLabel? onJump? previewChars?>` | editable list — jump / recolour / note textarea / remove (`data-pore-hl-*`) |
+| `<BookmarksPanel className? onJump? emptyLabel?>` | list — jump / inline rename / remove (`data-pore-bm-*`). Renders `null` when the source has no bookmark methods. |
 | `<FootnotePopover>` | renders the footnote a link opened |
 | `<ReaderScrubber>` | bottom seek bar with chapter ticks |
 | `<ReaderAnnouncer>` | visually-hidden ARIA live region — mount once inside `<Reader>` |

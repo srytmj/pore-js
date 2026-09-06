@@ -81,7 +81,14 @@ const source = new CachedSource(new DemoSource()); // swap DemoSource for your o
 - **Position** (`loadProgress` / `saveProgress`) is a small opaque JSON value —
   store it verbatim; it round-trips across devices and viewport sizes.
 
-## Status — editorial redesign (`v0.9.0-editorial`)
+## Status — library & portability (`v0.10.0-library`)
+
+**Library & portability (M7):** bookmarks (`useBookmarks` + headless
+`<BookmarksPanel>`, over new optional `ReaderSource.loadBookmarks?` /
+`saveBookmarks?` and a new `goToCfi` engine method), a "Continue reading" shelf
+on the demo home, a full-screen annotations review, versioned export / import
+(`docs/portability-format.md`), and `?book=&cfi=` deep links that navigate +
+pulse. All additive. See `docs/m7-plan.md`.
 
 **Editorial UI redesign (M6):** the demo has a quiet, reading-first identity —
 warm paper palette, bundled Hanken Grotesk + Literata, no decorative accent
@@ -167,6 +174,10 @@ F6, `v0.8.0-comfort`; F3b deferred).
 M6: [`docs/m6-plan.md`](docs/m6-plan.md) — done (D0–D7, `v0.9.0-editorial`) —
 an editorial UI redesign of the demo. `docs/design-language.md` is the
 reference.
+
+M7: [`docs/m7-plan.md`](docs/m7-plan.md) — done (L0–L6, `v0.10.0-library`) —
+bookmarks, home shelf, annotations review, export / import, `?cfi=` deep
+links. `docs/portability-format.md` is the bundle schema.
 
 Live status: [`docs/agent-worklog.md`](docs/agent-worklog.md).
 

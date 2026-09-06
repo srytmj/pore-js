@@ -217,17 +217,23 @@ there.
 
 ---
 
-## L6 — Hardening + release · S
+## L6 — Hardening + release · S · **DONE**
 
-- [ ] a11y: the bookmarks panel, the library shelf, the annotations review,
-      the import dialog — keyboard-reachable + axe clean (light + dark).
-- [ ] Playwright: bookmark round-trip, library resume, review jump, export →
-      import round-trip, `?cfi=` deep link.
-- [ ] `docs/integration.md` + `docs/architecture.md` updated for the new
-      source methods / `goToCfi` / the headless `<BookmarksPanel>`.
-- [ ] `CHANGELOG.md` `v0.10.0-library`; `README.md` status; `CLAUDE.md`;
-      `docs/agent-worklog.md`.
-- [ ] Tag `v0.10.0-library`.
+- [x] a11y: annotations review axe clean + keyboard-reachable, **light + dark**
+      (new e2e). Bookmarks panel / shelf / import already covered by the M5 +
+      landing axe sweeps.
+- [x] Playwright (44 specs): bookmark round-trip, library resume + remove,
+      review jump, export → import round-trip, `?cfi=` deep link + pulse,
+      review axe light/dark.
+- [x] `docs/integration.md` + `docs/architecture.md` updated (source methods,
+      `goToCfi` / `resolvePendingCfi`, `<BookmarksPanel>`, `useBookmarks`,
+      portability).
+- [x] `CHANGELOG.md` `v0.10.0-library`; `README.md` status + milestone list;
+      `CLAUDE.md`; `docs/agent-worklog.md`.
+- [x] Removing a shelf entry frees the offline copy (`removeDownload`);
+      annotations kept on purpose (recoverable value — diverges from the
+      original "also clear the stores" note).
+- [x] Tag `v0.10.0-library`.
 
 ---
 

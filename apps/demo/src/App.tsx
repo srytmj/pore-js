@@ -172,6 +172,13 @@ export function App() {
     if (b) library.record({ id, title: b.label, glyph: b.glyph, kind: 'sample' });
   };
 
+  const forget = (id: string) => {
+    library.remove(id);
+    // free the offline copy (re-downloadable); annotations are kept on purpose —
+    // they reappear if the book is opened again.
+    void demoSource.removeDownload(id).catch(() => {});
+  };
+
   const onArrived = (doPulse: boolean) => {
     if (!doPulse) return;
     setPulse(true);
@@ -224,7 +231,7 @@ export function App() {
             onSample={openSample}
             recent={library.entries}
             onResume={(e) => (e.kind === 'sample' ? openSample(e.id) : undefined)}
-            onForget={library.remove}
+            onForget={forget}
             {...(library.entries.some((e) => e.kind === 'sample')
               ? { onReview: () => setReviewOpen(true) }
               : {})}

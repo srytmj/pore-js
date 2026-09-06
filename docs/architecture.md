@@ -103,6 +103,12 @@ author CSS.
 - **CFI** — `cfi.ts` — a documented **"epubcfi-shaped"** serialization
   (`epubcfi(/6/N[idref]!/steps:offset)`), element-sibling steps only, not full
   IDPF conformance. Used for portable positions and highlight interchange.
+  `getCfi()` serializes the current position; **`goToCfi(cfi)`** is the inverse
+  — `parseCfi` → a `pendingCfi`, and `resolvePendingCfi()` (run in
+  `renderSpine`'s finish, or synchronously when the target spine is already
+  current) resolves the element via `resolveCfiElement`, walks up to the
+  nearest block, translates the element-relative offset to block-relative, and
+  hands a `pendingAnchor` to the normal resume path. No-op on image/PDF.
 - **Highlights** — `highlight.ts` turns a selection `Range` into a
   block-ordinal `HighlightRange`; painted with the CSS Custom Highlight API
   (`CSS.highlights.set` + `::highlight()`), `<mark>` + `Range.surroundContents`
@@ -165,7 +171,18 @@ Single-page mode only.
 
 - `CachedSource(inner)` — local-first manifests + resume + `MediaCache` (whole
   books downloaded to a `KvStore` over IndexedDB, `offline/idb.ts`). Implements
-  `loadHighlights`/`saveHighlights` locally. Mirrors the `saveProgress` pattern.
+  `loadHighlights`/`saveHighlights` **and `loadBookmarks`/`saveBookmarks`**
+  locally (`#bmKey`). Mirrors the `saveProgress` pattern.
+- **Bookmarks** are a per-book collection like highlights — `Bookmark`
+  (`source/types.ts`) is `{ id, position, cfi?, page, percent, label, text?,
+  createdAt }`. No engine involvement: `reader-react`'s `useBookmarks()` sits
+  over the handle (`getCfi` / `goto` / `goToCfi`) + the source's optional
+  methods.
+- **Portability** (demo): `apps/demo/src/portability.ts` — a versioned
+  `pore.js/annotations` JSON bundle (`docs/portability-format.md`),
+  merge-by-id. The demo's `useLibrary()` (a `KvStore` shelf) and
+  `<AnnotationsReview>` are demo-level, not core — a non-caching source can't
+  enumerate "every book".
 - The demo service worker (`apps/demo/public/sw.js`) precaches the app shell
   (parses `index.html` for the hashed `/assets/*`) and does
   stale-while-revalidate + cache-first with `ignoreVary`.
@@ -186,8 +203,9 @@ back to synchronous. Results are `SearchHit` with a section index + snippet;
 `reader.tsx` is the whole runtime: it owns the engine ref, subscribes every
 event to `useState`, builds the `ReaderHandle` (`useMemo`), and exposes
 everything through a context consumed by the `useReader*` hooks. Components
-(`settings-panel`, `table-of-contents`, `highlights-panel`, `scrubber`,
-`footnote-popover`, `announcer`) are thin, headless, and read the context.
+(`settings-panel`, `table-of-contents`, `highlights-panel`, `bookmarks-panel`,
+`scrubber`, `footnote-popover`, `announcer`) are thin, headless, and read the
+context.
 `primitives.tsx` wraps Radix (Dialog, Tabs, Slider, Switch, Popover) with
 `data-pore-*` hooks. **No stylesheet is shipped.**
 

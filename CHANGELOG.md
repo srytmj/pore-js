@@ -1,5 +1,53 @@
 # Changelog
 
+## v0.10.0-library — 2026-09-06
+
+M7 — library & portability (`docs/m7-plan.md`). Bookmarks, a home shelf of what
+you've read, a place to review every annotation, portable export / import, and
+`?cfi=` deep links. Additive: new *optional* source methods, one engine method,
+new headless components — nothing removed.
+
+### Engine + packages (L0 / L1)
+
+- **`goToCfi(cfi)`** on `TextEngine` and `ReaderHandle` — the inverse of
+  `getCfi()`. Resolves an `epubcfi`-shaped string to the nearest block and
+  feeds the normal anchor path; a no-op on image / PDF. `resolvePendingCfi()`
+  translates the CFI's element-relative offset to block-relative.
+- **`Bookmark`** type + optional **`ReaderSource.loadBookmarks?` /
+  `saveBookmarks?`**; `CachedSource` implements both local-first. Exported from
+  both packages, alongside `TextHighlightRecord` / `RectHighlightRecord` /
+  `NormRect`.
+- **`useBookmarks()`** (reader-react) — `add(label?)` / `remove` / `rename` /
+  `goTo` / `toggle`, `isBookmarkedHere`. Snapshots `position` + `getCfi()` +
+  page / percent; jumps by exact position, keeps the CFI for export. Headless
+  **`<BookmarksPanel>`** (`data-pore-bm-*`). `ReaderCtx` gained `bookId` +
+  `source`.
+
+### Demo (L2–L5)
+
+- **Library / home shelf.** `useLibrary()` over IndexedDB — a "Continue
+  reading" section on the landing with per-book progress, "N min ago", a layout
+  glyph, and remove. Sample books resume in place; dropped files are history.
+- **Annotations review.** A full-screen overlay from the shelf header —
+  highlights + bookmarks grouped by book, collapsible, text filter, jump
+  (with an orienting pulse).
+- **Export / import.** Versioned `pore.js/annotations` JSON bundle
+  (`docs/portability-format.md`), per-book or whole-library. Import validates
+  the schema version and merges by id (skip on clash unless overwrite).
+  `apps/demo/src/portability.ts` is unit-tested; the demo is now in
+  `vitest.workspace.ts`.
+- **Share a passage.** "Copy quote" on the selection toolbar (passage +
+  chapter + link); the rail link button copies a full `?book=&cfi=` deep link.
+  Opening a `?cfi=` link navigates there and plays a ~2s pulse, then strips the
+  param.
+- Removing a shelf entry frees its offline copy; annotations are kept (they
+  reappear if the book is reopened).
+
+### Tests / a11y
+
+- 44 Playwright specs (bookmark round-trip, library resume, review jump + axe
+  light/dark, export→import round-trip, `?cfi=` deep link) · 263 unit.
+
 ## v0.9.0-editorial — 2026-09-06
 
 M6 — an editorial redesign of the demo (`docs/m6-plan.md`,
