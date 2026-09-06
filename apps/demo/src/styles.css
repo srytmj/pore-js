@@ -587,12 +587,12 @@
   }
 
   .toast {
-    @apply fixed left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-[var(--radius-control)] bg-neutral-900 px-3 py-2 text-[0.8rem] text-white;
+    @apply fixed left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border border-line bg-fg px-3.5 py-2 text-[0.8rem] font-medium text-canvas shadow-[var(--shadow-popover)];
     bottom: calc(4.25rem + env(safe-area-inset-bottom));
     animation: pore-fade-in 0.2s ease-out;
   }
   .toast button {
-    @apply rounded border border-white/25 px-1.5 py-0.5 text-[0.75rem];
+    @apply rounded-[var(--radius-control)] border border-canvas/30 px-2 py-0.5 text-[0.75rem];
   }
 
   .footnote {
@@ -633,7 +633,7 @@
   }
 
   .notice {
-    @apply fixed bottom-4 left-1/2 z-[60] max-w-[90vw] -translate-x-1/2 cursor-pointer rounded-2xl bg-black/80 px-4 py-2 text-center text-[0.8rem] break-all text-white;
+    @apply fixed bottom-4 left-1/2 z-[60] max-w-[90vw] -translate-x-1/2 cursor-pointer rounded-full border border-line bg-fg px-4 py-2 text-center text-[0.8rem] break-all text-canvas shadow-[var(--shadow-popover)];
   }
 
   /* --- highlights (F2) ------------------------------------------------------ */
@@ -647,7 +647,7 @@
     @apply max-w-[16rem] truncate text-[0.8rem] text-muted italic;
   }
   .selection-toolbar__swatch {
-    @apply h-6 w-6 shrink-0 cursor-pointer rounded-full border border-black/10;
+    @apply h-6 w-6 shrink-0 cursor-pointer rounded-full border border-fg/15;
   }
   .selection-toolbar__swatch:hover {
     @apply scale-110;
@@ -666,45 +666,48 @@
     animation: pore-panel-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .highlights-panel__header {
-    @apply flex items-center justify-between border-b border-line p-2 px-3;
+    @apply flex items-center justify-between border-b border-line px-3 py-2 text-[0.9rem] font-semibold;
   }
   .highlights-panel__body {
-    @apply overflow-y-auto;
+    @apply overflow-y-auto p-1;
   }
   /* headless <HighlightsPanel> — data-pore-hl-* hooks */
   [data-pore-hl-empty] {
-    @apply p-4 text-center text-[0.85rem] text-muted;
+    @apply p-6 text-center text-[0.85rem] leading-relaxed text-muted;
   }
   [data-pore-hl-list] {
-    @apply m-0 list-none p-0;
+    @apply m-0 flex list-none flex-col gap-1 p-0;
   }
   [data-pore-hl-item] {
-    @apply grid gap-1.5 border-b border-line/60 p-2;
+    @apply grid gap-2 rounded-[var(--radius-control)] p-2;
     grid-template-columns: 1fr auto;
   }
+  [data-pore-hl-item]:hover {
+    @apply bg-fg/[0.03];
+  }
   [data-pore-hl-jump] {
-    @apply col-start-1 border-0 border-l-4 border-solid bg-transparent py-1 pl-2 text-left text-[0.85rem] leading-snug text-fg;
+    @apply col-start-1 rounded-r-[var(--radius-control)] border-0 border-l-[3px] border-solid bg-transparent py-0.5 pl-2.5 text-left text-[0.85rem] leading-snug text-fg;
   }
   [data-pore-hl-jump]:hover {
-    @apply bg-fg/10;
+    @apply underline;
   }
   [data-pore-hl-remove] {
-    @apply col-start-2 row-start-1 h-7 w-7 shrink-0 self-start border-0 bg-transparent text-muted;
+    @apply col-start-2 row-start-1 h-6 w-6 shrink-0 self-start rounded-full border-0 bg-transparent text-[1rem] leading-none text-muted;
   }
   [data-pore-hl-remove]:hover {
-    @apply text-fg;
+    @apply bg-fg/5 text-danger;
   }
   [data-pore-hl-colors] {
-    @apply col-span-2 flex gap-1.5;
+    @apply col-span-2 flex gap-2 pl-2.5;
   }
   [data-pore-hl-swatch] {
-    @apply h-4 w-4 shrink-0 cursor-pointer rounded-full border border-black/10;
+    @apply h-4 w-4 shrink-0 cursor-pointer rounded-full border border-fg/15 transition-transform hover:scale-110;
   }
   [data-pore-hl-swatch][aria-pressed='true'] {
-    @apply ring-2 ring-fg/50;
+    @apply ring-2 ring-fg ring-offset-1 ring-offset-surface;
   }
   [data-pore-hl-note] {
-    @apply col-span-2 resize-none rounded-[var(--radius-control)] border border-line bg-canvas p-1.5 text-[0.8rem] text-fg;
+    @apply col-span-2 ml-2.5 resize-none rounded-[var(--radius-control)] border border-line bg-canvas p-2 text-[0.8rem] leading-snug text-fg placeholder:text-muted focus-visible:border-focus focus-visible:outline-none;
   }
 
   /* --- OPDS catalog browser (F4) --------------------------------------- */
@@ -724,7 +727,8 @@
     @apply min-w-0 flex-1 rounded-[6px] border border-line bg-canvas px-2 py-1.5 text-[0.85rem];
   }
   .opds-browser__error {
-    @apply m-0 border-b border-line bg-red-500/10 p-2 px-3 text-[0.8rem] text-red-600;
+    @apply m-0 border-b border-line p-2 px-3 text-[0.8rem] text-danger;
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
   }
   .opds-browser__title {
     @apply m-0 border-b border-line px-3 py-2 text-[0.8rem] font-semibold text-muted;

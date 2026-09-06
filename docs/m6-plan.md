@@ -149,7 +149,17 @@ status location, and it still works docked left/right and auto-hiding.
 
 ---
 
-## D2 — Settings panel + the floating panels · M
+## D2 — Settings panel + the floating panels · M · **DONE**
+
+The settings restyle largely came with D0 (accent-less tokens) + D1 (the
+accordion replaced the modal). This pass finished it: highlights panel + note
+editor + swatches given a proper spacing/hover/focus pass; the resume toast,
+`.notice`, and the OPDS error banner moved off hard-coded `bg-neutral-900` /
+`bg-black/80` / `bg-red-500` onto the ink + `--color-danger` tokens; end-page
+cards already on tokens from D0.
+
+<details><summary>Original checklist</summary>
+
 
 - [ ] **`<SettingsPanel>` presentation.** Still Radix Dialog + the headless
       `primitives.tsx` fields — restyle only. Grouped sections with quiet
@@ -168,6 +178,8 @@ status location, and it still works docked left/right and auto-hiding.
 
 **Done when:** every popover / panel / dialog uses the D0 tokens and none of
 them look like a raw form.
+
+</details>
 
 ---
 
