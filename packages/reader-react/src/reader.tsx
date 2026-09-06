@@ -156,6 +156,12 @@ export interface ReaderProps {
    * Pass `gsapAdapter(gsap)` for smooth transitions.
    */
   transitions?: ReaderTransitions;
+  /**
+   * `@font-face` CSS injected into the reading iframe so the Serif / Sans
+   * typography options can use webfonts the app bundles (files must be
+   * same-origin). EPUB/PDF only.
+   */
+  fontFaceCss?: string;
 }
 
 export function Reader({
@@ -167,6 +173,7 @@ export function Reader({
   ref,
   persistSettings = true,
   transitions,
+  fontFaceCss,
 }: ReaderProps) {
   const source = useReaderSource();
   const hostRef = useRef<HTMLDivElement>(null);
@@ -175,6 +182,8 @@ export function Reader({
   onPosRef.current = onPositionChange;
   const transitionsRef = useRef(transitions);
   transitionsRef.current = transitions;
+  const fontFaceCssRef = useRef(fontFaceCss);
+  fontFaceCssRef.current = fontFaceCss;
   const persistence = useMemo<SettingsPersistence>(
     () =>
       persistSettings === false
@@ -232,6 +241,7 @@ export function Reader({
             source,
             bookId,
             settings: seeded as Partial<TextEngineSettings>,
+            ...(fontFaceCssRef.current ? { fontFaceCss: fontFaceCssRef.current } : {}),
             ...txOpt,
           })
         : isPdf

@@ -218,7 +218,20 @@ cards are legible and even.
 
 ---
 
-## D4 — Reading surface + the font menu · M
+## D4 — Reading surface + the font menu · M · **DONE**
+
+`CreateTextEngineOptions.fontFaceCss` (+ a `<Reader fontFaceCss>` prop) injects
+an `@font-face` sheet into the reading iframe; the demo builds one from the
+bundled `@fontsource` woff2 (`reader-fonts.ts`). `FONT_STACKS` `serif` / `sans`
+now prefer `Literata` / `Hanken Grotesk` (graceful fallback when no font is
+injected); the font menu labels them. Reading rhythm nudges in
+`buildBaseStylesheet`: `hyphens:auto` when justified, `orphans/widows:2`,
+`text-wrap:balance` on headings, and a proper heading + indent treatment for
+the `publisherStyles: off` path. Loading-skeleton / error-state token cleanup
+folded into D5/D7.
+
+<details><summary>Original checklist</summary>
+
 
 - [ ] **Measure + rhythm.** The reading column, heading treatment (chapter
       title), paragraph spacing / indent, first-paragraph handling. Tune per
@@ -234,6 +247,8 @@ cards are legible and even.
 
 **Done when:** a chapter looks typeset, not dumped, in all four reading themes,
 and the reader offers a real font choice.
+
+</details>
 
 ---
 

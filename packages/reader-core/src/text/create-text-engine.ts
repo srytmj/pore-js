@@ -70,6 +70,13 @@ export interface CreateTextEngineOptions {
   bookId: string;
   settings?: Partial<TextEngineSettings>;
   domParser?: DOMParser;
+  /**
+   * `@font-face` CSS injected into the sandboxed reading iframe, so the `serif`
+   * / `sans` typography options can resolve to bundled webfonts the host app
+   * ships (the font files must be same-origin). Falls back to the system stack
+   * when omitted.
+   */
+  fontFaceCss?: string;
   /** Passed to the in-book `SearchController`. `false` forces synchronous search. */
   searchWorkerFactory?: (() => Worker) | false;
   /** Animation seam — defaults to synchronous {@link instantTransitions}. */
@@ -885,6 +892,12 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   const injectStyle = () => {
     const cdoc = frame.contentDocument;
     if (!cdoc) return;
+    if (options.fontFaceCss && !cdoc.getElementById('pore-fonts')) {
+      const f = cdoc.createElement('style');
+      f.id = 'pore-fonts';
+      f.textContent = options.fontFaceCss;
+      cdoc.head?.appendChild(f);
+    }
     let el = cdoc.getElementById('pore-base-style') as HTMLStyleElement | null;
     if (!el) {
       el = cdoc.createElement('style');

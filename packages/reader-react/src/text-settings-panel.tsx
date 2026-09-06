@@ -27,10 +27,10 @@ export function TextSettingsPanel({
             value={s.fontFamily}
             onValueChange={(fontFamily) => set({ fontFamily })}
             options={[
-              { value: 'original', label: 'Publisher' },
-              { value: 'serif', label: 'Serif' },
-              { value: 'sans', label: 'Sans' },
-              { value: 'slab', label: 'Slab' },
+              { value: 'original', label: "Publisher's" },
+              { value: 'serif', label: 'Literata (serif)' },
+              { value: 'sans', label: 'Hanken Grotesk (sans)' },
+              { value: 'slab', label: 'Slab serif' },
               { value: 'dyslexic', label: 'OpenDyslexic' },
             ]}
           />

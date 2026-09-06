@@ -114,8 +114,11 @@ export interface TypographyOptions {
 
 const FONT_STACKS: Record<TypographyOptions['fontFamily'], string> = {
   original: '',
-  serif: "Georgia, 'Times New Roman', serif",
-  sans: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+  // 'Literata' / 'Hanken Grotesk' resolve when the host injects a matching
+  // @font-face (see CreateTextEngineOptions.fontFaceCss); otherwise the stack
+  // falls through to the system faces.
+  serif: "'Literata', Georgia, 'Times New Roman', serif",
+  sans: "'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
   slab: "'Roboto Slab', Rockwell, Georgia, serif",
   dyslexic: "'OpenDyslexic', Verdana, sans-serif",
 };
@@ -146,6 +149,9 @@ body {
   ${t.color ? `color:${t.color};` : ''}
   ${family ? `font-family:${family}${forceFamily ? ' !important' : ''};` : ''}
   -webkit-font-smoothing:antialiased;
+  -webkit-text-size-adjust:100%;
+  orphans:2; widows:2;
+  ${t.textAlign === 'justify' ? 'hyphens:auto; -webkit-hyphens:auto;' : ''}
 }
 #${VIEWPORT_ID} {
   width:${layout.contentWidth}px;
@@ -189,8 +195,15 @@ ${forceFamily ? `body, body * { font-family:${family} !important; }` : ''}
   } }
 #${FLOW_ID} table, #${FLOW_ID} pre { max-width:100%; overflow-x:auto; break-inside:avoid; }
 #${FLOW_ID} a { color:inherit; }
-#${FLOW_ID} h1, #${FLOW_ID} h2, #${FLOW_ID} h3 { break-after:avoid; }
-${t.publisherStyles ? '' : `#${FLOW_ID} p { margin:0 0 1em; } #${FLOW_ID} h1, #${FLOW_ID} h2, #${FLOW_ID} h3 { margin:1.4em 0 .6em; }`}
+#${FLOW_ID} h1, #${FLOW_ID} h2, #${FLOW_ID} h3 { break-after:avoid; text-wrap:balance; }
+${
+  t.publisherStyles
+    ? ''
+    : `#${FLOW_ID} p { margin:0 0 1em; }
+#${FLOW_ID} p + p { text-indent:1.2em; margin-top:0; }
+#${FLOW_ID} h1, #${FLOW_ID} h2, #${FLOW_ID} h3 { margin:1.5em 0 .5em; line-height:1.2; font-weight:600; }
+#${FLOW_ID} h1 { font-size:1.5em; }`
+}
 `.trim();
 }
 

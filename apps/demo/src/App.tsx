@@ -7,6 +7,7 @@ import { OpdsBrowser } from './OpdsBrowser.js';
 import { Landing, type SampleBook } from './Landing.js';
 import { useMenuBar } from './use-menu-bar.js';
 import { useFullscreen } from './use-fullscreen.js';
+import { readerFontFaceCss } from './reader-fonts.js';
 
 export function useAnimations() {
   const [animate, setAnimate] = useState(() => {
@@ -149,6 +150,7 @@ export function App() {
           <Reader
             key={activeBook}
             bookId={activeBook}
+            fontFaceCss={readerFontFaceCss}
             {...(animate ? { transitions: defaultTransitions } : {})}
             className={hostClass}
             {...(sample?.settings ? { initialSettings: sample.settings } : {})}

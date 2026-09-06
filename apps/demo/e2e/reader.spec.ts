@@ -316,11 +316,13 @@ test.describe('Pore.js demo — M3', () => {
     const loc = page.locator('.loc');
     await expect(loc).toContainText('%');
     const flow = page.frameLocator('iframe.pore-text__frame').locator('#pore-flow');
+    // wait for pagination to settle before capturing the baseline transform
+    await expect.poll(() => flow.evaluate((el) => el.style.transform)).toMatch(/translate/);
     const before = await flow.evaluate((el) => el.style.transform);
     // ArrowLeft = forward in a vertical book
     await page.locator('.pore-text').press('ArrowLeft');
     await expect
-      .poll(() => flow.evaluate((el) => el.style.transform))
+      .poll(() => flow.evaluate((el) => el.style.transform), { timeout: 8000 })
       .not.toBe(before);
   });
 
