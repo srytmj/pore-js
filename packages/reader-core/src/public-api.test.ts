@@ -42,6 +42,8 @@ const PUBLIC = [
   'DemoSource',
   'CachedSource',
   'LocalFileSource',
+  'createReaderSource',
+  'readerSourceKey',
   'KavitaSource',
   'KavitaAuthError',
   'KavitaDownloadForbiddenError',

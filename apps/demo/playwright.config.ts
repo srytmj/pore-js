@@ -9,6 +9,9 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'on-first-retry',
+    // the demo's service worker would serve /fixtures from cache and hide them
+    // from page.route(); no e2e depends on the SW.
+    serviceWorkers: 'block',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

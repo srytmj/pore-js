@@ -97,6 +97,23 @@ settled transform already; could use a firmer readiness signal. *(M8 H5)*
 
 ## Fixed
 
+### 🟠 Manga library integration gaps — `(M8 H11)`
+
+Three things that would have bitten a real per-chapter manga library, addressed
+together with the `<Book>` one-call API:
+
+- **Next chapter served as a separate `bookId`** had no hook → `<Reader onEnd>`
+  / `<Book onEnd>` `({ kind, hasNext })` fires at the end-of-book card; the host
+  swaps `src` / `bookId`.
+- **A page image that fails mid-chapter showed a silent blank** → the image
+  engine now renders a tappable "Page N — tap to retry" tile
+  (`img[data-pore-page-error]`) that re-fetches just that page. The demo's
+  blocking error card is now for fatal (whole-book) errors only.
+- **Per-chapter `bookId` reset the reader's fit / direction / zoom every
+  chapter** → `<Reader settingsKey>` / `<Book seriesId>` keys the per-book
+  settings layer by a series id instead.
+- CDN auth headers → `<Book fetch>` / `createReaderSource({ fetch })`.
+
 ### 🔴 Text selection / highlights / footnote taps were dead in Safari/WebKit — `7b70ab4` (M8 H5)
 
 A sandboxed `<iframe>` without `allow-scripts` receives **no** input events in

@@ -422,6 +422,40 @@ reader — ✓ (mechanically). `v1.0.0` tagged + published — **pending the RC*
 
 ---
 
+## H11 — Integration DX (added 2026-09-07) · M · **DONE**
+
+Owner asked for a "one call" on-ramp before wiring the reader into their
+library, plus three gaps a real per-chapter manga library would hit.
+
+- [x] **`<Book>`** (`porejs-react`) — `src` (archive URL) / `pages` (image-URL
+      list) / `file` (`File`\|`Blob`), `meta` (`title` / `author` / `volume` /
+      `chapter` / `direction`), `progress` + `onProgress`, `onEnd`, `seriesId`,
+      `fetch`. Builds its own source; no `<ReaderProvider>`.
+- [x] **`createReaderSource(input)`** (`porejs`, also non-React) + a
+      `PagesSource` (image-URL list → manifest; hands the URL straight to
+      `<img>` unless a `fetch` override needs auth) + a fetch-and-parse path for
+      `src`/`file` reusing `LocalFileSource`. `readerSourceKey()` for a stable
+      re-mount key. `ManifestMeta` on `LocalFileSource` too.
+- [x] **`<Reader onEnd>`** `({ kind: 'book' | 'chapter', hasNext })` — the
+      host's hook for "load the next chapter" when chapters are separate
+      `bookId`s.
+- [x] **Broken-page retry** — the image engine renders a tappable
+      `img[data-pore-page-error]` tile that re-fetches just that page
+      (`PageLoader.forget(i)`); pointer-up ignores taps on it. The demo's
+      blocking error card is now fatal-only (`error.index === undefined`).
+- [x] **`<Reader settingsKey>` / `<Book seriesId>`** — key the per-book
+      settings layer by a series id so fit / direction / zoom carry across
+      chapters.
+- [x] Docs: `getting-started.md` leads with `<Book>`; `integration.md §0` = the
+      two tiers; `stability.md` covers `<Book>` / `createReaderSource`.
+- [x] Tests: `create-reader-source.test.ts` (9), `book.test.tsx` (2),
+      broken-page-retry e2e. 304 unit · 93 e2e (chromium+webkit) · size 4/4.
+
+**Done when:** a host can show a chapter with one `<Book src … />` and handle
+next-chapter + flaky pages without touching `ReaderSource`. ✓
+
+---
+
 ## Cut from M8 / still deferred
 
 - **F3b — fixed-layout two-page spreads.** Engine reshape; its own milestone.

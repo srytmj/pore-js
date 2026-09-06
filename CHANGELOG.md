@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### Integration DX — `<Book>` (M8 H11)
+
+- **`<Book>`** (`porejs-react`) — the one-call reader: `src` (a `.cbz`/`.epub`/
+  `.pdf` URL), `pages` (a list of image URLs), or `file`; plus `meta`
+  (`title` / `author` / `volume` / `chapter` / `direction`), `progress` +
+  `onProgress`, `onEnd`, `seriesId`, `fetch`. No `<ReaderProvider>`, no
+  `ReaderSource` to implement.
+- **`createReaderSource(input)`** (`porejs`) — the source builder behind
+  `<Book>`, usable without React. `readerSourceKey(input)` for a stable key.
+- **`<Reader onEnd>`** — `({ kind, hasNext })` at the end-of-book/chapter card;
+  swap `bookId` to load the next chapter.
+- **`<Reader settingsKey>` / `<Book seriesId>`** — keep fit / direction / zoom
+  across chapters served as separate books.
+- **A failed page image now shows a tappable "tap to retry" tile** in the flow
+  instead of a silent blank (image / PDF). Retries just that page. The demo's
+  blocking error card is fatal-only now.
+- `LocalFileSource` options accept `subtitle` / `volume`.
+
 ### Release pipeline & deploy (M8 H8–H9)
 
 - **`.github/workflows/release.yml`** — Changesets: a "version packages" PR on

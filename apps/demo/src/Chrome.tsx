@@ -776,9 +776,11 @@ export function Chrome({
         </div>
       )}
 
-      {readerError.error && (
+      {/* only a fatal / whole-book error gets the blocking card — a single
+          failed page shows the engine's inline "tap to retry" tile instead */}
+      {readerError.error && readerError.error.index === undefined && (
         <div className="error-tile" role="alert">
-          <p>Couldn't load this page.</p>
+          <p>Couldn't load this book.</p>
           <div className="error-tile__actions">
             <button onClick={readerError.retry}>Retry</button>
             <button onClick={readerError.dismiss}>Dismiss</button>

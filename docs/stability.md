@@ -20,6 +20,8 @@ The two are released **together on one version number**.
 - **`data-pore-*` DOM hooks** on the headless components, and the **engine
   event names** (`reader:*`).
 - **`<Reader>` props** and the `useReader*` hook return shapes.
+- **`<Book>` props** and **`createReaderSource` input shape** — the one-call
+  convenience layer over `ReaderSource`.
 
 Adding an engine event, a new optional `Manifest` / settings field, a new hook,
 or a new headless component is a **minor** bump. Removing or renaming any of the

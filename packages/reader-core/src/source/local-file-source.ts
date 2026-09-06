@@ -18,6 +18,8 @@ const PDF_RE = /\.pdf$/i;
 
 export interface LocalFileSourceOptions {
   title?: string;
+  subtitle?: string;
+  volume?: string | number;
   direction?: Direction;
 }
 
@@ -85,11 +87,16 @@ export class LocalFileSource implements ReaderSource {
   async getManifest(_bookId: string): Promise<Manifest> {
     await this.#ready;
     const title = this.#opts.title ?? this.#bookId.replace(/\.(cbz|zip|epub|pdf)$/i, '');
+    const meta = {
+      ...(this.#opts.subtitle !== undefined ? { subtitle: this.#opts.subtitle } : {}),
+      ...(this.#opts.volume !== undefined ? { volume: this.#opts.volume } : {}),
+    };
     if (this.#kind !== 'image') {
       const manifest: TextManifest = {
         bookId: this.#bookId,
         type: this.#kind,
         title,
+        ...meta,
         ...(this.#file ? { bytes: this.#file.size } : {}),
       };
       return manifest;
@@ -98,6 +105,7 @@ export class LocalFileSource implements ReaderSource {
       bookId: this.#bookId,
       type: 'image',
       title,
+      ...meta,
       direction: this.#opts.direction ?? 'ltr',
       pageCount: this.#entries.length,
       pages: this.#entries.map((_, index) => ({ index })),

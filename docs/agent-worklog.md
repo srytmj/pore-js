@@ -48,9 +48,13 @@ publish + deploy milestone (no new reader features). Packages built at
 | H9 | **`apps/demo/Dockerfile`** + `nginx.conf` + **`docs/deploy.md`** (compose stanza + owner checklist) |
 | H10 | **`docs/getting-started.md`**; README badges + Status/Milestones rewrite; docs index |
 
-**All green:** 293 unit · size 4/4 · chromium 46/46 · webkit 44/44 (2 TTS skips)
-· host-app e2e 3/3 · lint · typecheck · `verify-packages`. Firefox on CI only
-(won't launch on the Windows box). Bug log: `docs/known-issues.md`.
+**Plus H11 (2026-09-07):** `<Book>` one-call API (`src` / `pages` / `file` +
+`meta`), `createReaderSource`, `<Reader onEnd>` + `settingsKey`, broken-page
+retry tile — the on-ramp for wiring the reader into a real library.
+
+**All green:** 304 unit · size 4/4 · chromium 47/47 · webkit 46/46 (2 TTS
+skips) · host-app e2e 3/3 · lint · typecheck · `verify-packages`. Firefox on CI
+only (won't launch on the Windows box). Bug log: `docs/known-issues.md`.
 
 **What's left — owner-gated:**
 
@@ -99,6 +103,26 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-07 — M8 H11: `<Book>` one-call API + 3 manga-library fixes
+- **What:** owner wants a "one call" on-ramp before integrating with their
+  library. **`<Book>`** (`porejs-react`): `src` (archive URL) / `pages` (image
+  URL list) / `file`, `meta` (title/author/volume/chapter/direction),
+  `progress`+`onProgress`, `onEnd`, `seriesId`, `fetch` — no `<ReaderProvider>`,
+  no `ReaderSource`. Behind it: **`createReaderSource(input)`** in `porejs`
+  (`PagesSource` + fetch-and-parse over `LocalFileSource`) + `readerSourceKey()`.
+  Three real gaps fixed too: **`<Reader onEnd>`** `({kind,hasNext})` for
+  next-chapter-is-a-separate-bookId; **broken-page retry tile**
+  (`img[data-pore-page-error]` + `PageLoader.forget`), demo error card now
+  fatal-only; **`<Reader settingsKey>` / `<Book seriesId>`** so fit/zoom/direction
+  survive chapter changes. `LocalFileSource` opts gained `subtitle`/`volume`.
+- **State:** committed + pushed. 304 unit (+13) · 93 e2e (chromium+webkit,
+  +2, SW now blocked in the config so `page.route` works) · host-app 3/3 · size
+  4/4 · lint · typecheck. Docs: `getting-started.md` leads with `<Book>`,
+  `integration.md §0` = two tiers, `stability.md`, `known-issues.md`.
+- **Notes:** the `<Reader onEnd>` fires on the end card becoming visible; the
+  demo still shows a "Continue →" for in-manifest chapters. `settingsKey` reads
+  from a ref (no engine remount when only it changes — edge case, documented).
 
 ## 2026-09-07 — npm publish postponed; local-consumption path added
 - **What:** owner decided to hold off publishing `porejs` / `porejs-react` to

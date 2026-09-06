@@ -158,6 +158,13 @@ export class PageLoader {
     this.#lru = this.#lru.filter((i) => i !== index);
   }
 
+  /** Discard a page's cache entry (in-flight loads aborted) so the next
+   *  `get(index)` re-fetches it — used to retry a page that failed. */
+  forget(index: number): void {
+    this.#entries.get(index)?.controller?.abort();
+    this.#drop(index);
+  }
+
   async #fetch(
     index: number,
     signal: AbortSignal,

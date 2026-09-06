@@ -29,7 +29,33 @@ Peer deps: `react` / `react-dom` ≥ 19 for the React package; `gsap` is an
 
 ---
 
-## 0. Embedding in an existing site
+## 0. Two tiers
+
+**Tier 1 — `<Book>`.** You have a URL to a file, a list of image URLs, or a
+`File`. Render `<Book src|pages|file meta … />` — it builds the source, no
+`ReaderSource` to implement, no `<ReaderProvider>`. Covers most manga /
+comics / book sites. See [`getting-started.md`](getting-started.md). Props:
+
+| prop | |
+|---|---|
+| `src` \| `pages` \| `file` | **one required** — archive URL / image-URL list / `File`\|`Blob` |
+| `meta` | `{ title, author, subtitle, volume, chapter, direction }` — tab title + reading direction |
+| `progress` / `onProgress` | resume value in / out (you persist it) |
+| `onEnd` | `({ kind: 'book' \| 'chapter', hasNext })` — load the next chapter |
+| `seriesId` | keep fit / zoom / direction prefs across chapters served as separate `<Book>`s |
+| `fetch` | swap the fetcher — add `Referer` / auth headers for a CDN |
+| `className` / `style` / `children` / `transitions` / `persistSettings` / `fontFaceCss` | passthrough to `<Reader>` |
+
+`createReaderSource(input)` (also from `porejs`, no React) is the same builder
+if you want the source object.
+
+**Tier 2 — `ReaderSource` + `<ReaderProvider>`.** A real backend: auth,
+streaming, server-side progress, offline caching, per-page signed URLs. One
+object, ~5 methods (§2). This is the rest of this document.
+
+---
+
+## 0.5. Embedding in an existing site
 
 The common case: you already have a manga / comics / book library — a catalog,
 a content API, auth, routing. You want a reader without building one.

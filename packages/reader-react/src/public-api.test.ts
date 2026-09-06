@@ -10,6 +10,10 @@ const PUBLIC = [
   'ReaderProvider',
   'useReaderSource',
   'createSettingsPersistence',
+  // one-call reader
+  'Book',
+  'createReaderSource',
+  'readerSourceKey',
   // the component + hooks
   'Reader',
   'useReader',

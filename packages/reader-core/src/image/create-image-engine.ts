@@ -257,8 +257,13 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     if (settings.maxHeight) img.style.maxHeight = `${settings.maxHeight}px`;
   };
 
+  const ERR_STYLE =
+    'min-height:60vh;width:100%;display:flex;align-items:center;justify-content:center;' +
+    'border:1px dashed currentColor;opacity:0.6;font:inherit;text-align:center;cursor:pointer;padding:1rem;box-sizing:border-box;';
+
   const loadInto = (img: HTMLImageElement, pageIndex: number) => {
     emitter.emit('reader:loadingstate', { index: pageIndex, state: 'loading' });
+    img.removeAttribute('data-pore-page-error');
     loader
       ?.get(pageIndex)
       .then((url) => {
@@ -267,9 +272,32 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
         emitter.emit('reader:loadingstate', { index: pageIndex, state: 'loaded' });
       })
       .catch((error: unknown) => {
+        if (destroyed) return;
         emitter.emit('reader:loadingstate', { index: pageIndex, state: 'error' });
         emitter.emit('reader:error', { index: pageIndex, error });
+        // A tappable "page failed — retry" tile instead of a silent blank. An
+        // <img> with no src renders its `alt`; the inline style makes it a hit
+        // target. `img[data-pore-page-error]` is a styling hook for hosts.
+        img.removeAttribute('src');
+        img.alt = `Page ${pageIndex + 1} failed to load — tap to retry`;
+        img.setAttribute('data-pore-page-error', String(pageIndex + 1));
+        img.setAttribute('role', 'button');
+        img.style.cssText = ERR_STYLE;
       });
+  };
+
+  /** Tap a failed page tile to retry just that page. */
+  const onRetryClick = (ev: MouseEvent) => {
+    const t = ev.target as HTMLElement | null;
+    const img = t?.closest?.('img[data-pore-page-error]') as HTMLImageElement | null;
+    if (!img) return;
+    const n = Number(img.getAttribute('data-pore-page-error'));
+    if (!Number.isFinite(n) || n < 1) return;
+    ev.stopPropagation();
+    img.removeAttribute('role');
+    applyFitStyle(img);
+    loader?.forget(n - 1);
+    loadInto(img, n - 1);
   };
 
   const syncPrefetchAndRetain = () => {
@@ -670,6 +698,11 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
 
   const onPointerUp = (ev: PointerEvent) => {
     if (!pointer || ev.pointerId !== pointer.id) return;
+    // a tap on a failed-page tile is a retry, not a page turn
+    if ((ev.target as HTMLElement | null)?.closest?.('img[data-pore-page-error]')) {
+      pointer = null;
+      return;
+    }
     const dx = ev.clientX - pointer.x;
     const dy = ev.clientY - pointer.y;
     const dt = Date.now() - pointer.t;
@@ -879,6 +912,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     }
     root.addEventListener('keydown', onKeyDown);
     root.addEventListener('scroll', onScroll, { passive: true });
+    root.addEventListener('click', onRetryClick);
     root.addEventListener('pointerdown', onPointerDown);
     root.addEventListener('pointermove', onPointerMove);
     root.addEventListener('pointerup', onPointerUp);
@@ -913,6 +947,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     if (advanceTimer) clearTimeout(advanceTimer);
     root.removeEventListener('keydown', onKeyDown);
     root.removeEventListener('scroll', onScroll);
+    root.removeEventListener('click', onRetryClick);
     root.removeEventListener('pointerdown', onPointerDown);
     root.removeEventListener('pointermove', onPointerMove);
     root.removeEventListener('pointerup', onPointerUp);

@@ -346,6 +346,28 @@ test.describe('Pore.js demo', () => {
     await expect(counter).not.toContainText('1/8');
   });
 
+  test('a page that fails to load shows a retry tile; tapping it recovers', async ({ page }) => {
+    let block = true;
+    // fail the 2nd manga page (p02.svg) until the retry
+    await page.route(/demo-manga\/p0*2\.svg/i, (route) =>
+      block ? route.abort() : route.continue(),
+    );
+    await page.goto('/?book=demo-manga');
+    await page.getByRole('button', { name: 'Reader settings' }).click();
+    await openSettingsSection(page, 'Layout');
+    await page.getByLabel('Layout').selectOption('paged-single'); // one page at a time
+    await page.getByRole('button', { name: 'Reader settings' }).click();
+
+    await turn(page, 'forward', { rtl: true }); // → page 2 (blocked)
+    const tile = page.locator('img[data-pore-page-error]');
+    await expect(tile).toBeVisible({ timeout: 10_000 });
+
+    block = false;
+    await tile.click();
+    await expect(page.locator('img[data-pore-page-error]')).toHaveCount(0, { timeout: 10_000 });
+    await expect(page.locator('.pore-image__viewport img[src]')).toBeVisible();
+  });
+
   test('RTL double spread renders two pages, left arrow goes back', async ({ page }) => {
     await page.goto('/?book=demo-manga');
     await expect(page.locator('.pore-image img')).toHaveCount(2);

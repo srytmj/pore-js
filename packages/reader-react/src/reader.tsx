@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
   type Ref,
 } from 'react';
@@ -152,7 +153,20 @@ export interface ReaderProps {
   bookId: string;
   initialSettings?: Partial<AnySettings>;
   onPositionChange?: (loc: ReaderLocation) => void;
+  /**
+   * Fires when the reader reaches an end-of-chapter / end-of-book card.
+   * `kind: 'book'` = the last page of this `bookId`; use it to load the next
+   * chapter (swap `bookId`) in a host that serves chapters separately.
+   */
+  onEnd?: (info: { kind: 'book' | 'chapter'; hasNext: boolean }) => void;
+  /**
+   * Key the per-book settings layer by this instead of `bookId`. Use a series
+   * id when you serve chapters as separate `bookId`s, so a reader's fit /
+   * direction / zoom choices carry across chapters. Defaults to `bookId`.
+   */
+  settingsKey?: string;
   className?: string;
+  style?: CSSProperties;
   children?: ReactNode;
   ref?: Ref<ReaderHandle>;
   /**
@@ -177,7 +191,10 @@ export function Reader({
   bookId,
   initialSettings,
   onPositionChange,
+  onEnd,
+  settingsKey,
   className,
+  style,
   children,
   ref,
   persistSettings = true,
@@ -189,6 +206,10 @@ export function Reader({
   const engineRef = useRef<EngineLike | null>(null);
   const onPosRef = useRef(onPositionChange);
   onPosRef.current = onPositionChange;
+  const onEndRef = useRef(onEnd);
+  onEndRef.current = onEnd;
+  const settingsKeyRef = useRef(settingsKey);
+  settingsKeyRef.current = settingsKey;
   const transitionsRef = useRef(transitions);
   transitionsRef.current = transitions;
   const fontFaceCssRef = useRef(fontFaceCss);
@@ -245,7 +266,7 @@ export function Reader({
       // pdf uses the image settings shape (it's the image engine underneath)
       const rk: ReaderKind = isText ? 'text' : 'image';
       setKind(rk);
-      const seeded = { ...persistence.initial(bookId, rk), ...initialSettings };
+      const seeded = { ...persistence.initial(settingsKeyRef.current ?? bookId, rk), ...initialSettings };
       setSettings({
         ...(isText ? DEFAULT_TEXT_SETTINGS : DEFAULT_IMAGE_SETTINGS),
         ...seeded,
@@ -296,7 +317,7 @@ export function Reader({
           const q = p as { settings: AnySettings; keymap?: Keymap };
           setSettings(q.settings);
           if (q.keymap) setKeymap(q.keymap);
-          persistence.save(bookId, rk, q.settings);
+          persistence.save(settingsKeyRef.current ?? bookId, rk, q.settings);
         }),
         engine.on('reader:toc', (p: never) => {
           setToc((p as { toc: TocEntry[] }).toc);
@@ -316,6 +337,7 @@ export function Reader({
         engine.on('reader:endpage', (p: never) => {
           const q = p as EndPage & { visible: boolean };
           setEndPage(q.visible ? { kind: q.kind, label: q.label, hasNext: q.hasNext } : null);
+          if (q.visible) onEndRef.current?.({ kind: q.kind, hasNext: q.hasNext });
         }),
         engine.on('reader:chrometoggle', (p: never) =>
           setChromeVisible((p as { visible: boolean }).visible),
@@ -434,7 +456,11 @@ export function Reader({
   return (
     <RuntimeContext.Provider value={ctx}>
       {children}
-      <div ref={hostRef} className={className} style={{ flex: 1, minHeight: 0, minWidth: 0 }} />
+      <div
+        ref={hostRef}
+        className={className}
+        style={{ flex: 1, minHeight: 0, minWidth: 0, ...style }}
+      />
     </RuntimeContext.Provider>
   );
 }

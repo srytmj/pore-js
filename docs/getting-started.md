@@ -1,70 +1,85 @@
 # Getting started
 
-Add a full reader — manga, comics, EPUB, PDF — to a React app. You bring a
-content source and a mount point; `porejs` is everything else.
+Add a reader — manga, comics, EPUB, PDF — to a React app.
 
-> Not on React? `porejs` alone gives you `createImageEngine` /
-> `createTextEngine` / `createPdfEngine` over the same `ReaderSource`. This
-> guide is the React path.
-
-## 1. Install
+## Install
 
 ```bash
 npm i porejs porejs-react
-# peers: react >= 19, react-dom >= 19 (gsap is optional — eased page turns)
+# peers: react >= 19, react-dom >= 19 (gsap optional — eased page turns)
 ```
 
 ESM-only, Node ≥ 20, current + previous major of Chrome / Firefox / Safari.
+`porejs-react` is **client-only** (Next.js: put it under `'use client'`).
 
-## 2. A source
+## The one-call reader: `<Book>`
 
-A `ReaderSource` maps *your* book ids to a manifest, page bytes and a reading
-position. The quickest start is the bundled `DemoSource` (fixtures, no backend);
-swap it for your own once it renders.
-
-```ts
-import { CachedSource, DemoSource } from 'porejs';
-
-// CachedSource adds local-first resume + offline caching around any source
-export const source = new CachedSource(new DemoSource());
-```
-
-Your real source is ~40 lines over your existing API — see
-[`integration.md` §2](integration.md) and the worked example in
-[`examples/host-app/`](../examples/host-app).
-
-## 3. Mount `<Reader>`
+You have a URL to a file, or a list of image URLs. That's all `<Book>` needs.
 
 ```tsx
-import { ReaderProvider, Reader } from 'porejs-react';
-import { source } from './source';
+import { Book } from 'porejs-react';
 
-export function BookView({ bookId }: { bookId: string }) {
-  return (
-    <ReaderProvider source={source}>
-      {/* size it however you like — the reader fills its box */}
-      <Reader bookId={bookId} className="reader-host" style={{ height: '100dvh' }} />
-    </ReaderProvider>
-  );
-}
+// a .cbz / .epub / .pdf / .zip
+<Book src="https://cdn.site/one-piece/vol-108/ch-1074.cbz" />
+
+// …or a list of image URLs (one manga chapter)
+<Book pages={['https://cdn/1.webp', 'https://cdn/2.webp', '…']} />
+
+// …or a File / Blob you already have
+<Book file={droppedFile} />
 ```
 
-That's a working reader: pagination, themes, pinch-zoom, keyboard / tap / swipe
-nav, resume. `<Reader>` picks the image / text / PDF engine from the manifest.
+Add metadata if you have it — it drives the tab title and reading direction:
 
-## 4. Style the chrome you want
+```tsx
+<Book
+  src="https://cdn.site/one-piece/ch-1074.cbz"
+  meta={{
+    title: 'One Piece',
+    author: 'Eiichiro Oda',
+    volume: 108,
+    chapter: 1074,
+    direction: 'rtl',          // manga; 'vertical' for tategaki
+  }}
+/>
+```
+
+### Progress, chapters, auth
+
+```tsx
+<Book
+  src={chapterUrl}
+  meta={meta}
+  seriesId="one-piece"                       // keeps fit/zoom prefs across chapters
+  progress={savedPosition}                   // resume — a value from onProgress
+  onProgress={(pos) => saveToMyDb(pos)}      // persist it yourself
+  onEnd={({ kind }) => {                     // reached the end
+    if (kind === 'book') loadNextChapter();
+  }}
+  fetch={(url, init) =>                      // CDN that needs auth / Referer
+    fetch(url, { ...init, headers: { Referer: 'https://site' } })
+  }
+  className="reader"
+  style={{ height: '100dvh' }}
+/>
+```
+
+Style the reader host with `className` / `style`. `<Book>` renders no chrome —
+add your own toolbar with the hooks (below) if you want one.
+
+## Adding chrome
 
 `porejs-react` ships **no CSS**. The headless components carry `data-pore-*`
-hooks; you style them, and you decide which to show.
+hooks; you style and place them. They work inside `<Book>` via `children`:
 
 ```tsx
-import { useReader, useReaderLocation, TableOfContents, SettingsPanel } from 'porejs-react';
+import { Book, useReader, useReaderLocation, TableOfContents } from 'porejs-react';
 
 function Toolbar() {
   const reader = useReader();
   const loc = useReaderLocation();
   return (
-    <div className="my-toolbar">
+    <div className="toolbar">
       <button onClick={() => reader.turn('back')}>‹</button>
       <span>{loc ? `${loc.page + 1} / ${loc.total}` : '…'}</span>
       <button onClick={() => reader.turn('forward')}>›</button>
@@ -72,22 +87,33 @@ function Toolbar() {
     </div>
   );
 }
+
+<Book src={url} meta={meta}>
+  <Toolbar />
+</Book>;
 ```
 
 Hooks: `useReader`, `useReaderLocation`, `useReaderProgress`,
 `useReaderSettings`, `useReaderSearch`, `useReaderHighlights`, `useBookmarks`,
-`useTts`, `useTableOfContents`, `useReaderHistory` (tab title / URL — opt-in).
-Components: `<SettingsPanel>`, `<TableOfContents>`, `<HighlightsPanel>`,
-`<BookmarksPanel>`, `<ReaderScrubber>`, `<FootnotePopover>`,
-`<ReaderAnnouncer>` (mount once for screen readers).
+`useTts`, `useTableOfContents`. Components: `<SettingsPanel>`,
+`<TableOfContents>`, `<HighlightsPanel>`, `<BookmarksPanel>`,
+`<ReaderScrubber>`, `<FootnotePopover>`, `<ReaderAnnouncer>` (mount once for
+screen readers). `apps/demo/src/styles.css` is a full worked stylesheet — copy
+from it.
 
-**A complete worked stylesheet** is `apps/demo/src/styles.css` in the repo —
-copy from it.
+## When you have a real backend
 
-## 5. PDF worker (only if you show PDFs)
+If you need auth, streaming, server-side progress, or offline caching, drop to
+the source tier — implement `ReaderSource` (one object, ~5 methods) and pass it
+to `<ReaderProvider>`. See [`integration.md`](integration.md) and the worked
+example in [`examples/host-app/`](../examples/host-app) (`pnpm example`).
 
-pdf.js is a lazy chunk. Point it at its worker once at startup so it stays out
-of your main bundle:
+`<Book>` is `createReaderSource(...)` + `<ReaderProvider>` + `<Reader>` — you
+can compose those yourself at any point.
+
+## PDF worker (only if you show PDFs)
+
+pdf.js is a lazy chunk. Point it at its worker once at startup:
 
 ```ts
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'; // Vite
@@ -97,7 +123,7 @@ setPdfWorkerSrc(pdfWorkerUrl);
 
 ## Next
 
-- [`integration.md`](integration.md) — the `ReaderSource` seam, the embed
-  story, security / CSP, bundle size.
+- [`integration.md`](integration.md) — the source seam, security / CSP, bundle
+  size, embed isolation.
 - [`architecture.md`](architecture.md) — how the engines work.
 - [`stability.md`](stability.md) — what `v1.x` SemVer covers.

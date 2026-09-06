@@ -113,6 +113,11 @@ export type {
 } from './source/cached-source.js';
 export { LocalFileSource } from './source/local-file-source.js';
 export type { LocalFileSourceOptions } from './source/local-file-source.js';
+export { createReaderSource, readerSourceKey } from './source/create-reader-source.js';
+export type {
+  CreateReaderSourceInput,
+  ReaderMeta,
+} from './source/create-reader-source.js';
 export {
   KavitaSource,
   KavitaAuthError,

@@ -7,6 +7,11 @@
 
 export { ReaderProvider, useReaderSource } from './provider.js';
 export type { ReaderProviderProps } from './provider.js';
+export { Book } from './book.js';
+export type { BookProps } from './book.js';
+// the one-call source (also usable without React)
+export { createReaderSource, readerSourceKey } from 'porejs';
+export type { CreateReaderSourceInput, ReaderMeta } from 'porejs';
 
 export { createSettingsPersistence } from './settings-store.js';
 export type { SettingsPersistence, SettingsStorage } from './settings-store.js';
