@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { ImageEngineSettings } from '@pore/reader-core';
+import type { ImageEngineSettings } from 'porejs';
 import { useReader, useReaderLocation } from './reader.js';
 
 export type HistoryMode = ImageEngineSettings['historyMode'];

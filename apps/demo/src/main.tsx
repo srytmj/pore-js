@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import '@fontsource-variable/hanken-grotesk/wght.css';
 import '@fontsource-variable/literata/wght.css';
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
-import { setPdfWorkerSrc } from '@pore/reader-core';
+import { setPdfWorkerSrc } from 'porejs';
 import { App } from './App.js';
 import './styles.css';
 

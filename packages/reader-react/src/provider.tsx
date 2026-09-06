@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import type { ReaderSource } from '@pore/reader-core';
+import type { ReaderSource } from 'porejs';
 
 interface ReaderProviderValue {
   source: ReaderSource;

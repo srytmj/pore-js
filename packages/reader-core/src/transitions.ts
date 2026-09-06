@@ -5,7 +5,7 @@
  * {@link instantTransitions}, applies changes synchronously — identical to the
  * pre-seam behaviour and zero cost.
  *
- * `@pore/reader-react` ships a `gsapAdapter(gsap)` that implements this.
+ * `porejs-react` ships a `gsapAdapter(gsap)` that implements this.
  */
 
 export interface TransitionContext {

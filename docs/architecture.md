@@ -16,11 +16,11 @@ depth, [`image-engine-spec.md`](image-engine-spec.md).
                         │  Chrome.tsx     the reader chrome            │
                         │  styles.css     ALL styling (Tailwind v4)    │
                         └───────────────────┬─────────────────────────┘
-                                            │ @pore/reader-react (headless)
+                                            │ porejs-react (headless)
         ┌───────────────────────────────────┴───────────────────────────────┐
         │  <ReaderProvider source>   <Reader bookId>   hooks   headless UI   │
         └───────────────────────────────────┬───────────────────────────────┘
-                                            │ @pore/reader-core (no React)
+                                            │ porejs (no React)
         ┌───────────────────────────────────┴───────────────────────────────┐
         │  ReaderSource ──► Manifest / pages / Position / highlights         │
         │  createImageEngine · createTextEngine · createPdfEngine           │

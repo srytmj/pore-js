@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { DEFAULT_KEYMAP, type ActionId, type ImageEngineSettings } from '@pore/reader-core';
+import { DEFAULT_KEYMAP, type ActionId, type ImageEngineSettings } from 'porejs';
 import { useReaderKeymap, useReaderKind, useReaderSettings } from './reader.js';
 import { TextSettingsPanel } from './text-settings-panel.js';
 import { Accordion, SelectField, SliderField, SwitchField, Tabs, type TabDef } from './primitives.js';

@@ -34,7 +34,7 @@ import {
   type TtsVoiceLike,
   type TocEntry,
   type TurnDirection,
-} from '@pore/reader-core';
+} from 'porejs';
 import { useReaderSource } from './provider.js';
 import { createSettingsPersistence, type SettingsPersistence } from './settings-store.js';
 
@@ -42,7 +42,7 @@ export type ReaderKind = 'image' | 'text';
 export type AnySettings = ImageEngineSettings | TextEngineSettings;
 
 export type ReaderLocation = Locator;
-export type { ReaderProgress, Chapter } from '@pore/reader-core';
+export type { ReaderProgress, Chapter } from 'porejs';
 
 export interface Footnote {
   html: string;

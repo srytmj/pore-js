@@ -29,7 +29,7 @@ Reference implementation: [`apps/demo/src/portability.ts`](../apps/demo/src/port
 }
 ```
 
-`HighlightRecord` and `Bookmark` are re-exported from `@pore/reader-core` (see
+`HighlightRecord` and `Bookmark` are re-exported from `porejs` (see
 [`architecture.md`](architecture.md)). In brief:
 
 - **Text highlight** (`kind: "text"`): `{ id, kind, color, text, note?,

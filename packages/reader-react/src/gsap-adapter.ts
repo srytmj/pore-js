@@ -1,9 +1,9 @@
-import type { ReaderTransitions } from '@pore/reader-core';
+import type { ReaderTransitions } from 'porejs';
 
 /**
  * The slice of GSAP's API this adapter needs. Pass the real `gsap` object
  * (`import gsap from 'gsap'`) — it is an *optional peer dependency* of
- * `@pore/reader-react`, never bundled.
+ * `porejs-react`, never bundled.
  */
 export interface GsapLike {
   to(target: unknown, vars: Record<string, unknown>): unknown;

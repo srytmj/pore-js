@@ -97,7 +97,7 @@ end-page styling; Radix `Select`/`DropdownMenu` variants deferred to U5)_
 
 ## U4 — `gsapAdapter` (GSAP animation) · M ✅
 
-- [x] `@pore/reader-react` exports `gsapAdapter(gsap, opts?)` → `ReaderTransitions`;
+- [x] `porejs-react` exports `gsapAdapter(gsap, opts?)` → `ReaderTransitions`;
       `gsap` is an **optional peer dep** (`peerDependenciesMeta`), never bundled
 - [x] `page()` — eased `x`/`y` slide from → to (~220 ms `power2.out`) with a
       short opacity fade on a real turn (`dir !== 0`); flow-mode / continuous use

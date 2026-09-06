@@ -1,4 +1,4 @@
-import { openKvStore } from '@pore/reader-core';
+import { openKvStore } from 'porejs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ModeGlyph } from './Landing.js';
 

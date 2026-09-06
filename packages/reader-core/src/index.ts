@@ -1,5 +1,5 @@
 /**
- * @pore/reader-core — framework-agnostic reader engine.
+ * porejs — framework-agnostic reader engine.
  *
  * Public surface is intentionally small; see docs/reader-engine-design.md §4
  * and docs/image-engine-spec.md §10.

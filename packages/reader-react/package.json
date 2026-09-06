@@ -1,10 +1,33 @@
 {
-  "name": "@pore/reader-react",
-  "version": "0.0.0",
-  "description": "React 19 bindings for @pore/reader-core",
+  "name": "porejs-react",
+  "version": "1.0.0-rc.1",
+  "description": "React 19 bindings for porejs: headless <Reader> + hooks",
   "license": "MIT",
+  "author": "Surya",
   "type": "module",
   "sideEffects": false,
+  "keywords": [
+    "reader",
+    "epub",
+    "pdf",
+    "cbz",
+    "manga",
+    "react",
+    "headless",
+    "ereader",
+    "porejs"
+  ],
+  "homepage": "https://github.com/srytmj/pore-js#readme",
+  "bugs": "https://github.com/srytmj/pore-js/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/srytmj/pore-js.git",
+    "directory": "packages/reader-react"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -14,7 +37,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist/**/*.js",
+    "dist/**/*.d.ts"
   ],
   "scripts": {
     "build": "tsup",
@@ -23,7 +47,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@pore/reader-core": "workspace:*",
+    "porejs": "workspace:*",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-popover": "^1.1.23",
     "@radix-ui/react-select": "^2.3.7",

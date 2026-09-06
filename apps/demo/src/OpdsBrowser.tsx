@@ -1,4 +1,4 @@
-import { OpdsSource, type OpdsEntry, type OpdsFeed, type ReaderSource } from '@pore/reader-core';
+import { OpdsSource, type OpdsEntry, type OpdsFeed, type ReaderSource } from 'porejs';
 import { useState } from 'react';
 
 const DEFAULT_URL = '/opds/catalog.xml';

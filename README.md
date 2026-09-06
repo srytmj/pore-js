@@ -56,8 +56,8 @@ Requires Node >= 20.
 Full guide: [`docs/integration.md`](docs/integration.md). The short version —
 
 ```tsx
-import { ReaderProvider, Reader } from '@pore/reader-react';
-import { CachedSource, DemoSource } from '@pore/reader-core';
+import { ReaderProvider, Reader } from 'porejs-react';
+import { CachedSource, DemoSource } from 'porejs';
 
 const source = new CachedSource(new DemoSource()); // swap DemoSource for your own
 
@@ -66,12 +66,12 @@ const source = new CachedSource(new DemoSource()); // swap DemoSource for your o
 </ReaderProvider>
 ```
 
-- **`@pore/reader-react`** — React 19: `<Reader>`, the `useReader*` hooks, and
+- **`porejs-react`** — React 19: `<Reader>`, the `useReader*` hooks, and
   **headless** components (`<SettingsPanel>`, `<TableOfContents>`,
   `<HighlightsPanel>`, `<ReaderScrubber>`, `<FootnotePopover>`,
   `<ReaderAnnouncer>`). **Ships no CSS** — you style the `data-pore-*` markup.
   `apps/demo/src/styles.css` is a complete worked example.
-- **`@pore/reader-core`** — framework-agnostic. `createImageEngine` /
+- **`porejs`** — framework-agnostic. `createImageEngine` /
   `createTextEngine` / `createPdfEngine` if you're not on React.
 - **Sources** — implement `ReaderSource` (`getManifest`, `getPage`, `getFile`,
   `loadProgress` / `saveProgress`, optional `loadHighlights` / `saveHighlights`)

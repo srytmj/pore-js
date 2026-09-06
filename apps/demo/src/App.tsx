@@ -4,7 +4,7 @@ import {
   LocalFileSource,
   type Position,
   type ReaderSource,
-} from '@pore/reader-core';
+} from 'porejs';
 import {
   Reader,
   ReaderAnnouncer,
@@ -12,7 +12,7 @@ import {
   gsapAdapter,
   useReader,
   useReaderLocation,
-} from '@pore/reader-react';
+} from 'porejs-react';
 import gsap from 'gsap';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type MutableRefObject } from 'react';
 import { Chrome } from './Chrome.js';

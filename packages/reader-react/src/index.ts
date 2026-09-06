@@ -1,5 +1,5 @@
 /**
- * @pore/reader-react — React 19 bindings for @pore/reader-core.
+ * porejs-react — React 19 bindings for porejs.
  *
  * Core mounts imperatively into a ref'd container; React owns the chrome.
  * No React inside iframes — ever. See docs/reader-engine-design.md §11.
@@ -30,8 +30,8 @@ export type {
   TtsState,
   TtsSentence,
   TtsVoiceLike,
-} from '@pore/reader-core';
-export { instantTransitions } from '@pore/reader-core';
+} from 'porejs';
+export { instantTransitions } from 'porejs';
 export { gsapAdapter } from './gsap-adapter.js';
 export type { GsapLike, GsapAdapterOptions } from './gsap-adapter.js';
 

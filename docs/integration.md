@@ -2,15 +2,15 @@
 
 How to embed the reader in your own app. Two layers:
 
-- **`@pore/reader-react`** — React 19. `<Reader>` + hooks + headless components.
+- **`porejs-react`** — React 19. `<Reader>` + hooks + headless components.
   This is what most apps use.
-- **`@pore/reader-core`** — framework-agnostic. Use directly only if you are not
+- **`porejs`** — framework-agnostic. Use directly only if you are not
   on React or want to drive the engine imperatively.
 
 Both are published from this monorepo (`workspace:*` internally). Peer deps:
 `react` / `react-dom` 19 for the React package.
 
-> **Styling model:** `@pore/reader-react` ships **no CSS**. Every component
+> **Styling model:** `porejs-react` ships **no CSS**. Every component
 > renders semantic markup with `data-pore-*` hooks and (where interactive)
 > Radix primitives. You bring the stylesheet. The `apps/demo` stylesheet
 > (`apps/demo/src/styles.css`) is a complete worked example.
@@ -20,8 +20,8 @@ Both are published from this monorepo (`workspace:*` internally). Peer deps:
 ## 1. Minimal React integration
 
 ```tsx
-import { ReaderProvider, Reader } from '@pore/reader-react';
-import { DemoSource, CachedSource } from '@pore/reader-core';
+import { ReaderProvider, Reader } from 'porejs-react';
+import { DemoSource, CachedSource } from 'porejs';
 
 // A source resolves book ids to manifests, pages/files, and reading position.
 const source = new CachedSource(new DemoSource()); // CachedSource = offline + resume
@@ -99,7 +99,7 @@ formats; `getPage` returns per-page blobs/URLs for image books.
 ### A custom source
 
 ```ts
-import type { ReaderSource, Manifest, Position } from '@pore/reader-core';
+import type { ReaderSource, Manifest, Position } from 'porejs';
 
 export class MyApiSource implements ReaderSource {
   constructor(private baseUrl: string, private token: string) {}
@@ -221,7 +221,7 @@ disable or your own `SettingsPersistence` (`createSettingsPersistence`).
 
 ```tsx
 import gsap from 'gsap';
-import { gsapAdapter } from '@pore/reader-react';
+import { gsapAdapter } from 'porejs-react';
 <Reader transitions={gsapAdapter(gsap)} />
 ```
 
@@ -238,7 +238,7 @@ lands in your main bundle:
 ```ts
 // Vite — the engine imports the *legacy* pdf.js build, so match it here
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
-import { setPdfWorkerSrc } from '@pore/reader-core';
+import { setPdfWorkerSrc } from 'porejs';
 setPdfWorkerSrc(pdfWorkerUrl);
 ```
 
@@ -247,7 +247,7 @@ setPdfWorkerSrc(pdfWorkerUrl);
 ## 9. Framework-agnostic core (no React)
 
 ```ts
-import { createTextEngine } from '@pore/reader-core';
+import { createTextEngine } from 'porejs';
 
 const engine = createTextEngine({ container, source, bookId, settings });
 const off = engine.on('reader:locationchange', (loc) => { /* … */ });

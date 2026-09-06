@@ -53,7 +53,8 @@ a host app** (`examples/host-app/`, isolation audit, `document.title`
 composition) → H3 real-content corpus → H4 robustness/fuzz → H5 cross-browser +
 e2e de-flake → H6 perf/size budgets → H7 security + a11y → H8 CI/CD + npm
 publish → H9 homelab deploy (Dockerfile, needs owner: DNS/proxy) → H10 docs +
-`v1.0.0`. All 6 open questions decided (see plan §Decisions).
+`v1.0.0`. All 6 open questions decided (see plan §Decisions). **H0 done**
+(renamed to `porejs` / `porejs-react`, `1.0.0-rc.1`, Changesets); H1 next.
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -70,6 +71,27 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-06 — M8 H0: package identity + Changesets
+- **What:** renamed the npm packages — `@pore/reader-core` → **`porejs`**,
+  `@pore/reader-react` → **`porejs-react`** (folder names unchanged; `apps/demo`
+  stays private `@pore/demo`). Touched every `name` / `workspace:*` dep /
+  source import / `tsup` external / doc mention; regenerated the lockfile. Both
+  publishable packages: `version` → `1.0.0-rc.1`, added `author` / `keywords` /
+  `homepage` / `bugs` / `repository.directory` / `publishConfig`
+  (`access: public`, `provenance: true`); `files` tightened to
+  `dist/**/*.{js,d.ts}` (drops `.map` + `.tsbuildinfo` from the tarball);
+  per-package `README.md` + `LICENSE`. Fixed root `repository.url`
+  (`pore.js` → `pore-js.git`). Removed dead `apps/demo/vercel.json`. Added
+  **Changesets** (`.changeset/config.json` with `porejs`/`porejs-react`
+  **fixed** together, `@pore/demo` ignored), `CONTRIBUTING.md`, and root
+  `changeset` / `version-packages` / `release` scripts.
+- **State:** committed. `npm pack --dry-run` clean (`porejs` 87 kB/103 files,
+  `porejs-react` 26 kB/35 files). build · typecheck · lint · 263 unit green.
+  e2e 42/43 (the annotations-review flake again — passes in isolation, it's
+  H5's job).
+- **Notes:** `porejs` still hard-deps `pdfjs-dist` — the tree-shake / optional
+  story is H6. Nothing published yet; first publish is H8's pipeline.
 
 ## 2026-09-06 — M8 scoped: hardening, embed, publish, deploy
 - **What:** `docs/m8-plan.md` — the road to `v1.0.0`. Not features: rename the

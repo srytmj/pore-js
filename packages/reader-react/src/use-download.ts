@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { CachedSource, DownloadStatus } from '@pore/reader-core';
+import type { CachedSource, DownloadStatus } from 'porejs';
 import { useReaderSource } from './provider.js';
 
 /** A source that can cache whole books offline (i.e. a {@link CachedSource}). */

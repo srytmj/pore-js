@@ -144,7 +144,7 @@ needs a wider reshape than M5's scope.
 - **Highlight notes & a reusable highlights panel (M5 F2b)** —
   `TextEngine.updateHighlight(id, { color?, note? })` (also on `ReaderHandle`
   and `useReaderSelection()`); `note: ''` clears the note. New headless
-  `<HighlightsPanel>` in `@pore/reader-react` — renders the list with
+  `<HighlightsPanel>` in `porejs-react` — renders the list with
   `data-pore-hl-*` hooks (jump / recolour / note textarea / remove) and calls
   the handle; the demo dropped its hand-rolled markup for it. The selection
   toolbar gained a "highlight + note" action.
@@ -444,7 +444,7 @@ EPUB reflowable text engine.
 
 ### Added
 
-- **`@pore/reader-core` — `text/`**
+- **`porejs` — `text/`**
   - `parseEpub` — `container.xml` → OPF (metadata / namespace-agnostic manifest /
     spine) → EPUB3 nav or EPUB2 ncx TOC; `EpubBook.resource()`; path helpers
   - `createTextEngine` — sandboxed `<iframe srcdoc>` (scripts stripped),
@@ -457,7 +457,7 @@ EPUB reflowable text engine.
     columns (1–2), theme (light/sepia/dark/oled), publisher-styles toggle
   - `goToHref` (TOC), footnote / same-doc link interception → `reader:footnote`
   - fixed-layout EPUB detected → `reader:error`, not a crash
-- **`@pore/reader-react`**
+- **`porejs-react`**
   - `<Reader>` mounts the image **or** text engine by `manifest.type`;
     `useReaderKind`, `useTableOfContents`, `useFootnote`, generic
     `useReaderSettings<T>`, normalized `location.percent`
@@ -504,7 +504,7 @@ First milestone: the image engine and a deployable demo. No backend.
 
 ### Added
 
-- **`@pore/reader-core`**
+- **`porejs`**
   - `ReaderSource` seam; `DemoSource` (fixture manifests + pages), `CachedSource`
     (local-first progress, offline write queue), `openKvStore` (IndexedDB KV)
   - Image engine (`createImageEngine`): paged single/double with spread pairing,
@@ -517,7 +517,7 @@ First milestone: the image engine and a deployable demo. No backend.
     (`scrollToTurn`), double-tap, Fullscreen API, Wake Lock
   - Last-read checkpoint: `loadProgress` before first paint, debounced save
   - Position model + `clampPagePosition`; typed event emitter
-- **`@pore/reader-react`**: `<Reader>`, `ReaderProvider`, `useReader`,
+- **`porejs-react`**: `<Reader>`, `ReaderProvider`, `useReader`,
   `useReaderLocation`, `useReaderSettings`, `useResumedFromPage`
 - **`apps/demo`**: control bar, progress bar, resume toast, `?book=` URL,
   Playwright e2e suite, Vercel config

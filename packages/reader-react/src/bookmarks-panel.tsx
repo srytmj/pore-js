@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Bookmark } from '@pore/reader-core';
+import type { Bookmark } from 'porejs';
 import { useBookmarks } from './reader.js';
 
 export interface BookmarksPanelProps {

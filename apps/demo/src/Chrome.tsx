@@ -24,7 +24,7 @@ import {
   type ImageEngineSettings,
   type TextEngineSettings,
   type TtsVoiceLike,
-} from '@pore/reader-react';
+} from 'porejs-react';
 import { useEffect, useState } from 'react';
 import {
   Home, Library, Search, Link as LinkIcon, Highlighter, Volume2,

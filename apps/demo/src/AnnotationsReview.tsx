@@ -1,4 +1,4 @@
-import type { Bookmark, HighlightRecord, Position, ReaderSource } from '@pore/reader-core';
+import type { Bookmark, HighlightRecord, Position, ReaderSource } from 'porejs';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { LibraryEntry } from './use-library.js';
 import {

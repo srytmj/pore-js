@@ -1,4 +1,4 @@
-import type { HighlightRecord, Position } from '@pore/reader-core';
+import type { HighlightRecord, Position } from 'porejs';
 import { useReader, useReaderHighlights, useReaderSelection } from './reader.js';
 
 export interface HighlightsPanelProps {

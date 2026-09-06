@@ -1,4 +1,4 @@
-import type { Bookmark, HighlightRecord, Position } from '@pore/reader-core';
+import type { Bookmark, HighlightRecord, Position } from 'porejs';
 
 /** One book's portable annotation set. `position` is the resume checkpoint. */
 export interface PortableBook {

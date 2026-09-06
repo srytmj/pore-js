@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { TextEngineSettings } from '@pore/reader-core';
+import type { TextEngineSettings } from 'porejs';
 import { useReaderSettings } from './reader.js';
 import { Accordion, SelectField, SliderField, SwitchField, Tabs, type TabDef } from './primitives.js';
 

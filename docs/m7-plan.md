@@ -116,7 +116,7 @@ a reload.
 The demo's landing becomes a home screen with a shelf of what you've read.
 
 - [x] **`useLibrary()` in the demo** (`apps/demo/src/use-library.ts`) — over
-      IndexedDB (`openKvStore` from `@pore/reader-core`, one key
+      IndexedDB (`openKvStore` from `porejs`, one key
       `pore:demo:library` → `LibraryEntry[]`). `{ id; title; glyph; kind:
       'sample' | 'file'; lastOpened; percent }`. `record()` on open (creates /
       bumps, keeps prior `percent`), `setProgress()` from `<Reader

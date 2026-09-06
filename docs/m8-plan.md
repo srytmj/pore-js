@@ -60,23 +60,25 @@ demo on the homelab, `H10` cuts `1.0.0`.
 
 ---
 
-## H0 — Package identity & release tooling · S
+## H0 — Package identity & release tooling · S · **DONE**
 
-- [ ] **Rename the packages** — `@pore/reader-core` → **`porejs`**,
-      `@pore/reader-react` → **`porejs-react`**. Every `name`, `workspace:*`
-      ref, `apps/demo` import, and `@pore/…` mention in `docs/` + `README.md` +
-      `CLAUDE.md`.
-- [ ] Fix `repository.url` (`srytmj/pore.js` → `srytmj/pore-js`); add
-      `homepage`, `bugs`, `keywords`, `publishConfig.access: "public"` to both
-      publishable packages.
-- [ ] Per-package `README.md` + `LICENSE` (copy root MIT). `files` is
-      `["dist"]` — confirm with `npm pack --dry-run`.
-- [ ] Add **Changesets** (`@changesets/cli`) + a `CONTRIBUTING` note. Both
-      packages to **`1.0.0-rc.1`**.
-- [ ] `.npmrc` / provenance groundwork for H8.
+- [x] **Renamed the packages** — the old `@pore/reader-core` → **`porejs`**,
+      `@pore/reader-react` → **`porejs-react`** (folder names unchanged;
+      `apps/demo` stays private `@pore/demo`). Every `name`, `workspace:*` dep,
+      source import, `tsup` external, and doc mention. Lockfile regenerated.
+- [x] Fixed `repository.url` (`srytmj/pore.js` → `srytmj/pore-js` `.git`);
+      added `homepage`, `bugs`, `keywords`, `author`, and
+      `publishConfig` (`access: public`, `provenance: true`) to both packages.
+- [x] Bumped both publishable packages to **`1.0.0-rc.1`**.
+- [x] Removed the dead `apps/demo/vercel.json` (deploy is the homelab now).
+- [x] Per-package `README.md` + `LICENSE` (copy of root MIT); `files` is
+      `["dist"]`, verified with `npm pack --dry-run`.
+- [x] **Changesets** (`@changesets/cli`) — `.changeset/config.json`, a
+      `CONTRIBUTING.md` note. `.npmrc` untouched (provenance rides on
+      `publishConfig` + the CI OIDC in H8).
 
 **Done when:** `npm pack --dry-run` shows a clean tarball with a real README,
-and `pnpm changeset` works.
+and `pnpm changeset` works. ✓
 
 ---
 

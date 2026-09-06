@@ -1,4 +1,4 @@
-import type { TocEntry } from '@pore/reader-core';
+import type { TocEntry } from 'porejs';
 import { useReader, useTableOfContents } from './reader.js';
 
 export interface TableOfContentsProps {
