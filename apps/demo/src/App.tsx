@@ -96,6 +96,7 @@ const BOOKS: SampleBook[] = [
     label: 'PDF',
     blurb: 'Rendered pages + a searchable text layer',
     glyph: 'pdf',
+    settings: { direction: 'ltr' },
   },
 ];
 
@@ -118,7 +119,7 @@ export function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [opdsOpen, setOpdsOpen] = useState(false);
   const menu = useMenuBar();
-  const [isFullscreen, toggleFullscreen] = useFullscreen();
+  const [isFullscreen] = useFullscreen();
   const [animate, toggleAnimate] = useAnimations();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const library = useLibrary();
@@ -269,7 +270,6 @@ export function App() {
               onToggleOpds={() => setOpdsOpen((v) => !v)}
               menu={menu}
               isFullscreen={isFullscreen}
-              onToggleFullscreen={toggleFullscreen}
               animate={animate}
               onToggleAnimate={toggleAnimate}
               settingsOpen={settingsOpen}

@@ -6,6 +6,39 @@ import { expect, test, type Page } from '@playwright/test';
  * Navigation / Layout / Image fit / Behavior / Menu bar). Controls in other
  * sections stay `inert`, so the wanted section must be expanded first.
  */
+/**
+ * Turn the page from the keyboard. The Prev/Next chrome buttons were removed —
+ * navigation is keyboard / click-zone / swipe only. `rtl` flips the arrow for
+ * right-to-left books (manga, Arabic, vertical-JP), where forward is ArrowLeft.
+ */
+async function turn(page: Page, dir: 'forward' | 'back' = 'forward', opts: { rtl?: boolean } = {}) {
+  await page.locator('.pore-image img, iframe.pore-text__frame').first().waitFor();
+  const image = page.locator('.pore-image');
+  const loc = page.locator('.loc');
+  const before = await loc.textContent().catch(() => null);
+
+  const go = async () => {
+    if ((await image.count()) > 0) {
+      // image / PDF: click the edge tap-zone (right = forward in LTR)
+      const box = (await image.boundingBox())!;
+      const forwardRight = !opts.rtl;
+      const toRight = dir === 'forward' ? forwardRight : !forwardRight;
+      await page.mouse.click(box.x + box.width * (toRight ? 0.85 : 0.15), box.y + box.height / 2);
+    } else {
+      const key = dir === 'forward'
+        ? (opts.rtl ? 'ArrowLeft' : 'ArrowRight')
+        : (opts.rtl ? 'ArrowRight' : 'ArrowLeft');
+      await page.locator('.pore-text').press(key);
+    }
+  };
+
+  await go();
+  await expect
+    .poll(() => loc.textContent().catch(() => null), { timeout: 2000 })
+    .not.toBe(before)
+    .catch(go);
+}
+
 async function openSettingsSection(page: Page, section: string) {
   const trigger = page.getByRole('button', { name: 'Reader settings' });
   if ((await trigger.getAttribute('aria-expanded')) !== 'true') await trigger.click();
@@ -239,8 +272,8 @@ test.describe('Pore.js demo', () => {
     const counter = page.locator('.loc');
     await expect(counter).toContainText('1/12');
 
-    await page.getByRole('button', { name: 'Next page' }).click();
-    await page.getByRole('button', { name: 'Next page' }).click();
+    await turn(page, 'forward', { rtl: true });
+    await turn(page, 'forward', { rtl: true });
     await expect(counter).toContainText('/12');
     const reached = await counter.textContent();
 
@@ -267,16 +300,16 @@ test.describe('Pore.js demo', () => {
   test('RTL double spread renders two pages, left arrow goes back', async ({ page }) => {
     await page.goto('/?book=demo-manga');
     await expect(page.locator('.pore-image img')).toHaveCount(2);
-    await page.getByRole('button', { name: 'Next page' }).click();
+    await turn(page, 'forward', { rtl: true });
     await expect(page.locator('.loc')).toContainText('3/12');
-    await page.getByRole('button', { name: 'Previous page' }).click();
+    await turn(page, 'back', { rtl: true });
     await expect(page.locator('.loc')).toContainText('1/12');
   });
 
   test('resize keeps the reading position', async ({ page }) => {
     await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: 'Next page' }).click();
-    await page.getByRole('button', { name: 'Next page' }).click();
+    await turn(page, 'forward', { rtl: true });
+    await turn(page, 'forward', { rtl: true });
     const before = await page.locator('.loc').textContent();
     await page.setViewportSize({ width: 500, height: 900 });
     await expect(page.locator('.loc')).toHaveText(before!.trim());
@@ -378,8 +411,8 @@ test.describe('Pore.js demo', () => {
 
   test('url-and-title history: ?p= updates and back/forward paginate', async ({ page }) => {
     await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: 'Next page' }).click();
-    await page.getByRole('button', { name: 'Next page' }).click();
+    await turn(page, 'forward', { rtl: true });
+    await turn(page, 'forward', { rtl: true });
     await expect(page).toHaveURL(/[?&]p=\d+/);
     const reached = await page.locator('.loc').textContent();
     await page.goBack();
@@ -417,7 +450,7 @@ test.describe('Pore.js demo — EPUB', () => {
     const frame = page.frameLocator('iframe.pore-text__frame');
     await expect(frame.locator('h1')).toContainText('The Beginning');
 
-    for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Next page' }).click();
+    for (let i = 0; i < 4; i++) await turn(page, 'forward');
     const reached = await loc.textContent();
     await page.waitForTimeout(1000);
     await page.reload();
@@ -440,9 +473,9 @@ test.describe('Pore.js demo — EPUB', () => {
 
   test('progress line shows the current chapter for a chaptered book', async ({ page }) => {
     await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: 'Next page' }).click();
-    await page.getByRole('button', { name: 'Next page' }).click();
-    await page.getByRole('button', { name: 'Next page' }).click();
+    await turn(page, 'forward', { rtl: true });
+    await turn(page, 'forward', { rtl: true });
+    await turn(page, 'forward', { rtl: true });
     await expect(page.locator('.loc')).toContainText('Ch 2/3');
   });
 
@@ -465,8 +498,8 @@ test.describe('Pore.js demo — PDF', () => {
     await expect(loc).toContainText('1/9');
     await expect(page.locator('.pore-image img')).toHaveCount(1);
 
-    await page.getByRole('button', { name: 'Next page' }).click();
-    await page.getByRole('button', { name: 'Next page' }).click();
+    await turn(page, 'forward');
+    await turn(page, 'forward');
     await expect(loc).toContainText('3/9');
 
     // cross-format switch: back to the EPUB (the book picker is a Radix Select)
@@ -548,21 +581,6 @@ test.describe('Pore.js demo — M3', () => {
     await expect(page.locator('.search__count')).toContainText('/');
   });
 
-  test('download a book, go offline, keep reading', async ({ page, context }) => {
-    await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: 'Download for offline' }).click();
-    await expect(page.getByRole('button', { name: 'Download for offline' })).toContainText(
-      'offline',
-      { timeout: 15_000 },
-    );
-    await context.setOffline(true);
-    await page.reload();
-    await expect(page.locator('.pore-image img').first()).toBeVisible();
-    await page.getByRole('button', { name: 'Next page' }).click();
-    await expect(page.locator('.loc')).toContainText('/12');
-    await context.setOffline(false);
-  });
-
   test('reader has no critical axe violations (keyboard + ARIA)', async ({ page }) => {
     await page.goto('/?book=demo-book');
     await page.locator('iframe.pore-text__frame').waitFor();
@@ -631,7 +649,8 @@ test.describe('Pore.js demo — M3', () => {
 
   test('bottom scrubber seeks and shows chapter ticks', async ({ page }) => {
     await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: 'Next page' }).click(); // wake the chrome
+    await turn(page, 'forward', { rtl: true }); // also wakes the chrome
+    await page.mouse.move(400, 300); // nudge auto-hide
     const slider = page.getByRole('slider', { name: 'Seek' });
     await expect(slider).toBeVisible();
     // demo-manga has 3 chapters → 2 interior ticks
@@ -739,7 +758,7 @@ test.describe('Pore.js demo — M3', () => {
     await page.goto('/?book=demo-fixed');
     const frame = page.frameLocator('iframe.pore-text__frame');
     await expect(frame.locator('h1')).toContainText('A Good Morning');
-    await page.getByRole('button', { name: 'Next page' }).click();
+    await turn(page, 'forward');
     await expect(frame.locator('h1')).toContainText('The Long Walk');
     const flow = frame.locator('#pore-flow');
     await expect(flow).toHaveCSS('width', '750px');

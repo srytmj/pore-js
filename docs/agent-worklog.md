@@ -61,6 +61,23 @@ M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
 
+## 2026-09-06 — demo: trim the reader rail (user request)
+- **What:** removed the Prev/Next, Download-for-offline and Fullscreen buttons
+  from `Chrome.tsx` — the user found them redundant/unused. Nav is now
+  keyboard/tap-zone/swipe only; fullscreen is the browser's (F11); offline
+  download keeps engine support (`CachedSource`/`useDownload`) but has no demo
+  UI. Dropped `onToggleFullscreen`/`useDownload` from `Chrome`,
+  `toggleFullscreen` from `App`. Highlights/Bookmarks panels open on the side
+  opposite the rail (`highlights-panel--left`) so they don't cover it.
+  `demo-pdf` now opens LTR (`settings: { direction: 'ltr' }`) — it was
+  inheriting `DEFAULT_IMAGE_SETTINGS.direction === 'rtl'`, which only surfaced
+  once physical-key/tap nav replaced the logical `reader.turn` button.
+- **State:** committed. e2e: added a keyboard `turn()` helper, ported ~12 call
+  sites off the removed buttons, deleted the "download … go offline" spec
+  (no UI trigger left). 43 e2e · 263 unit · typecheck · lint 0.
+- **Notes:** if offline-download UI is wanted back, put it in the Settings
+  accordion. `use-fullscreen.ts`'s `toggle` is now unused but kept.
+
 ## 2026-09-06 — M7 L6: hardening + release `v0.10.0-library`
 - **What:** annotations-review axe + keyboard e2e (light + dark). Removing a
   shelf entry now also `removeDownload`s the offline copy (annotations kept —

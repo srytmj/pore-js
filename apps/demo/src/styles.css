@@ -868,6 +868,11 @@
     -webkit-backdrop-filter: blur(24px);
     animation: pore-panel-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   }
+  /* the rail sits on the right by default — open these panels on the left so
+     they never cover the rail's own buttons */
+  .highlights-panel--left {
+    @apply left-3 right-auto;
+  }
   .highlights-panel__header {
     @apply flex items-center justify-between border-b border-line px-3 py-2 text-[0.9rem] font-semibold;
   }

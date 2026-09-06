@@ -21,7 +21,6 @@ import {
   useTts,
   useResumedFromPage,
   useChromeVisible,
-  useDownload,
   type ImageEngineSettings,
   type TextEngineSettings,
   type TtsVoiceLike,
@@ -30,7 +29,6 @@ import { useEffect, useState } from 'react';
 import {
   Home, Library, Search, Link as LinkIcon, Highlighter, Volume2,
   Sun, Moon, Coffee, Settings, ArrowLeft, ArrowRight, Pin, PinOff,
-  ChevronLeft, ChevronRight, Maximize, Minimize, Download,
   Bookmark, BookmarkCheck,
   File, BookOpen, ArrowDownToLine, ArrowRightToLine,
   PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen,
@@ -61,7 +59,6 @@ export function Chrome({
   onToggleOpds,
   menu,
   isFullscreen,
-  onToggleFullscreen,
   animate,
   onToggleAnimate,
   settingsOpen,
@@ -76,7 +73,6 @@ export function Chrome({
   onToggleOpds: () => void;
   menu: MenuBar;
   isFullscreen: boolean;
-  onToggleFullscreen: () => void;
   animate: boolean;
   onToggleAnimate: () => void;
   settingsOpen: boolean;
@@ -98,7 +94,6 @@ export function Chrome({
   const endPage = useEndPage();
   const [dismissed, setDismissed] = useState(false);
   const [posNotice, setPosNotice] = useState<string | null>(null);
-  const download = useDownload(bookId);
   const [highlightsOpen, setHighlightsOpen] = useState(false);
   const [bookmarksOpen, setBookmarksOpen] = useState(false);
   const { selection, highlight } = useReaderSelection();
@@ -227,18 +222,6 @@ export function Chrome({
         </Select>
       )}
 
-      {/* Page navigation */}
-      <div className="bar__pair bar__pair--nav">
-        <button onClick={() => reader.turn('back')} aria-label="Previous page" title="Previous page">
-          <span className="icon"><ChevronLeft size={18} /></span>
-          <span>Prev</span>
-        </button>
-        <button onClick={() => reader.turn('forward')} aria-label="Next page" title="Next page">
-          <span>Next</span>
-          <span className="icon"><ChevronRight size={18} /></span>
-        </button>
-      </div>
-
       <button
         className={opdsOpen ? 'active' : ''}
         onClick={onToggleOpds}
@@ -248,26 +231,6 @@ export function Chrome({
         <span className="icon"><Library size={18} /></span>
         <span>Catalog</span>
       </button>
-
-      {download.status !== undefined && (
-        <button
-          onClick={() => (download.status?.state === 'complete' ? download.remove() : download.start())}
-          aria-label="Download for offline"
-          title="Download this book for offline reading"
-          className={download.status?.state === 'complete' ? 'active' : ''}
-        >
-          <span className="icon"><Download size={18} /></span>
-          <span>
-            {download.downloading
-              ? `${Math.round(
-                  ((download.status?.cached ?? 0) / (download.status?.total || 1)) * 100,
-                )}%`
-              : download.status?.state === 'complete'
-                ? 'Saved offline'
-                : 'Download'}
-          </span>
-        </button>
-      )}
 
       {!collapsed && <TableOfContents />}
 
@@ -439,17 +402,6 @@ export function Chrome({
           <span>{menu.behaviour === 'always' ? 'Pinned' : 'Unpinned'}</span>
         </button>
       </div>
-
-      <button
-        onClick={onToggleFullscreen}
-        aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-        aria-pressed={isFullscreen}
-        title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-        className={isFullscreen ? 'active' : ''}
-      >
-        <span className="icon">{isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}</span>
-        <span>{isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}</span>
-      </button>
 
       {/* Settings — expands its sub-sections inline right below, same rail */}
       <button
@@ -693,7 +645,11 @@ export function Chrome({
       )}
 
       {canAnnotate && highlightsOpen && (
-        <div className="highlights-panel" role="dialog" aria-label="Highlights">
+        <div
+          className={`highlights-panel${onRight ? ' highlights-panel--left' : ''}`}
+          role="dialog"
+          aria-label="Highlights"
+        >
           <div className="highlights-panel__header">
             <strong>Highlights</strong>
             <button onClick={() => setHighlightsOpen(false)} aria-label="Close highlights">
@@ -714,7 +670,11 @@ export function Chrome({
       )}
 
       {bm.supported && bookmarksOpen && (
-        <div className="highlights-panel" role="dialog" aria-label="Bookmarks">
+        <div
+          className={`highlights-panel${onRight ? ' highlights-panel--left' : ''}`}
+          role="dialog"
+          aria-label="Bookmarks"
+        >
           <div className="highlights-panel__header">
             <strong>Bookmarks</strong>
             <div className="highlights-panel__head-actions">

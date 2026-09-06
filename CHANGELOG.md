@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Demo chrome trim
+
+- **Removed the Prev / Next, Download-for-offline and Fullscreen buttons** from
+  the reader rail — page turning is keyboard (←/→), edge tap-zones and swipe;
+  fullscreen is the browser's own (F11). The offline **download** feature keeps
+  its engine support (`CachedSource` + `useDownload`) but no longer has a demo
+  UI entry point.
+- Highlights / Bookmarks panels now open on the **opposite side from the menu
+  rail** so they never cover its buttons.
+- `demo-pdf` sample now opens **left-to-right** (was inheriting the image
+  engine's `rtl` default).
+
 ## v0.10.0-library — 2026-09-06
 
 M7 — library & portability (`docs/m7-plan.md`). Bookmarks, a home shelf of what
