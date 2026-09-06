@@ -42,6 +42,84 @@ M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
 
+## 2026-09-06 — M6 D1 landed: menu rail + inline settings accordion, e2e green
+- **What:** finished the parallel M6 chrome work (see next entry) to a
+  committable state. Split into 3 commits: `feat(core)` webtoon maxWidth,
+  `feat(react)` Accordion + `layout` prop, `feat(demo)` D1 the rail.
+- **Regressions fixed** (from the Antigravity WIP): `use-auto-hide` wakes on
+  real pointer/key/wheel/touch again; `use-fullscreen` uses the real
+  Fullscreen API; Prev/Next page buttons, a Fullscreen button, a
+  Download-for-offline button, and a page-turn-animations toggle (in the Menu
+  bar section) are back in the chrome. Dead `components/ui/sidebar.tsx` +
+  `.pore-sidebar*` CSS removed. All 6 lint warnings gone.
+- **e2e:** rewrote the 16 broken tests for the new UI — `getByRole('tab')` →
+  `openSettingsSection()` helper (expands an accordion section), settings
+  dialog test → accordion test, `.bar--top` test → side-rail test, book picker
+  → Radix Select click, scrubber test accounts for the RTL slider direction.
+  Fixed two axe contrast fails found doing it: the collapse toggle label (now
+  `sr-only`), `.bar button` colour transition (snaps now, so a scan can't catch
+  a low-contrast mid-transition frame).
+- **State:** committed + pushed. build ✓ · typecheck ✓ · lint 0 ✓ · 256 unit ✓
+  · 37 e2e ✓ (stable across 3 runs). `docs/m6-plan.md` D1 not yet checked off —
+  D0 (palette/tokens/self-hosted fonts) and D2–D7 remain; Inter still loads
+  from the Google Fonts CDN (D0 will self-host it).
+
+## 2026-09-06 — M6 in flight (parallel: Antigravity + this session)
+- **Context:** a separate agent (Antigravity IDE) is doing the bulk of the M6
+  redesign in the working tree — shadcn-style setup (Radix + CVA + lucide +
+  Inter via Google Fonts), a vertical rail menu bar, a `components/ui/` dir.
+  All **uncommitted**. This session was asked to fix three specific misses.
+- **Fixed here (uncommitted, in that same working tree):**
+  1. **Webtoon image width** — `create-image-engine.ts`: the continuous-vertical
+     path never applied `settings.maxWidth`. Added `stripWidth()` (min of window
+     width and `maxWidth`), used for layout estimation, per-page measurement,
+     and the mounted `<img>` (centred, `translateX(-50%)`, width capped).
+     `setSettings` clears `measured` on a maxWidth/maxHeight change so the strip
+     re-lays-out. Browser-verified at 500px.
+  2. **Autoscroll removed from the demo** — the button + prompt popover + state
+     + CSS in `Chrome.tsx` / `styles.css`. The engine capability stays (core).
+  3. **Settings unified into the menu rail, inline accordion** — removed the
+     separate `<Sidebar>` slide-over. The menu `<header class="bar">` is the
+     single rail; clicking **Settings** expands its sub-sections *inline* as a
+     stacked accordion (`SettingsPanelBody layout="accordion"`, "Menu bar" is an
+     `extraTabs` section) — the menu items stay visible, no separate view / back
+     button. New headless `Accordion` in `reader-react` (native `<details>`,
+     `data-pore-accordion*`, exported as `SettingsAccordion`); `layout?: 'tabs'
+     \| 'accordion'` on `TextSettingsPanel` / `ImageSettingsPanel` /
+     `SettingsPanelBody`. A **Collapse** toggle shrinks the whole rail to an
+     icon strip (`bar--collapsed`); `useMenuBar` gained `collapsed`/
+     `toggleCollapsed` (persisted). Rail + reader inset driven by a `--rail-w`
+     CSS var on `.shell` (13rem / 3.25rem collapsed / 18rem settings-open).
+     Gotcha fixed: `.bar` base is `flex-wrap`, so the tall rail wrapped its
+     content into a hidden second column — `.bar--left/right` now `flex-nowrap`.
+  4. **Settings polish (per owner feedback)** — the accordion now renders
+     *directly under its own Settings button* (0 gap, tinted panel, connected
+     rounded corners) instead of at the bottom of the rail; rail **width is
+     constant** whether settings is open or not (16rem; only the collapse
+     toggle changes it); accordion fields tidied — label + value on one line,
+     full-width control below, switches right-aligned on the label line.
+     **Theme + Pin are now one side-by-side row** (`.bar__pair`) placed above
+     Settings. Fixed: `.bar--left/right button { w-full }` was making the Radix
+     switch `<button>` full-width — scoped to `> button` (direct children only).
+  5. **Accordion animation** — `Accordion` was native `<details>` (opens
+     instantly). Rewrote it controlled (`useState`, all panels stay mounted,
+     `data-state="open|closed"`, `inert` on closed panels) so the demo can
+     height-animate it: `grid-template-rows: 0fr↔1fr` transition on
+     `[data-pore-accordion-panel]` + a fade-in on `.bar__settings-inline`,
+     `prefers-reduced-motion` respected. Still headless / no shipped CSS.
+- **Reverted:** the Antigravity change to `reader-react/src/primitives.tsx`
+  `SelectField` (native `<select>` → Radix Select) — it broke the unit test and
+  violates "reader-react ships no CSS / stays headless" (added a hard
+  `@radix-ui/react-select` dep + `.pore-select-*` classes). Back to native.
+  The demo's own `components/ui/select.tsx` is fine — that's demo code.
+- **Regressions in the Antigravity WIP the owner should have it fix:**
+  `use-auto-hide.ts` no longer listens for pointer/key activity, so auto-hide
+  never auto-reveals (only the reader's tap-to-toggle brings it back);
+  `toggleFullscreen` is unwired (no way to enter fullscreen from the UI);
+  the Playwright suite is broken (bar structure + removed buttons).
+- **State:** 256 unit + typecheck + lint(0 err) green. e2e not run (WIP).
+  Nothing committed — the owner will commit the M6 batch.
+
 ## 2026-09-06 — documentation for AI + human integrators
 - **What:** `docs/ai-agent-guide.md` (the single AI entry point — repo map,
   run/verify, conventions, invariants, UI/styling map, current milestone),

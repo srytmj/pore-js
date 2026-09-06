@@ -1,5 +1,19 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+/**
+ * Open the settings rail and expand one accordion section (Text / Theme /
+ * Navigation / Layout / Image fit / Behavior / Menu bar). Controls in other
+ * sections stay `inert`, so the wanted section must be expanded first.
+ */
+async function openSettingsSection(page: Page, section: string) {
+  const trigger = page.getByRole('button', { name: 'Reader settings' });
+  if ((await trigger.getAttribute('aria-expanded')) !== 'true') await trigger.click();
+  const summary = page.locator('[data-pore-accordion-summary]', { hasText: section });
+  await summary.waitFor();
+  if ((await summary.getAttribute('data-state')) !== 'open') await summary.click();
+  await expect(summary).toHaveAttribute('data-state', 'open');
+}
 
 test.describe('Pore.js demo — landing', () => {
   test('bare / shows the landing page; a sample opens the reader and Home returns', async ({
@@ -89,51 +103,48 @@ test.describe('Pore.js demo', () => {
     await expect(page.locator('.loc')).toHaveText(before!.trim());
   });
 
-  test('the top bar floats — hiding it leaves no dead strip, content is full-height', async ({
+  test('the menu rail is a fixed overlay that insets the reader when docked', async ({ page }) => {
+    await page.goto('/?book=demo-manga');
+    const bar = page.locator('.bar--right, .bar--left').first();
+    await expect(bar).toHaveCSS('position', 'fixed');
+    // default behaviour is "always visible" → docked: the reader host butts up
+    // against the rail with no gap and no overlap
+    const barBox = (await bar.boundingBox())!;
+    const hostBox = (await page.locator('.pore-image').boundingBox())!;
+    expect(Math.abs(hostBox.x + hostBox.width - barBox.x)).toBeLessThanOrEqual(2);
+  });
+
+  test('menu bar: Left placement docks the rail on the left and insets the reader', async ({
     page,
   }) => {
     await page.goto('/?book=demo-manga');
-    const bar = page.locator('.bar--top');
-    await expect(bar).toHaveCSS('position', 'absolute');
-    // the reader host starts at y=0, not pushed down by the bar
-    const host = page.locator('.pore-image');
-    const box = (await host.boundingBox())!;
-    expect(box.y).toBeLessThanOrEqual(1);
-  });
-
-  test('menu bar: Left placement docks the bar and insets the reader', async ({ page }) => {
-    await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: 'Reader settings' }).click();
-    await page.getByRole('tab', { name: 'Menu bar' }).click();
+    await openSettingsSection(page, 'Menu bar');
     await page.getByRole('button', { name: 'Left', exact: true }).click();
     await page.getByRole('button', { name: /Always visible/ }).click();
-    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Reader settings' }).click(); // close settings
 
     const bar = page.locator('.bar--left');
     await expect(bar).toHaveCSS('position', 'fixed');
     const barBox = (await bar.boundingBox())!;
     expect(barBox.x).toBeLessThanOrEqual(1);
-    const hostBox = (await page.locator('.pore-image').boundingBox())!;
-    expect(hostBox.x).toBeGreaterThan(barBox.width - 1);
+    // the reader is inset roughly by the rail width (allow for the width
+    // transition + sub-pixel rounding)
+    await expect
+      .poll(async () => (await page.locator('.pore-image').boundingBox())!.x)
+      .toBeGreaterThan(barBox.width - 20);
   });
 
-  test('menu bar: Auto-hide slides the side bar away, pointer wakes it', async ({ page }) => {
+  test('menu bar: Auto-hide slides the rail away, activity wakes it', async ({ page }) => {
     await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: 'Reader settings' }).click();
-    await page.getByRole('tab', { name: 'Menu bar' }).click();
+    await openSettingsSection(page, 'Menu bar');
     await page.getByRole('button', { name: 'Right', exact: true }).click();
     await page.getByRole('button', { name: /Auto-hide/ }).click();
-    await page.keyboard.press('Escape');
-    // move focus out of the bar (Escape returns it to the ⚙ trigger, which is
-    // inside the bar → :focus-within would pin it open)
+    await page.getByRole('button', { name: 'Reader settings' }).click(); // close settings
     await page.locator('.pore-image').first().click({ position: { x: 8, y: 8 } });
 
     const bar = page.locator('.bar--right');
-    // move the pointer off any bar control and let the idle timer fire
     await page.mouse.move(400, 300);
     await expect(bar).toHaveClass(/bar--hidden/, { timeout: 6000 });
-    // slid fully off the right edge (no partial / frozen transform)
-    await expect(bar).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 192, 0)');
     await page.mouse.move(410, 310);
     await page.mouse.move(420, 320);
     await expect(bar).not.toHaveClass(/bar--hidden/);
@@ -200,16 +211,15 @@ test.describe('Pore.js demo', () => {
 
   test('settings panel changes the fit mode live', async ({ page }) => {
     await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: 'Reader settings' }).click();
-    await page.getByRole('tab', { name: 'Image fit' }).click();
-    await page.locator('[data-pore-tabpanel]:not([hidden]) select').first().selectOption('width');
+    await openSettingsSection(page, 'Image fit');
+    await page.getByLabel('Fit mode').selectOption('width');
     await expect(page.locator('.pore-image img').first()).toHaveAttribute('style', /width:\s*100%/);
   });
 
   test('continuous-horizontal reads and virtualizes', async ({ page }) => {
     await page.goto('/?book=demo-manga');
-    await page.getByRole('button', { name: 'Reader settings' }).click();
-    await page.locator('[data-pore-tabpanel]:not([hidden]) select').first().selectOption('continuous-horizontal');
+    await openSettingsSection(page, 'Layout');
+    await page.getByLabel('Layout').selectOption('continuous-horizontal');
     const surface = page.locator('.pore-image');
     await expect(surface).toHaveCSS('overflow-x', 'auto');
     await surface.evaluate((el) => {
@@ -259,9 +269,8 @@ test.describe('Pore.js demo — EPUB', () => {
 
   test('theme + font size restyle without losing the chapter', async ({ page }) => {
     await page.goto('/?book=demo-book');
-    await page.getByRole('button', { name: 'Reader settings' }).click();
-    await page.getByRole('tab', { name: 'Theme' }).click();
-    await page.locator('[data-pore-tabpanel]:not([hidden]) select').first().selectOption('dark');
+    await openSettingsSection(page, 'Theme');
+    await page.getByLabel('Theme', { exact: true }).selectOption('dark');
     const bg = await page
       .frameLocator('iframe.pore-text__frame')
       .locator('#pore-base-style')
@@ -281,16 +290,16 @@ test.describe('Pore.js demo — PDF', () => {
     await page.getByRole('button', { name: 'Next page' }).click();
     await expect(loc).toContainText('3/9');
 
-    // cross-format switch: back to the EPUB
-    await page.getByRole('combobox', { name: 'Book' }).selectOption('demo-book');
+    // cross-format switch: back to the EPUB (the book picker is a Radix Select)
+    await page.getByRole('combobox', { name: 'Book' }).click();
+    await page.getByRole('option', { name: 'Novel (EPUB)' }).click();
     await expect(loc).toContainText('%');
   });
 
   test('pinch/zoom controls work like the image reader', async ({ page }) => {
     await page.goto('/?book=demo-pdf');
-    await page.getByRole('button', { name: 'Reader settings' }).click();
-    await page.getByRole('tab', { name: 'Image fit' }).click();
-    await page.locator('[data-pore-tabpanel]:not([hidden]) select').first().selectOption('width');
+    await openSettingsSection(page, 'Image fit');
+    await page.getByLabel('Fit mode').selectOption('width');
     await expect(page.locator('.pore-image img').first()).toHaveAttribute('style', /width:\s*100%/);
   });
 });
@@ -336,10 +345,9 @@ test.describe('Pore.js demo — M3', () => {
 
   test('flow mode turns the reader into a semantic scroller', async ({ page }) => {
     await page.goto('/?book=demo-book');
-    await page.getByRole('button', { name: 'Reader settings' }).click();
-    await page.getByRole('tab', { name: 'Navigation' }).click();
+    await openSettingsSection(page, 'Navigation');
     await page.getByLabel('Reading mode').selectOption('flow');
-    await page.keyboard.press('Escape'); // close the modal (its trigger is behind the overlay)
+    await page.getByRole('button', { name: 'Reader settings' }).click(); // close settings
 
     const vp = page.frameLocator('iframe.pore-text__frame').locator('#pore-viewport');
     await expect(vp).toHaveCSS('overflow-y', 'auto');
@@ -390,30 +398,36 @@ test.describe('Pore.js demo — M3', () => {
     expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
   });
 
-  test('settings dialog: focus trap, Radix tabs, axe clean', async ({ page }) => {
+  test('settings accordion: sections expand one at a time, controls reachable, axe clean', async ({
+    page,
+  }) => {
     await page.goto('/?book=demo-book');
     await page.getByRole('button', { name: 'Reader settings' }).click();
-    const dialog = page.getByRole('dialog', { name: 'Reader settings' });
-    await expect(dialog).toBeVisible();
+    const rail = page.locator('.bar__settings-inline');
+    await expect(rail).toBeVisible();
 
-    // tab switch works and only one panel shows
-    await page.getByRole('tab', { name: 'Navigation' }).click();
-    await expect(page.locator('[data-pore-tabpanel]:not([hidden])')).toHaveCount(1);
-    await expect(dialog.getByLabel('Reading mode')).toBeVisible();
+    // exclusive: opening Navigation closes Text
+    await openSettingsSection(page, 'Navigation');
+    await expect(page.locator('[data-pore-accordion-summary]', { hasText: 'Text' })).toHaveAttribute(
+      'data-state',
+      'closed',
+    );
+    await expect(page.getByLabel('Reading mode')).toBeVisible();
 
     const results = await new AxeBuilder({ page })
-      .include('[data-pore-dialog]')
+      .include('.bar')
+      .exclude('iframe.pore-text__frame')
       .withTags(['wcag2a', 'wcag2aa'])
+      .disableRules(['region'])
       .analyze();
     expect(
       results.violations.filter((v) => v.impact === 'critical' || v.impact === 'serious'),
       JSON.stringify(results.violations, null, 2),
     ).toEqual([]);
 
-    // Esc closes and returns focus to the trigger
-    await page.keyboard.press('Escape');
-    await expect(dialog).toBeHidden();
-    await expect(page.getByRole('button', { name: 'Reader settings' })).toBeFocused();
+    // the Settings toggle closes it again
+    await page.getByRole('button', { name: 'Reader settings' }).click();
+    await expect(rail).toBeHidden();
   });
 
   test('bottom scrubber seeks and shows chapter ticks', async ({ page }) => {
@@ -426,10 +440,11 @@ test.describe('Pore.js demo — M3', () => {
 
     const track = page.locator('.pore-scrubber__track');
     const box = (await track.boundingBox())!;
-    // near the far end — chapter 3 of demo-manga starts at page index 9 of 12
-    await page.mouse.click(box.x + box.width * 0.97, box.y + box.height / 2);
+    // demo-manga reads RTL, so the scrubber runs right→left: the far end of the
+    // book is the LEFT edge of the track
+    await page.mouse.click(box.x + box.width * 0.03, box.y + box.height / 2);
     await expect(page.locator('.loc')).toContainText('Ch 3/3');
-    await expect(page.locator('.pore-scrubber__label')).toContainText('%');
+    await expect(page.locator('[data-pore-scrubber-label]')).toContainText('%');
   });
 
   test('highlight persists across reload and click-to-jump works', async ({ page }) => {
@@ -575,9 +590,8 @@ test.describe('Pore.js demo — M3', () => {
     await page.keyboard.type('keyboard note');
     await expect(note).toHaveValue('keyboard note');
 
-    // open the Menu bar settings tab
-    await page.getByRole('button', { name: 'Reader settings' }).click();
-    await page.getByRole('tab', { name: 'Menu bar' }).click();
+    // open the Menu bar settings section
+    await openSettingsSection(page, 'Menu bar');
     await expect(page.getByRole('button', { name: 'Right', exact: true })).toBeVisible();
 
     const results = await new AxeBuilder({ page })

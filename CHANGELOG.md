@@ -1,5 +1,32 @@
 # Changelog
 
+## Unreleased
+
+M6 (in progress) — editorial UI redesign of the demo. See `docs/m6-plan.md`.
+
+- **The menu bar is now a single collapsible rail.** It sits on the left or
+  right edge (`docs/m6-plan.md` D1), collapses to an icon-only strip
+  (shadcn-style), and **settings live in the same rail** — clicking *Settings*
+  expands its sub-sections inline as a stacked accordion (Text / Theme /
+  Navigation / Menu bar for EPUB; Layout / Image fit / Behavior / Keybinds for
+  images), one section open at a time, with a height animation. No more modal
+  dialog, no separate slide-over panel. New headless `Accordion` primitive in
+  `@pore/reader-react` (controlled, `data-pore-accordion*` hooks, no CSS);
+  `SettingsPanelBody` / `TextSettingsPanel` / `ImageSettingsPanel` take a
+  `layout?: 'tabs' | 'accordion'` prop.
+- **Menu bar controls**: page nav (Prev / Next), Theme and Pin as one row above
+  Settings, Fullscreen (real Fullscreen API), Download-for-offline, a
+  page-turn-animations toggle in the Menu bar section. Icons are lucide SVGs.
+- **Webtoon image width** — the continuous-vertical strip now honours the
+  reader's `maxWidth`: pages are centred and capped so a webtoon is readable at
+  a comfortable size on a wide screen. The layout re-estimates when the width
+  changes (`create-image-engine.ts` `stripWidth()`).
+- Autoscroll was removed from the demo UI (the engine capability stays).
+- `useAutoHide` again wakes on real pointer / key / wheel / touch activity;
+  `useFullscreen` uses the real Fullscreen API.
+- Only the top / left / right menu placements remain (`menuPosition` values);
+  the top placement was dropped from the demo.
+
 ## v0.8.0-comfort — 2026-09-06
 
 M5 — reading-comfort chrome + annotation polish. Menu bar you can place on any

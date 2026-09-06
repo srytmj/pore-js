@@ -1,13 +1,12 @@
 import {
   FootnotePopover,
   HighlightsPanel,
-  SettingsPanel,
+  SettingsPanelBody,
   TableOfContents,
   useEndPage,
   useReader,
   useReaderHistory,
   useReaderKind,
-  useDownload,
   ReaderScrubber,
   useReaderLoading,
   useReaderError,
@@ -19,15 +18,25 @@ import {
   useReaderSelection,
   useTts,
   useResumedFromPage,
+  useChromeVisible,
+  useDownload,
   type ImageEngineSettings,
   type TextEngineSettings,
   type TtsVoiceLike,
 } from '@pore/reader-react';
 import { useEffect, useState } from 'react';
+import {
+  Home, Library, Search, Link as LinkIcon, Highlighter, Volume2,
+  Sun, Moon, Coffee, Settings, ArrowLeft, ArrowRight, Pin, PinOff,
+  ChevronLeft, ChevronRight, Maximize, Minimize, Download,
+  File, BookOpen, ArrowDownToLine, ArrowRightToLine,
+  PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen,
+} from 'lucide-react';
 import { useTheme } from './theme.js';
 import { useAutoHide } from './use-auto-hide.js';
 import type { MenuBar } from './use-menu-bar.js';
 import { MenuBarSettings } from './MenuBarSettings.js';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select.js';
 
 
 interface BookOpt {
@@ -49,6 +58,10 @@ export function Chrome({
   menu,
   isFullscreen,
   onToggleFullscreen,
+  animate,
+  onToggleAnimate,
+  settingsOpen,
+  onToggleSettings,
 }: {
   books: BookOpt[];
   bookId: string;
@@ -60,10 +73,13 @@ export function Chrome({
   menu: MenuBar;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
+  animate: boolean;
+  onToggleAnimate: () => void;
+  settingsOpen: boolean;
+  onToggleSettings: () => void;
 }) {
   const loc = useReaderLocation();
   const progress = useReaderProgress();
-  const download = useDownload(bookId);
   const search = useReaderSearch();
   const loading = useReaderLoading();
   const readerError = useReaderError();
@@ -77,14 +93,15 @@ export function Chrome({
   const resumed = useResumedFromPage();
   const endPage = useEndPage();
   const [dismissed, setDismissed] = useState(false);
-  const [panelOpen, setPanelOpen] = useState(false);
   const [posNotice, setPosNotice] = useState<string | null>(null);
+  const download = useDownload(bookId);
   const [highlightsOpen, setHighlightsOpen] = useState(false);
   const { selection, highlight } = useReaderSelection();
   const highlights = useReaderHighlights();
   const tts = useTts();
   const [ttsOpen, setTtsOpen] = useState(false);
   const [voices, setVoices] = useState<TtsVoiceLike[]>([]);
+  const chromeVisible = useChromeVisible();
   useEffect(() => {
     if (ttsOpen) setVoices(tts.listVoices());
     else tts.stop();
@@ -122,33 +139,85 @@ export function Chrome({
   const canAnnotate = isText || isPdf;
   const menuPos = menu.placement;
 
-  const overlayOpen = panelOpen || searchOpen || endPage !== null;
+  const overlayOpen = settingsOpen || searchOpen || endPage !== null || highlightsOpen || ttsOpen;
   // Auto-hide when the user chose it, or always in fullscreen. Panels pin it open.
-  const autoHiding = (isFullscreen || menu.behaviour === 'auto-hide') && !overlayOpen;
-  const [autoHidden, pinChrome] = useAutoHide(2600, autoHiding);
-  const barHidden = autoHiding && autoHidden;
+  const isAuto = menu.behaviour === 'auto-hide';
+  const autoHiding = (isFullscreen || isAuto) && !overlayOpen;
+  const [autoHidden, pinChrome, hideChrome] = useAutoHide(2600, autoHiding);
+
   useEffect(() => {
     if (overlayOpen) pinChrome();
   }, [overlayOpen, pinChrome]);
 
+  // Sync reader chrome-toggle with auto-hide
+  useEffect(() => {
+    if (chromeVisible) {
+      pinChrome();
+    } else {
+      hideChrome();
+    }
+  }, [chromeVisible, pinChrome, hideChrome]);
+
+  const barHidden = autoHiding && autoHidden;
+
+
+  const collapsed = menu.collapsed && !settingsOpen;
+
+  // Settings expands inline right under its own button in the same rail, as a
+  // stacked accordion — no separate view, no navigating away from the menu.
+  const settingsInline = settingsOpen && (
+    <div className="bar__settings-inline" data-pore-settings-inline>
+      <SettingsPanelBody
+        layout="accordion"
+        extraTabs={[
+          {
+            id: 'menubar',
+            label: 'Menu bar',
+            content: (
+              <MenuBarSettings menu={menu} animate={animate} onToggleAnimate={onToggleAnimate} />
+            ),
+          },
+        ]}
+      />
+    </div>
+  );
 
   const barControls = (
     <>
       <button className="home" onClick={onHome} aria-label="Back to start" title="Back to start">
-        Pore.js
+        <span className="icon"><Home size={18} /></span>
+        <span>Pore.js</span>
       </button>
-      <select
-        aria-label="Book"
-        value={droppedName ? '' : bookId}
-        onChange={(e) => e.target.value && onBook(e.target.value)}
-      >
-        {droppedName && <option value="">{droppedName}</option>}
-        {books.map((b) => (
-          <option key={b.id} value={b.id}>
-            {b.label}
-          </option>
-        ))}
-      </select>
+      {!collapsed && (
+        <Select
+          value={droppedName ? '' : bookId}
+          onValueChange={(val) => val && onBook(val)}
+        >
+          <SelectTrigger aria-label="Book" className="w-[180px] h-8 text-[0.85rem] border-transparent bg-transparent hover:bg-fg/5 transition-colors">
+            <SelectValue placeholder="Select a book" />
+          </SelectTrigger>
+          <SelectContent>
+            {droppedName && <SelectItem value="">{droppedName}</SelectItem>}
+            {books.map((b) => (
+              <SelectItem key={b.id} value={b.id}>
+                {b.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {/* Page navigation */}
+      <div className="bar__pair bar__pair--nav">
+        <button onClick={() => reader.turn('back')} aria-label="Previous page" title="Previous page">
+          <span className="icon"><ChevronLeft size={18} /></span>
+          <span>Prev</span>
+        </button>
+        <button onClick={() => reader.turn('forward')} aria-label="Next page" title="Next page">
+          <span>Next</span>
+          <span className="icon"><ChevronRight size={18} /></span>
+        </button>
+      </div>
 
       <button
         className={opdsOpen ? 'active' : ''}
@@ -156,26 +225,86 @@ export function Chrome({
         aria-label="Browse OPDS catalog"
         title="Browse an OPDS catalog"
       >
-        📚
+        <span className="icon"><Library size={18} /></span>
+        <span>Catalog</span>
       </button>
 
-      <TableOfContents />
-
-      <button onClick={() => reader.turn('back')} aria-label="Previous page">
-        ‹
-      </button>
-      <button onClick={() => reader.turn('forward')} aria-label="Next page">
-        ›
-      </button>
-
-      {isImage && (
+      {download.status !== undefined && (
         <button
-          className={imgSettings.autoscroll ? 'active' : ''}
-          onClick={() => setImgSettings({ autoscroll: !imgSettings.autoscroll })}
-          title="Autoscroll"
+          onClick={() => (download.status?.state === 'complete' ? download.remove() : download.start())}
+          aria-label="Download for offline"
+          title="Download this book for offline reading"
+          className={download.status?.state === 'complete' ? 'active' : ''}
         >
-          {imgSettings.autoscroll ? '⏸' : '▶'}
+          <span className="icon"><Download size={18} /></span>
+          <span>
+            {download.downloading
+              ? `${Math.round(
+                  ((download.status?.cached ?? 0) / (download.status?.total || 1)) * 100,
+                )}%`
+              : download.status?.state === 'complete'
+                ? 'Saved offline'
+                : 'Download'}
+          </span>
         </button>
+      )}
+
+      {!collapsed && <TableOfContents />}
+
+      {isImage && !isPdf && (
+        <>
+          <button
+            onClick={() => {
+              const layouts = [
+                'paged-single',
+                'paged-double',
+                'continuous-vertical',
+                'continuous-horizontal',
+              ] as const;
+              const next = layouts[(layouts.indexOf(imgSettings.layout) + 1) % layouts.length]!;
+              setImgSettings({ layout: next });
+            }}
+            title="Cycle Layout"
+          >
+            <span className="icon">
+              {imgSettings.layout === 'paged-single' ? <File size={18} /> :
+               imgSettings.layout === 'paged-double' ? <BookOpen size={18} /> :
+               imgSettings.layout === 'continuous-vertical' ? <ArrowDownToLine size={18} /> :
+               <ArrowRightToLine size={18} />}
+            </span>
+            <span>
+              {imgSettings.layout === 'paged-single' ? 'Single' :
+               imgSettings.layout === 'paged-double' ? 'Double' :
+               imgSettings.layout === 'continuous-vertical' ? 'Webtoon' :
+               'Horizontal'}
+            </span>
+          </button>
+          {imgSettings.layout === 'continuous-vertical' && !collapsed && (
+            <div className="slider" title="Webtoon Image Width">
+              <input
+                type="range"
+                min={300}
+                max={1500}
+                step={50}
+                value={imgSettings.maxWidth ?? 1500}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setImgSettings({ maxWidth: val >= 1500 ? null : val });
+                }}
+              />
+              <span>{imgSettings.maxWidth ? `${imgSettings.maxWidth}px` : 'Fit'}</span>
+            </div>
+          )}
+          <button
+            onClick={() => setImgSettings({ direction: imgSettings.direction === 'rtl' ? 'ltr' : 'rtl' })}
+            title={imgSettings.direction === 'rtl' ? 'Reading direction: Right to Left (RTL). Click for Left to Right.' : 'Reading direction: Left to Right (LTR). Click for Right to Left.'}
+          >
+            <span className="icon">
+              {imgSettings.direction === 'rtl' ? <ArrowLeft size={18} /> : <ArrowRight size={18} />}
+            </span>
+            <span>{imgSettings.direction === 'rtl' ? 'RTL' : 'LTR'}</span>
+          </button>
+        </>
       )}
       {canSearch && (
         <button
@@ -183,7 +312,8 @@ export function Chrome({
           onClick={() => setSearchOpen((v) => !v)}
           aria-label="Search in book"
         >
-          🔍
+          <span className="icon"><Search size={18} /></span>
+          <span>Search</span>
         </button>
       )}
       {isText && (
@@ -198,7 +328,8 @@ export function Chrome({
           aria-label="Copy position (CFI)"
           title="Copy a portable position link (epubcfi)"
         >
-          🔗
+          <span className="icon"><LinkIcon size={18} /></span>
+          <span>Copy Link</span>
         </button>
       )}
       {canAnnotate && (
@@ -208,7 +339,8 @@ export function Chrome({
           aria-label="Highlights"
           title={isPdf ? 'Highlights — Shift-drag on the page to add' : 'Highlights'}
         >
-          🖍{highlights.length > 0 ? ` ${highlights.length}` : ''}
+          <span className="icon"><Highlighter size={18} /></span>
+          <span>Highlights{highlights.length > 0 ? ` (${highlights.length})` : ''}</span>
         </button>
       )}
       {isText && (
@@ -218,110 +350,190 @@ export function Chrome({
           aria-label="Text to speech"
           title="Listen (text-to-speech)"
         >
-          🔊
+          <span className="icon"><Volume2 size={18} /></span>
+          <span>Listen</span>
         </button>
       )}
-      {isText ? (
+      {/* ---- separator ---- */}
+      <div className="bar__separator" />
+
+      {/* Theme + Pin, side by side, above Settings */}
+      <div className="bar__pair">
+        {isText ? (
+          <button
+            onClick={() => {
+              const t = textSettings.theme;
+              const next = t === 'light' ? 'sepia' : t === 'sepia' ? 'dark' : 'light';
+              setTextSettings({ theme: next });
+              if ((next === 'dark') !== (theme === 'dark')) toggleTheme();
+            }}
+            aria-label={`Reading theme: ${textSettings.theme}`}
+            title="Reading theme — light · sepia · dark"
+          >
+            <span className="icon">
+              {textSettings.theme === 'sepia' ? (
+                <Coffee size={18} />
+              ) : textSettings.theme === 'light' ? (
+                <Sun size={18} />
+              ) : (
+                <Moon size={18} />
+              )}
+            </span>
+            <span>Theme</span>
+          </button>
+        ) : (
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+          >
+            <span className="icon">{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</span>
+            <span>Theme</span>
+          </button>
+        )}
         <button
-          onClick={() => {
-            const t = textSettings.theme;
-            const next = t === 'light' ? 'sepia' : t === 'sepia' ? 'dark' : 'light';
-            setTextSettings({ theme: next });
-            if ((next === 'dark') !== (theme === 'dark')) toggleTheme(); // keep the chrome in step
-          }}
-          aria-label={`Reading theme: ${textSettings.theme}. Click to cycle (light, sepia, dark).`}
-          title="Reading theme — light · sepia · dark"
+          onClick={() => menu.setBehaviour(menu.behaviour === 'always' ? 'auto-hide' : 'always')}
+          title={
+            menu.behaviour === 'always' ? 'Unpin (menu auto-hides)' : 'Pin (keep menu visible)'
+          }
+          aria-label={menu.behaviour === 'always' ? 'Unpin menu' : 'Pin menu'}
+          aria-pressed={menu.behaviour === 'always'}
+          className={menu.behaviour === 'always' ? 'active' : ''}
         >
-          {textSettings.theme === 'sepia' ? '☕' : textSettings.theme === 'light' ? '☀' : '☾'}
+          <span className="icon">
+            {menu.behaviour === 'always' ? <Pin size={18} /> : <PinOff size={18} />}
+          </span>
+          <span>{menu.behaviour === 'always' ? 'Pinned' : 'Unpinned'}</span>
         </button>
-      ) : (
-        <button
-          onClick={toggleTheme}
-          aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-        >
-          {theme === 'dark' ? '☀' : '☾'}
-        </button>
-      )}
+      </div>
+
       <button
         onClick={onToggleFullscreen}
         aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-        title="Fullscreen"
+        aria-pressed={isFullscreen}
+        title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+        className={isFullscreen ? 'active' : ''}
       >
-        {isFullscreen ? '⊗' : '⛶'}
+        <span className="icon">{isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}</span>
+        <span>{isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}</span>
       </button>
+
+      {/* Settings — expands its sub-sections inline right below, same rail */}
       <button
-        className={panelOpen ? 'active' : ''}
-        onClick={() => setPanelOpen((v) => !v)}
+        className={`bar__settings-btn${settingsOpen ? ' active' : ''}`}
+        onClick={onToggleSettings}
         aria-label="Reader settings"
+        aria-expanded={settingsOpen}
+        title="Reader settings"
       >
-        ⚙
+        <span className="icon"><Settings size={18} /></span>
+        <span>Settings</span>
       </button>
+      {settingsInline}
 
-      {download.status !== undefined && (
-        <button
-          className={download.status?.state === 'complete' ? 'active' : ''}
-          onClick={() =>
-            download.downloading
-              ? download.cancel()
-              : download.status?.state === 'complete'
-                ? download.remove()
-                : download.start()
-          }
-          aria-label="Download for offline"
-          title={
-            download.error
-              ? `Download failed: ${download.error.message}`
-              : download.downloading
-                ? `Downloading ${download.status?.cached ?? 0}/${download.status?.total ?? '?'}`
-                : download.status?.state === 'complete'
-                  ? 'Saved offline — click to remove'
-                  : 'Download for offline'
-          }
-        >
-          {download.downloading
-            ? `⬇ ${download.status?.cached ?? 0}/${download.status?.total ?? '?'}`
-            : download.status?.state === 'complete'
-              ? '✓ offline'
-              : '⬇'}
-        </button>
+      {!collapsed && (
+        <span className="loc" role="status" aria-live="polite">
+          {loc?.label ?? '…'}
+          {progress && progress.chapterCount > 1 && (
+            <span className="loc__sub">
+              {' · '}Ch {progress.chapterIndex + 1}/{progress.chapterCount}
+              {progress.minutesLeft > 0 && ` · ${progress.minutesLeft} min left`}
+            </span>
+          )}
+        </span>
       )}
-
-      <span className="loc" role="status" aria-live="polite">
-        {loc?.label ?? '…'}
-        {progress && progress.chapterCount > 1 && (
-          <span className="loc__sub">
-            {' · '}Ch {progress.chapterIndex + 1}/{progress.chapterCount}
-            {progress.minutesLeft > 0 && ` · ${progress.minutesLeft} min left`}
-          </span>
-        )}
-      </span>
     </>
   );
 
+  const onRight = menuPos === 'right';
+  const CollapseIcon = menu.collapsed
+    ? onRight
+      ? PanelRightOpen
+      : PanelLeftOpen
+    : onRight
+      ? PanelRightClose
+      : PanelLeftClose;
+
+  const collapseToggle = (
+    <button
+      className="bar__collapse"
+      onClick={menu.toggleCollapsed}
+      aria-label={menu.collapsed ? 'Expand menu' : 'Collapse menu'}
+      title={menu.collapsed ? 'Expand menu' : 'Collapse menu'}
+    >
+      <span className="icon"><CollapseIcon size={18} /></span>
+      <span>Collapse</span>
+    </button>
+  );
+
+  const isRtl = isImage && imgSettings?.direction === 'rtl';
+  const progressSettings = isImage
+    ? (imgSettings?.progressBar ?? { style: 'normal', position: 'bottom', thickness: 3 })
+    : { style: 'normal' as const, position: 'bottom' as const, thickness: 3 };
+  const progressStyle = progressSettings.style;
+  const progressPos = progressSettings.position ?? 'bottom';
+  const progressThickness = progressSettings.thickness || 3;
+  const progressPercent = Math.min(100, Math.max(0, (progress?.percent ?? 0) * 100));
+
   return (
     <>
-      <header className={`bar bar--${menuPos}${barHidden ? ' bar--hidden' : ''}`}>
+      <header
+        className={`bar bar--${menuPos}${barHidden ? ' bar--hidden' : ''}${
+          collapsed ? ' bar--collapsed' : ''
+        }${settingsOpen ? ' bar--settings' : ''}`}
+        onPointerEnter={pinChrome}
+      >
+        {collapseToggle}
         {barControls}
       </header>
 
       {loading && <div className="progress progress--loading" aria-hidden />}
 
-      {!(isImage && imgSettings.progressBar?.style === 'hidden') && (
+      {/* Minimal edge lightbar when style is 'lightbar', or when style is 'normal' and chrome is hidden */}
+      {progressStyle !== 'hidden' && (progressStyle === 'lightbar' || barHidden) && (
         <div
-          className={`scrubber-dock${autoHiding && autoHidden ? ' scrubber-dock--hidden' : ''}`}
-          onPointerEnter={pinChrome}
+          className={`pore-lightbar pore-lightbar--${progressPos}`}
+          style={
+            progressPos === 'bottom'
+              ? { height: `${progressThickness}px` }
+              : { width: `${progressThickness}px` }
+          }
+          role="progressbar"
+          aria-valuenow={Math.round(progressPercent)}
+          aria-valuemin={0}
+          aria-valuemax={100}
         >
-          <ReaderScrubber />
+          <div
+            className="pore-lightbar__fill"
+            style={
+              progressPos === 'bottom'
+                ? {
+                    width: `${progressPercent}%`,
+                    ...(isRtl
+                      ? { marginRight: 0, marginLeft: 'auto' }
+                      : { marginLeft: 0, marginRight: 'auto' }),
+                  }
+                : {
+                    height: `${progressPercent}%`,
+                    marginTop: 'auto',
+                    marginBottom: 0,
+                  }
+            }
+          />
         </div>
       )}
 
-      <SettingsPanel
-        open={panelOpen}
-        onOpenChange={setPanelOpen}
-        extraTabs={[
-          { id: 'menubar', label: 'Menu bar', content: <MenuBarSettings menu={menu} /> },
-        ]}
-      />
+      {/* Interactive scrubber dock in normal mode */}
+      {progressStyle === 'normal' && (
+        <div
+          className={`scrubber-dock${barHidden ? ' scrubber-dock--hidden' : ''}`}
+          onPointerEnter={pinChrome}
+        >
+          <ReaderScrubber dir={isRtl ? 'rtl' : 'ltr'} />
+        </div>
+      )}
+
+
 
       {searchOpen && canSearch && (
         <div className="search" role="search">

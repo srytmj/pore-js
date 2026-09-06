@@ -1,7 +1,6 @@
 import type { MenuBar, MenuBehaviour, MenuPlacement } from './use-menu-bar.js';
 
 const PLACEMENTS: { value: MenuPlacement; label: string }[] = [
-  { value: 'top', label: 'Top' },
   { value: 'left', label: 'Left' },
   { value: 'right', label: 'Right' },
 ];
@@ -10,8 +9,16 @@ const BEHAVIOURS: { value: MenuBehaviour; label: string; hint: string }[] = [
   { value: 'auto-hide', label: 'Auto-hide', hint: 'Slides away when idle' },
 ];
 
-/** The "Menu bar" settings tab — passed to `<SettingsPanel extraTabs>`. */
-export function MenuBarSettings({ menu }: { menu: MenuBar }) {
+/** The demo-level "Menu bar" section for the settings accordion. */
+export function MenuBarSettings({
+  menu,
+  animate,
+  onToggleAnimate,
+}: {
+  menu: MenuBar;
+  animate: boolean;
+  onToggleAnimate: () => void;
+}) {
   return (
     <div className="menubar-settings">
       <fieldset>
@@ -47,6 +54,15 @@ export function MenuBarSettings({ menu }: { menu: MenuBar }) {
           ))}
         </div>
       </fieldset>
+      <label className="menubar-settings__toggle">
+        <span>Page-turn animations</span>
+        <input
+          type="checkbox"
+          checked={animate}
+          onChange={onToggleAnimate}
+          aria-label="Page-turn animations"
+        />
+      </label>
     </div>
   );
 }

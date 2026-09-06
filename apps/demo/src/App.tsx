@@ -1,14 +1,28 @@
 import { CachedSource, DemoSource, LocalFileSource, type ReaderSource } from '@pore/reader-core';
 import { Reader, ReaderAnnouncer, ReaderProvider, gsapAdapter } from '@pore/reader-react';
 import gsap from 'gsap';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Chrome } from './Chrome.js';
 import { OpdsBrowser } from './OpdsBrowser.js';
 import { Landing, type SampleBook } from './Landing.js';
 import { useMenuBar } from './use-menu-bar.js';
 import { useFullscreen } from './use-fullscreen.js';
 
-const transitions = gsapAdapter(gsap);
+export function useAnimations() {
+  const [animate, setAnimate] = useState(() => {
+    return localStorage.getItem('pore-animate') !== 'false';
+  });
+  const toggleAnimate = () => {
+    setAnimate((prev) => {
+      const next = !prev;
+      localStorage.setItem('pore-animate', String(next));
+      return next;
+    });
+  };
+  return [animate, toggleAnimate] as const;
+}
+
+const defaultTransitions = gsapAdapter(gsap);
 
 const BOOKS: SampleBook[] = [
   {
@@ -50,11 +64,16 @@ export function App() {
   const [opdsOpen, setOpdsOpen] = useState(false);
   const menu = useMenuBar();
   const [isFullscreen, toggleFullscreen] = useFullscreen();
-  // A docked side bar takes real width — inset the reader so it isn't covered.
-  const sideDocked =
-    (menu.placement === 'left' || menu.placement === 'right') &&
-    menu.behaviour === 'always' &&
-    !isFullscreen;
+  const [animate, toggleAnimate] = useAnimations();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  // A docked bar takes real space — inset the reader so it isn't covered.
+  const isDocked = menu.behaviour === 'always' && !isFullscreen;
+  // one rail: menu + inline settings accordion. Width is constant whether or
+  // not settings is open; only the explicit collapse toggle changes it.
+  const railWidth = menu.collapsed ? '3.25rem' : '16rem';
+  const hostClass = isDocked ? `reader-host reader-host--${menu.placement}` : 'reader-host';
+  const shellClass = `shell${isDocked ? ` shell--docked-${menu.placement}` : ''}`;
+  const shellStyle = { '--rail-w': railWidth } as CSSProperties;
 
   useEffect(() => {
     const url = new URL(location.href);
@@ -97,7 +116,8 @@ export function App() {
 
   return (
     <main
-      className="shell"
+      className={shellClass}
+      style={shellStyle}
       onDragOver={(e) => {
         e.preventDefault();
         setDragging(true);
@@ -112,8 +132,8 @@ export function App() {
           <Reader
             key={activeBook}
             bookId={activeBook}
-            transitions={transitions}
-            className={sideDocked ? `reader-host reader-host--${menu.placement}` : 'reader-host'}
+            {...(animate ? { transitions: defaultTransitions } : {})}
+            className={hostClass}
             {...(sample?.settings ? { initialSettings: sample.settings } : {})}
           >
             <ReaderAnnouncer />
@@ -128,6 +148,10 @@ export function App() {
               menu={menu}
               isFullscreen={isFullscreen}
               onToggleFullscreen={toggleFullscreen}
+              animate={animate}
+              onToggleAnimate={toggleAnimate}
+              settingsOpen={settingsOpen}
+              onToggleSettings={() => setSettingsOpen((v) => !v)}
             />
           </Reader>
           <OpdsBrowser
