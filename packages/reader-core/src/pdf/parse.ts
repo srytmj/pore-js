@@ -16,6 +16,69 @@ export function setPdfWorkerSrc(src: string): void {
   workerSrc = src;
 }
 
+interface RenderTarget {
+  canvas: OffscreenCanvas | HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+  toBlob(): Promise<Blob>;
+}
+
+/**
+ * A 2D canvas that can hand back an image Blob, across environments:
+ *  - `OffscreenCanvas` where it exists *and works* (Chromium, Firefox, Safari 16.4+)
+ *  - an `HTMLCanvasElement` fallback (Playwright's WebKit, older Safari)
+ * plus WebP → PNG fallback (Safari can't encode WebP from a canvas).
+ */
+let canvasKind: Promise<{ offscreen: boolean; type: 'image/webp' | 'image/png' }> | null = null;
+function probeCanvas() {
+  canvasKind ??= (async () => {
+    let offscreen = false;
+    if (typeof OffscreenCanvas !== 'undefined') {
+      try {
+        const b = await new OffscreenCanvas(1, 1).convertToBlob({ type: 'image/png' });
+        offscreen = b.size > 0;
+      } catch {
+        offscreen = false;
+      }
+    }
+    let webp = false;
+    try {
+      if (offscreen) {
+        webp = (await new OffscreenCanvas(1, 1).convertToBlob({ type: 'image/webp' })).type === 'image/webp';
+      } else if (typeof document !== 'undefined') {
+        webp = document.createElement('canvas').toDataURL('image/webp').startsWith('data:image/webp');
+      }
+    } catch {
+      webp = false;
+    }
+    return { offscreen, type: webp ? ('image/webp' as const) : ('image/png' as const) };
+  })();
+  return canvasKind;
+}
+
+async function renderTarget(w: number, h: number): Promise<RenderTarget> {
+  const { offscreen, type } = await probeCanvas();
+  if (offscreen) {
+    const canvas = new OffscreenCanvas(w, h);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('pdf: no 2d context');
+    return { canvas, ctx, toBlob: () => canvas.convertToBlob({ type, quality: 0.9 }) };
+  }
+  if (typeof document === 'undefined') throw new Error('pdf: no canvas available to render a page');
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('pdf: no 2d context');
+  return {
+    canvas,
+    ctx,
+    toBlob: () =>
+      new Promise<Blob>((res, rej) =>
+        canvas.toBlob((b) => (b ? res(b) : rej(new Error('pdf: canvas.toBlob failed'))), type, 0.9),
+      ),
+  };
+}
+
 let modPromise: Promise<PdfjsModule> | null = null;
 function pdfjs(): Promise<PdfjsModule> {
   // the legacy build runs in Node and older browsers alike
@@ -70,15 +133,13 @@ export async function loadPdf(data: Uint8Array): Promise<PdfDoc> {
       const viewport = page.getViewport({ scale });
       const w = Math.ceil(viewport.width);
       const h = Math.ceil(viewport.height);
-      const canvas = new OffscreenCanvas(w, h);
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('pdf: no 2d context');
+      const { canvas, ctx, toBlob } = await renderTarget(w, h);
       await page.render({
         canvasContext: ctx as unknown as never,
         viewport,
         canvas: canvas as unknown as never,
       }).promise;
-      return canvas.convertToBlob({ type: 'image/webp', quality: 0.9 });
+      return toBlob();
     },
 
     async textContent(n) {

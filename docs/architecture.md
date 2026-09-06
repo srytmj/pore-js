@@ -103,9 +103,17 @@ resolution when there's no layout signal (jsdom, drifted document).
 
 The hard part. EPUB is parsed (`text/epub/parse.ts`, `fflate` for the zip) into
 a spine of XHTML resources. Each spine item is rendered into a **sandboxed
-`<iframe srcdoc>`** (`sandbox="allow-same-origin"` — no scripts) after
-`rewriteResources` inlines images/CSS as blob URLs and (optionally) strips
-author CSS.
+`<iframe srcdoc>`** after `rewriteResources` inlines images/CSS as blob URLs,
+(optionally) strips author CSS, drops `<script>` / `on*` handlers /
+`javascript:` URLs / nested frames, and injects a strict
+`Content-Security-Policy` meta (`default-src 'none'; script-src 'none'; …`).
+
+- **No author scripts run.** The CSP `script-src 'none'` is the real guarantee;
+  `rewrite.ts` is defence in depth. The sandbox is
+  `allow-same-origin allow-scripts` — `allow-scripts` is there *only* because
+  **WebKit/Safari delivers no pointer/selection events to a sandboxed frame
+  without it**; the CSP still blocks every script. No `allow-top-navigation`,
+  `allow-forms`, `allow-popups`, `allow-modals`, `allow-downloads`.
 
 - **Pagination** — CSS multi-column: the content flows into `#pore-flow` inside
   `#pore-viewport`; turning a page is a `translateX` by one column step.

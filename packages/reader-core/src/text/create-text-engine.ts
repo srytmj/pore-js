@@ -121,7 +121,13 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   root.style.cssText = 'position:relative;width:100%;height:100%;outline:none;overflow:hidden;';
   const frame = doc.createElement('iframe');
   frame.className = 'pore-text__frame';
-  frame.setAttribute('sandbox', 'allow-same-origin');
+  // `allow-scripts` is here only so WebKit/Safari delivers pointer & selection
+  // events to the engine's listeners on the frame document — WebKit dispatches
+  // *nothing* to a sandboxed frame without it. Scripts still can't run: the
+  // frame carries a `script-src 'none'` CSP (see rewrite.ts) and `rewrite.ts`
+  // strips <script>, on* handlers and javascript: URLs. No `allow-top-navigation`,
+  // `allow-forms`, `allow-popups`, `allow-modals`, `allow-downloads`.
+  frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
   frame.style.cssText = 'width:100%;height:100%;border:0;display:block;background:transparent;';
   root.appendChild(frame);
   const endEl = doc.createElement('div');

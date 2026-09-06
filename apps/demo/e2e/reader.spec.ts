@@ -136,7 +136,10 @@ test.describe('Pore.js demo — landing', () => {
     await review.locator('.review__jump').first().click();
     await expect(review).toBeHidden();
     await expect(page).toHaveURL(/[?&]book=demo-book/);
-    await expect(frame.locator('h1')).toContainText('The Beginning');
+    // the reader re-mounts, restores, then PendingNav runs goToCfi — give the
+    // fresh iframe + spine load room, and re-query the frame (it's a new element)
+    const jumped = page.frameLocator('iframe.pore-text__frame');
+    await expect(jumped.locator('h1')).toContainText('The Beginning', { timeout: 15_000 });
   });
 
   test('export / import: a highlight survives a wipe via the JSON bundle', async ({ page }) => {
@@ -186,8 +189,23 @@ test.describe('Pore.js demo — landing', () => {
     await expect(page.getByRole('button', { name: 'Highlights' })).toContainText('1');
   });
 
-  test('share a passage: copy a page link, open it fresh, it lands + pulses', async ({ page }) => {
-    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  test('share a passage: copy a page link, open it fresh, it lands + pulses', async ({
+    page,
+    context,
+  }) => {
+    // Playwright's WebKit has no `clipboard-*` permission and Firefox's is flaky —
+    // stub the clipboard so the "Copy link" button still hands us the URL.
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
+    await page.addInitScript(() => {
+      let buf = '';
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText: (t: string) => ((buf = t), Promise.resolve()),
+          readText: () => Promise.resolve(buf),
+        },
+      });
+    });
     await page.goto('/?book=demo-book');
     const frame = page.frameLocator('iframe.pore-text__frame');
     await frame.locator('h1').waitFor();
@@ -382,8 +400,11 @@ test.describe('Pore.js demo', () => {
     await page.goto('/?book=demo-pdf');
     const img = page.locator('.pore-image__viewport img');
     await expect(img).toBeVisible();
-    // wait for the rendered page (broken/loading img is tiny)
-    await expect.poll(async () => (await img.boundingBox())!.width).toBeGreaterThan(200);
+    // wait for the rendered page (broken/loading img is tiny; WebKit decodes the
+    // PNG fallback slower)
+    await expect
+      .poll(async () => (await img.boundingBox())!.width, { timeout: 15_000 })
+      .toBeGreaterThan(200);
     const box = (await img.boundingBox())!;
 
     await page.mouse.move(box.x + box.width * 0.15, box.y + box.height * 0.09);
@@ -795,7 +816,12 @@ test.describe('Pore.js demo — M3', () => {
 
   test('text-to-speech: play shows the current sentence, pause/resume toggles', async ({
     page,
+    browserName,
   }) => {
+    // Playwright's Firefox / WebKit builds ship no Web Speech API (`speechSynthesis`
+    // is undefined) — real Firefox / Safari have it. The engine's no-op fallback
+    // is covered by unit tests; assert the real UI on Chromium only.
+    test.skip(browserName !== 'chromium', 'no SpeechSynthesis in this browser build');
     await page.goto('/?book=demo-book');
     await page.getByRole('button', { name: 'Text to speech' }).click();
     await page.getByRole('button', { name: 'Play' }).click();

@@ -53,6 +53,23 @@ pnpm --filter @pore/demo e2e           # end-to-end demo tests
 
 Requires Node >= 20.
 
+## Browser support
+
+The e2e suite runs on Chromium, Firefox and WebKit (Safari's engine).
+
+| | Chrome / Edge | Firefox | Safari (macOS / iOS) |
+|---|---|---|---|
+| image / manga | ✅ | ✅ | ✅ |
+| EPUB text engine | ✅ | ✅ | ✅ |
+| PDF | ✅ | ✅ | ✅ (canvas fallback where `OffscreenCanvas` is absent) |
+| highlights, bookmarks, TOC, footnotes | ✅ | ✅ | ✅ |
+| TTS | ✅ | ✅ | ✅ (uses the OS voices) |
+
+Targets current + previous major of each. The text engine's reading frame runs
+with a strict CSP (`script-src 'none'`) and `sandbox` — Safari needs
+`allow-scripts` in the sandbox to deliver input events, so it's set, but the CSP
+is what actually blocks scripts (see `docs/architecture.md`).
+
 ## Integrating it in your app
 
 Full guide: [`docs/integration.md`](docs/integration.md). The short version —

@@ -44,6 +44,10 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -53,6 +57,13 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm gen:fixtures
-      - run: pnpm --filter @pore/demo exec playwright install --with-deps chromium
-      - run: pnpm --filter @pore/demo e2e
-      - run: pnpm --filter @pore/example-host-app e2e
+      - run: pnpm --filter @pore/demo exec playwright install --with-deps ${{ matrix.browser }}
+      - run: pnpm --filter @pore/demo e2e --project=${{ matrix.browser }}
+      - if: matrix.browser == 'chromium'
+        run: pnpm --filter @pore/example-host-app e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: apps/demo/playwright-report/
+          retention-days: 7

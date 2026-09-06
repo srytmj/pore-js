@@ -51,7 +51,42 @@ export function rewriteResources(
     return url;
   };
 
+  // Scripts never run in the reading frame. Drop <script>, inline on* handlers,
+  // and javascript: URLs — defence in depth behind the frame's CSP + sandbox.
   for (const el of Array.from(root.querySelectorAll('script'))) el.remove();
+  for (const el of Array.from(root.querySelectorAll('*'))) {
+    for (const attr of Array.from(el.attributes)) {
+      if (/^on/i.test(attr.name)) el.removeAttribute(attr.name);
+      else if (
+        (attr.name === 'href' || attr.name === 'src' || attr.name === 'xlink:href') &&
+        /^\s*javascript:/i.test(attr.value)
+      ) {
+        el.removeAttribute(attr.name);
+      }
+    }
+  }
+  for (const el of Array.from(root.querySelectorAll('iframe, object, embed, meta[http-equiv]'))) {
+    el.remove();
+  }
+
+  // A strict Content-Security-Policy in the frame: no scripts (even if one slips
+  // past the strip above), no plugins, no nested frames, no form posts, no
+  // base-uri games. The frame still gets `allow-scripts` in its sandbox purely
+  // so WebKit delivers pointer/selection events to the engine's listeners —
+  // this CSP is what actually keeps scripts from running.
+  const rdoc = root as unknown as Document;
+  const csp = rdoc.createElement('meta');
+  csp.setAttribute('http-equiv', 'Content-Security-Policy');
+  csp.setAttribute(
+    'content',
+    "default-src 'none'; img-src blob: data:; media-src blob: data:; " +
+      "font-src blob: data:; style-src 'unsafe-inline' blob: data:; " +
+      "script-src 'none'; object-src 'none'; frame-src 'none'; " +
+      "base-uri 'none'; form-action 'none'",
+  );
+  const head = root.querySelector('head');
+  if (head) head.insertBefore(csp, head.firstChild);
+  else root.documentElement?.insertBefore(csp, root.documentElement.firstChild);
 
   if (opts.stripAuthorCss) {
     for (const el of Array.from(root.querySelectorAll('style, link[rel~="stylesheet"]'))) {

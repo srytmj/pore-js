@@ -60,7 +60,7 @@ public surface frozen (`porejs` + opt-in `porejs/internal`, pinned by
 composition). **H3 done** — `pnpm test:corpus` green against 3 real Gutenberg
 EPUBs (no engine bug in parse/CFI/search); CI `corpus` job. Set can grow (CBZ /
 vertical-JP / fixed-layout / big PDF sources still wanted, not 1.0-blocking).
-**H4 done** — fixed a white-screen bug (Reader swallowed fatal load errors), 15 fuzz cases, error-card e2e. **H5 (cross-browser + e2e de-flake) next.**
+**H4 done** — fixed a white-screen bug (Reader swallowed fatal load errors), 15 fuzz cases, error-card e2e. **H5 done** — 2 real Safari/WebKit bugs fixed (PDF canvas fallback, sandboxed-iframe events); e2e 3-browser matrix. **H6 (perf & size budgets) next.**
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -77,6 +77,26 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-07 — M8 H5: cross-browser (2 real Safari/WebKit bugs fixed)
+- **What:** added `firefox` + `webkit` Playwright projects; CI `e2e` is now a
+  3-browser matrix. **Bug 1:** PDF pages rendered *nowhere* without
+  `OffscreenCanvas` (Playwright WebKit, older Safari) — `pdf/parse.ts`
+  `renderToBlob` now falls back to `HTMLCanvasElement` + PNG-when-no-WebP.
+  **Bug 2:** text selection / footnote taps / highlighting were dead in WebKit —
+  a sandboxed `<iframe>` without `allow-scripts` gets **zero** input events in
+  WebKit. Fix: `sandbox="allow-same-origin allow-scripts"` + a strict in-frame
+  **CSP** (`script-src 'none'; default-src 'none'; …`) + `rewrite.ts` now also
+  strips `on*` / `javascript:` / `<iframe|object|embed>` / `<meta http-equiv>`.
+  Scripts still fully blocked (pulled H7 forward). TTS e2e skipped on
+  non-Chromium (Playwright FF/WebKit ship no `speechSynthesis`). De-flaked the
+  "annotations review jump" + "share a passage" (clipboard stub) tests.
+  Support matrix in README; sandbox note in `architecture.md`.
+- **State:** committed + pushed. **Chromium 44/44 + WebKit 43/43** (TTS skipped)
+  green, repeated. 290 unit · typecheck · lint.
+- **Notes:** Firefox can't launch on this Windows box (`spawn UNKNOWN` — AV /
+  Mark-of-the-Web); config'd + on CI, verified there. Owner: reinstall +
+  unblock the FF binary for local runs.
 
 ## 2026-09-07 — M8 H4: robustness / failure modes
 - **What:** **fixed a real white-screen bug** — `<Reader>`'s mount effect

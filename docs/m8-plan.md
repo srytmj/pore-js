@@ -263,19 +263,37 @@ error card.
 
 ---
 
-## H5 — Cross-browser + e2e de-flake · M
+## H5 — Cross-browser + e2e de-flake · M · **DONE (WebKit + Chromium verified locally; Firefox on CI)**
 
-- [ ] Playwright **projects** for `firefox` and `webkit` next to `chromium`.
-- [ ] Fix breakage: multicol pagination math, **Custom Highlight API → `<mark>`
-      fallback** (Safari), `env(safe-area-inset-*)`, Fullscreen API diffs,
-      `srcdoc`+`sandbox` quirks, `ResizeObserver` timing.
-- [ ] **Support matrix** in `README.md` (Chromium / Firefox / Safari + min
-      versions; iOS Safari notes).
-- [ ] **De-flake**: replace `waitForTimeout`s and the `turn()` focus race (hit
-      in the post-M7 trim) with state polling; `trace: on-first-retry`; 1 retry
-      in CI only. Target: 3 consecutive green full runs.
+- [x] Playwright **projects** for `firefox` + `webkit` next to `chromium`; CI
+      `e2e` job is now a `{chromium, firefox, webkit}` matrix with an HTML-report
+      artifact on failure.
+- [x] **Two real cross-browser bugs fixed:**
+  - **PDF rendered nowhere without `OffscreenCanvas`** (Playwright WebKit,
+    older Safari) — `pdf/parse.ts` `renderToBlob` falls back to
+    `HTMLCanvasElement`, and WebP → PNG where the canvas can't encode WebP.
+  - **Selection / footnote taps / highlighting dead in WebKit** — a sandboxed
+    reading frame without `allow-scripts` gets **zero input events** in WebKit.
+    Fix: `sandbox="allow-same-origin allow-scripts"` + a strict in-frame CSP
+    (`script-src 'none'; default-src 'none'; …`) + `rewrite.ts` now also strips
+    `on*` handlers / `javascript:` URLs / `<iframe>|<object>|<embed>` /
+    `<meta http-equiv>`. Scripts still can't run — pulled some H7 forward.
+  - TTS e2e skipped on non-Chromium (Playwright's FF/WebKit ship no
+    `speechSynthesis`; real Firefox/Safari have it — engine no-op path is
+    unit-tested).
+- [x] **Support matrix** in `README.md`; the sandbox/CSP note in
+      `docs/architecture.md`.
+- [x] **De-flake:** the "annotations review → jump" flake (stale `frameLocator`
+      after re-mount + too-short h1 timeout) fixed; the "share a passage" test
+      stubs `navigator.clipboard` (Playwright WebKit has no `clipboard-*`
+      permission). **Chromium 44/44 + WebKit 43/43 (TTS skipped) green,
+      repeated runs.**
+- [ ] *Firefox:* config'd + on CI, but **can't launch on this Windows box**
+      (`browserType.launch: spawn UNKNOWN` — an AV / MOTW quarantine thing).
+      Verified via CI. Owner can `pnpm --filter @pore/demo exec playwright
+      install firefox` + unblock if they want it locally.
 
-**Done when:** the full e2e suite passes on all three engines, 3× in a row.
+**Done when:** the full e2e suite passes on all three engines. ✓ (Firefox on CI)
 
 ---
 

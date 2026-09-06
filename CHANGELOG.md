@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### Cross-browser (M8 H5)
+
+- **Fixed: PDF pages didn't render on any browser without `OffscreenCanvas`**
+  (Playwright's WebKit, older Safari) — `renderToBlob` now falls back to an
+  `HTMLCanvasElement`, and to PNG where the canvas can't encode WebP (Safari).
+- **Fixed: text selection / footnote taps / highlighting were dead in
+  Safari/WebKit** — a sandboxed reading frame without `allow-scripts` gets *no*
+  input events in WebKit. The frame's sandbox now has `allow-scripts`; scripts
+  are still fully blocked by a new in-frame CSP (`script-src 'none'`) plus
+  `rewrite.ts` stripping `<script>` / `on*` / `javascript:` / nested frames.
+- e2e now runs on **Chromium + Firefox + WebKit** in CI (matrix job).
+
+### Robustness (M8 H4)
+
+- **Fixed: a corrupt / unreadable book showed a blank reader** — `<Reader>`
+  now catches a failing `getManifest()` / `mount()` and surfaces it as the
+  error card instead of an unhandled rejection.
+
 ### Demo chrome trim
 
 - **Removed the Prev / Next, Download-for-offline and Fullscreen buttons** from
