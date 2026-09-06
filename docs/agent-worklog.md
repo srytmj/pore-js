@@ -60,7 +60,7 @@ public surface frozen (`porejs` + opt-in `porejs/internal`, pinned by
 composition). **H3 done** — `pnpm test:corpus` green against 3 real Gutenberg
 EPUBs (no engine bug in parse/CFI/search); CI `corpus` job. Set can grow (CBZ /
 vertical-JP / fixed-layout / big PDF sources still wanted, not 1.0-blocking).
-**H4 (robustness / failure modes) next.**
+**H4 done** — fixed a white-screen bug (Reader swallowed fatal load errors), 15 fuzz cases, error-card e2e. **H5 (cross-browser + e2e de-flake) next.**
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -77,6 +77,22 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-07 — M8 H4: robustness / failure modes
+- **What:** **fixed a real white-screen bug** — `<Reader>`'s mount effect
+  `void`-ed its async IIFE with no `try/catch`, so a rejecting
+  `source.getManifest()` / `engine.mount()` (corrupt file, dead API) was an
+  unhandled rejection + a blank `<div>`. Now caught → `setError` → the error
+  card. `packages/reader-core/src/robustness.test.ts` — 15 fuzz cases across
+  `parseEpub` / `LocalFileSource` / `loadPdf`; **the parse layer was already
+  solid** (every malformed input throws a real `Error`, no raw crash / hang) —
+  the only gap was that missing catch. New demo e2e: drop a corrupt `.epub` →
+  `role="alert"` card, "Back to start" still works.
+- **State:** committed + pushed. 290 unit · 44 demo e2e · 3 example e2e ·
+  typecheck · lint clean.
+- **Notes:** guard rails (page-dimension clamp, `getManifest`/`getFile` load
+  timeout, max manifest size) deferred — additive `<Reader>` opts, their own
+  small task, not `1.0`-blocking (see plan H4).
 
 ## 2026-09-07 — M8 H3: real-content corpus (done — baseline of 3)
 - **What:** `scripts/fetch-corpus.mjs` + `test/corpus/corpus.test.ts` (the

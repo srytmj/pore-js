@@ -252,6 +252,21 @@ test.describe('Pore.js demo — landing', () => {
     }
   });
 
+  test('a corrupt dropped file shows the error card, not a blank screen', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('.landing').waitFor();
+    await page.setInputFiles('input[type="file"]', {
+      name: 'totally-broken.epub',
+      mimeType: 'application/epub+zip',
+      buffer: Buffer.from('PK\x03\x04 this is not a real epub at all'),
+    });
+    // fatal load error → the error card, within a few seconds, no white screen
+    await expect(page.getByRole('alert')).toContainText(/couldn.t load/i, { timeout: 10_000 });
+    // and the app is still usable
+    await page.getByRole('button', { name: 'Back to start' }).click();
+    await expect(page.locator('.landing')).toBeVisible();
+  });
+
   test('landing page has no critical/serious axe violations', async ({ page }) => {
     await page.goto('/');
     await page.locator('.landing').waitFor();

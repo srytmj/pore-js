@@ -234,21 +234,32 @@ widen as sources are found)
 
 ---
 
-## H4 — Robustness / failure modes · M
+## H4 — Robustness / failure modes · M · **DONE (guard rails deferred)**
 
 Never a blank screen — every bad input → a clean `reader:error` + the demo's
 error card.
 
-- [ ] Table-driven tests per source/engine: truncated ZIP, not-a-ZIP, 0-byte,
-      wrong MIME, missing/malformed OPF, `container.xml` with no rootfile,
-      cyclic or dangling TOC `href`, CBZ with non-image entries, encrypted PDF,
-      0-page PDF, a 100000-px-wide image page.
-- [ ] Each returns/emits a useful error (`message` + page/spine where known) —
-      no unhandled rejection, no throw-through.
-- [ ] e2e: drop junk → error card shows, Home still works.
-- [ ] Guard rails: max manifest size, page-dimension clamp, load timeout.
+- [x] **Fixed the real bug:** `<Reader>`'s mount effect `void`-ed the async IIFE
+      with **no `try/catch`** — a rejecting `source.getManifest()` or
+      `engine.mount()` (corrupt file, dead API) was an unhandled rejection and a
+      blank host `<div>`. Now both are caught → `setError` → `useReaderError` →
+      the error card.
+- [x] **`src/robustness.test.ts`** (15 cases) — `parseEpub` (empty / not-a-zip /
+      truncated / no container.xml / bad container XML / missing OPF / malformed
+      OPF / no spine), `LocalFileSource` (0-byte epub, non-zip cbz, unknown
+      ext, `getPage` out of range), `loadPdf` (empty / not-a-pdf / truncated).
+      **All already fail cleanly** — a real `Error` with a matching message, no
+      raw `TypeError`, no hang. The parse layer was solid; the gap was purely
+      the missing catch in `reader-react`.
+- [x] e2e: drop a corrupt `.epub` → `role="alert"` "Couldn't load" card within
+      seconds, "Back to start" still works (no white screen).
+- [ ] **Guard rails deferred** (not `1.0`-blocking, tracked): a page-dimension
+      clamp (a 100 000-px page shouldn't OOM the tab), a configurable
+      `getManifest` / `getFile` load timeout (a hung content API), a max
+      manifest size. These are additive `<Reader>` opts / engine settings —
+      their own small task.
 
-**Done when:** the fuzz table is green and a corrupt file can't white-screen.
+**Done when:** the fuzz table is green and a corrupt file can't white-screen. ✓
 
 ---
 

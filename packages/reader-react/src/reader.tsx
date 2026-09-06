@@ -231,7 +231,13 @@ export function Reader({
     const offs: Array<() => void> = [];
 
     void (async () => {
-      const manifest = await source.getManifest(bookId);
+      let manifest: Manifest;
+      try {
+        manifest = await source.getManifest(bookId);
+      } catch (err) {
+        if (!disposed) setError({ error: err, at: Date.now() });
+        return;
+      }
       if (disposed) return;
       setManifest(manifest);
       const isText = manifest.type === 'epub';
@@ -325,7 +331,11 @@ export function Reader({
         engine.on('reader:ttsstate', (p: never) => setTtsState(p as TtsState)),
       );
 
-      await engine.mount();
+      try {
+        await engine.mount();
+      } catch (err) {
+        if (!disposed) setError({ error: err, at: Date.now() });
+      }
     })();
 
     return () => {
