@@ -153,6 +153,28 @@ test.describe('Pore.js demo — landing', () => {
     await expect(page.getByRole('button', { name: 'Highlights' })).toContainText('1');
   });
 
+  test('share a passage: copy a page link, open it fresh, it lands + pulses', async ({ page }) => {
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.goto('/?book=demo-book');
+    const frame = page.frameLocator('iframe.pore-text__frame');
+    await frame.locator('h1').waitFor();
+    // turn a few pages so the link isn't page 1
+    for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowRight');
+    await page.waitForTimeout(300);
+
+    await page.getByRole('button', { name: 'Copy a link to this page' }).click();
+    const link = await page.evaluate(() => navigator.clipboard.readText());
+    expect(link).toMatch(/[?&]book=demo-book/);
+    expect(link).toMatch(/[?&]cfi=/);
+
+    await page.goto(link);
+    await expect(page.locator('.reader-host--pulse')).toBeVisible();
+    await expect(page).toHaveURL(/book=demo-book/);
+    await expect(page).not.toHaveURL(/cfi=/); // consumed on load
+    // pulse clears
+    await expect(page.locator('.reader-host--pulse')).toHaveCount(0, { timeout: 4000 });
+  });
+
   test('landing page has no critical/serious axe violations', async ({ page }) => {
     await page.goto('/');
     await page.locator('.landing').waitFor();

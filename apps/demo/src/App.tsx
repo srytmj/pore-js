@@ -44,8 +44,10 @@ const defaultTransitions = gsapAdapter(gsap);
 /** Applies a one-shot jump (from the annotations review) once the engine is ready. */
 function PendingNav({
   navRef,
+  onArrived,
 }: {
-  navRef: MutableRefObject<{ cfi?: string; position?: Position } | null>;
+  navRef: MutableRefObject<{ cfi?: string; position?: Position; pulse?: boolean } | null>;
+  onArrived: (pulse: boolean) => void;
 }) {
   const handle = useReader();
   const location = useReaderLocation();
@@ -55,7 +57,8 @@ function PendingNav({
     navRef.current = null;
     if (nav.cfi) handle.goToCfi(nav.cfi);
     else if (nav.position) handle.goto(nav.position);
-  }, [location, handle, navRef]);
+    onArrived(!!nav.pulse);
+  }, [location, handle, navRef, onArrived]);
   return null;
 }
 
@@ -120,13 +123,21 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const library = useLibrary();
   const [reviewOpen, setReviewOpen] = useState(false);
-  const pendingNavRef = useRef<{ cfi?: string; position?: Position } | null>(null);
+  const [pulse, setPulse] = useState(false);
+  const pendingNavRef = useRef<{ cfi?: string; position?: Position; pulse?: boolean } | null>(
+    (() => {
+      const cfi = new URLSearchParams(location.search).get('cfi');
+      return cfi ? { cfi, pulse: true } : null;
+    })(),
+  );
   // A docked bar takes real space — inset the reader so it isn't covered.
   const isDocked = menu.behaviour === 'always' && !isFullscreen;
   // one rail: menu + inline settings accordion. Width is constant whether or
   // not settings is open; only the explicit collapse toggle changes it.
   const railWidth = menu.collapsed ? '3.25rem' : '16rem';
-  const hostClass = isDocked ? `reader-host reader-host--${menu.placement}` : 'reader-host';
+  const hostClass =
+    (isDocked ? `reader-host reader-host--${menu.placement}` : 'reader-host') +
+    (pulse ? ' reader-host--pulse' : '');
   const shellClass = `shell${isDocked ? ` shell--docked-${menu.placement}` : ''}`;
   const shellStyle = { '--rail-w': railWidth } as CSSProperties;
 
@@ -134,6 +145,7 @@ export function App() {
     const url = new URL(location.href);
     if (view.kind === 'sample') url.searchParams.set('book', view.bookId);
     else url.searchParams.delete('book');
+    url.searchParams.delete('cfi'); // consumed once on load
     history.replaceState(null, '', url);
   }, [view]);
 
@@ -160,11 +172,17 @@ export function App() {
     if (b) library.record({ id, title: b.label, glyph: b.glyph, kind: 'sample' });
   };
 
+  const onArrived = (doPulse: boolean) => {
+    if (!doPulse) return;
+    setPulse(true);
+    setTimeout(() => setPulse(false), 2000);
+  };
+
   const onJump = (t: JumpTarget) => {
     pendingNavRef.current = t.cfi
-      ? { cfi: t.cfi }
+      ? { cfi: t.cfi, pulse: true }
       : t.position
-        ? { position: t.position }
+        ? { position: t.position, pulse: true }
         : null;
     setReviewOpen(false);
     openSample(t.bookId);
@@ -233,7 +251,7 @@ export function App() {
             {...(sample?.settings ? { initialSettings: sample.settings } : {})}
           >
             <ReaderAnnouncer />
-            <PendingNav navRef={pendingNavRef} />
+            <PendingNav navRef={pendingNavRef} onArrived={onArrived} />
             <Chrome
               books={BOOKS.map((b) => ({ id: b.id, label: b.label }))}
               bookId={view.kind === 'sample' ? view.bookId : ''}

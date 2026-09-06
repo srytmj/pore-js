@@ -263,6 +263,37 @@
 
   /* Reader renders directly into .shell: <header> <progress> <toast?> <host flex:1> */
 
+  /* A ~2s orienting flash after a deep-link / annotation jump lands. */
+  .reader-host--pulse {
+    position: relative;
+  }
+  .reader-host--pulse::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background: var(--color-focus);
+    opacity: 0;
+    animation: pore-pulse 2s ease-out;
+  }
+  @keyframes pore-pulse {
+    0% {
+      opacity: 0;
+    }
+    12% {
+      opacity: 0.16;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reader-host--pulse::after {
+      animation: none;
+    }
+  }
+
   /* The menu bar floats over the reader or docks when behaviour is 'always'.
      .reader-host--left/right/top insets and resizes the content cleanly when docked. */
   .reader-host--left {
@@ -822,6 +853,12 @@
     @apply h-6 w-6 shrink-0 cursor-pointer rounded-full border border-line bg-transparent text-[0.8rem] leading-none text-fg;
   }
   .selection-toolbar__note:hover {
+    @apply border-fg/40;
+  }
+  .selection-toolbar__quote {
+    @apply h-6 w-6 shrink-0 cursor-pointer rounded-full border border-line bg-transparent text-[0.8rem] leading-none text-fg;
+  }
+  .selection-toolbar__quote:hover {
     @apply border-fg/40;
   }
 

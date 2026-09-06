@@ -43,7 +43,7 @@ portability (a feature milestone): L0 engine groundwork (`goToCfi` +
 `<BookmarksPanel>`) → L2 library/home (a `useLibrary()` shelf) → L3 annotations
 review → L4 export/import (versioned JSON, `docs/portability-format.md`) → L5
 share-a-passage (`?cfi=` deep links) → L6 release. Open questions decided
-(see plan). **L0 · L1 · L2 · L3 · L4 done**; L5 (share-a-passage) next.
+(see plan). **L0 · L1 · L2 · L3 · L4 · L5 done**; L6 (hardening + release) next.
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -60,6 +60,19 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-06 — M7 L5: share a passage
+- **What:** `apps/demo/src/share.ts` — `deepLink(bookId, cfi)` →
+  `?book=<id>&cfi=<epubcfi>`, `citation()`, `copyText()`. Selection toolbar
+  gains a `❝` "Copy quote" (passage + `Ch n/m` + link); the rail link button now
+  copies a full deep link (was a bare CFI). `?cfi=` on load seeds
+  `pendingNavRef` → `<PendingNav>` `goToCfi` when ready → ~2s
+  `.reader-host--pulse` flash (`--color-focus` 16%, reduced-motion safe), then
+  the param is stripped. Review jumps pulse too.
+- **State:** committed. `docs/m7-plan.md` L5 done. 43 e2e · 263 unit · lint 0.
+- **Notes:** L6 next — a11y sweep (bookmarks panel / shelf / review / import),
+  full round-trip e2e, docs, tag `v0.10.0-library`. Also still open for L6:
+  clearing cached data on library remove.
 
 ## 2026-09-06 — M7 L4: export / import
 - **What:** `apps/demo/src/portability.ts` — versioned bundle

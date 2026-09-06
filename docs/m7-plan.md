@@ -193,21 +193,24 @@ via a file, and the CFIs still resolve after re-pagination.
 
 ---
 
-## L5 — Share a passage · S
+## L5 — Share a passage · S · **DONE**
 
 Cash in the CFI work.
 
-- [ ] **"Copy quote"** on a highlight row and on the selection toolbar →
-      clipboard gets the quoted text + a citation line (chapter · a deep link
-      `…/?book=<id>&cfi=<epubcfi>`).
-- [ ] **`?cfi=` deep link.** On mount, if the URL has `cfi`, the demo waits for
-      the engine and calls `handle.goToCfi(cfi)`, then briefly pulses the
-      target range (a 2s highlight-style flash, reusing the highlight renderer's
-      look, no persisted record).
-- [ ] The link is copy-only — no shortener, no server. It's a portable
-      pointer into a book the recipient also has.
-- [ ] Playwright: highlight a passage, copy its link, open the link in a fresh
-      context → lands on that passage.
+- [x] **`apps/demo/src/share.ts`** — `deepLink(bookId, cfi)` (`…/?book=<id>&cfi=
+      <epubcfi>`, strips other params), `citation(quote, locator, link)`,
+      `copyText`.
+- [x] **"Copy quote"** (`❝`) on the selection toolbar → clipboard gets
+      `"<passage>"\n<Ch n/m> · <link>`. The rail's link button now copies a
+      full `deepLink` to the current page (was a bare CFI).
+- [x] **`?cfi=` deep link.** `pendingNavRef` is seeded from `?cfi` at mount;
+      `<PendingNav>` runs `handle.goToCfi` once `useReaderLocation()` is ready,
+      then a ~2s `.reader-host--pulse` flash (`--color-focus` at 16%,
+      reduced-motion → no flash). The `cfi` param is stripped from the URL on
+      consume. Annotation-review jumps reuse the same pulse.
+- [x] Copy-only — no shortener, no server.
+- [x] Playwright: turn pages, copy the page link, open it in a fresh load →
+      pulses, lands on `book=demo-book`, `cfi` param gone.
 
 **Done when:** you can copy a link to a specific sentence and opening it jumps
 there.

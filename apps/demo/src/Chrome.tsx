@@ -39,6 +39,7 @@ import { useTheme } from './theme.js';
 import { useAutoHide } from './use-auto-hide.js';
 import type { MenuBar } from './use-menu-bar.js';
 import { MenuBarSettings } from './MenuBarSettings.js';
+import { citation, copyText, deepLink } from './share.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select.js';
 
 
@@ -340,12 +341,12 @@ export function Chrome({
           onClick={() => {
             const cfi = reader.getCfi();
             if (!cfi) return;
-            void navigator.clipboard?.writeText(cfi).catch(() => {});
-            setPosNotice(cfi);
+            void copyText(deepLink(bookId, cfi));
+            setPosNotice('Link to this page copied');
             setTimeout(() => setPosNotice(null), 4000);
           }}
-          aria-label="Copy position (CFI)"
-          title="Copy a portable position link (epubcfi)"
+          aria-label="Copy a link to this page"
+          title="Copy a portable link to this page (epubcfi)"
         >
           <span className="icon"><LinkIcon size={18} /></span>
           <span>Copy Link</span>
@@ -664,6 +665,30 @@ export function Chrome({
           >
             ✎
           </button>
+          {isText && selection.text.trim().length > 0 && (
+            <button
+              className="selection-toolbar__quote"
+              aria-label="Copy quote with a link"
+              title="Copy the passage + a link back to it"
+              onClick={() => {
+                const cfi = reader.getCfi();
+                const locator =
+                  progress && progress.chapterCount > 1
+                    ? `Ch ${progress.chapterIndex + 1}/${progress.chapterCount}`
+                    : undefined;
+                const text = citation(
+                  selection.text,
+                  locator,
+                  cfi ? deepLink(bookId, cfi) : location.href,
+                );
+                void copyText(text);
+                setPosNotice('Quote + link copied');
+                setTimeout(() => setPosNotice(null), 4000);
+              }}
+            >
+              ❝
+            </button>
+          )}
         </div>
       )}
 
@@ -759,7 +784,7 @@ export function Chrome({
 
       {posNotice && (
         <div className="notice" role="status" onClick={() => setPosNotice(null)}>
-          Copied: {posNotice}
+          {posNotice}
         </div>
       )}
 
