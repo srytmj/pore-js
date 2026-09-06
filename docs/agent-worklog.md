@@ -47,12 +47,13 @@ share-a-passage (`?cfi=` deep links) → L6 release. Open questions decided
 reader rail (removed Prev/Next, Download, Fullscreen buttons — user request).
 
 **M8 scoped, not started — `docs/m8-plan.md`, target `v1.0.0`.** Hardening +
-publish + deploy (not a feature milestone): H0 package identity + Changesets →
-H1 freeze/document the public API → H2 real-content corpus → H3 robustness/fuzz
-→ H4 cross-browser + e2e de-flake → H5 perf/size budgets → H6 security + a11y →
-H7 CI/CD + npm publish pipeline → H8 deploy the demo (needs owner: host + DNS)
-→ H9 docs + `v1.0.0`. 6 open questions in the plan (npm name, 1.0-vs-0.x,
-ESM-only, deploy host, offline-download UI, corpus in-repo).
+embed + publish + deploy (not a feature milestone): H0 rename to `porejs` /
+`porejs-react` + Changesets → H1 freeze the API (ESM-only) → **H2 embeddable in
+a host app** (`examples/host-app/`, isolation audit, `document.title`
+composition) → H3 real-content corpus → H4 robustness/fuzz → H5 cross-browser +
+e2e de-flake → H6 perf/size budgets → H7 security + a11y → H8 CI/CD + npm
+publish → H9 homelab deploy (Dockerfile, needs owner: DNS/proxy) → H10 docs +
+`v1.0.0`. All 6 open questions decided (see plan §Decisions).
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -70,22 +71,27 @@ M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
 
-## 2026-09-06 — M8 scoped: hardening, deploy, publish
-- **What:** `docs/m8-plan.md` — the road to `v1.0.0`. Not features: freeze +
-  document the public API (H1), prove the engines against real books not just
-  `gen-fixtures` output (H2), fuzz the failure modes (H3), pass on Firefox +
-  WebKit and de-flake e2e (H4), set perf/size budgets (H5), harden the iframe
-  threat model + a11y (H6), Changesets + `npm publish --provenance` pipeline
-  (H7), deploy the demo to `pore.suryatmaja.dev` as a PWA (H8), per-package
-  quickstarts + tag `v1.0.0` (H9).
+## 2026-09-06 — M8 scoped: hardening, embed, publish, deploy
+- **What:** `docs/m8-plan.md` — the road to `v1.0.0`. Not features: rename the
+  packages to `porejs` / `porejs-react` + Changesets (H0), freeze + document
+  the public API, ESM-only (H1), **make it embeddable in a host app** —
+  `examples/host-app/` (a fake manga library that mounts `<Reader>` over its
+  own `ReaderSource`), plus an isolation audit (input listeners scoped to the
+  focused root, no global singletons, opt-in URL/storage) and `document.title`
+  composition (`<work> · Vol N · Ch M`, or the file name) (H2), real-content
+  corpus (H3), fuzz failure modes (H4), Firefox+WebKit + e2e de-flake (H5),
+  perf/size budgets (H6), iframe security + a11y (H7), Changesets →
+  `npm publish --provenance` (H8), homelab deploy — Dockerfile + compose,
+  `pore.suryatmaja.dev` (H9), per-package quickstarts + tag `v1.0.0` (H10).
 - **Why:** M0–M7 got it feature-complete; nothing is published, deployed, or
-  tested against real-world content, and the API is still `0.0.0`.
-- **State:** plan committed. Not started. 6 open questions listed with
-  recommendations (npm name is the load-bearing one — `@pore` may not be
-  claimable).
-- **Notes:** H8 needs the owner (host account + DNS). The offline-download UI
-  removed in the rail trim is an open question for H8 (re-add in Settings vs
-  cut).
+  tested against real content, the API is `0.0.0`, and the "another site drops
+  in our reader" use case was never actually proven.
+- **State:** plan committed. Not started. All 6 open questions decided by the
+  owner (see plan §Decisions): names `porejs`/`porejs-react` (`pore` taken);
+  `rc` then `1.0.0`; ESM-only; homelab (not PaaS); offline-download UI cut;
+  corpus fetched + SHA-pinned.
+- **Notes:** H9 needs the owner for the homelab box + DNS/reverse-proxy. Renaming
+  in H0 touches every `@pore/*` import + doc — do it first, one commit.
 
 ## 2026-09-06 — demo: trim the reader rail (user request)
 - **What:** removed the Prev/Next, Download-for-offline and Fullscreen buttons

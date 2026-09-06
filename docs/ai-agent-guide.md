@@ -177,22 +177,23 @@ pnpm --filter @pore/demo e2e           # the full demo e2e suite
 ## 7. Current focus — M8: hardening, publish, deploy (→ `v1.0.0`)
 
 **[`docs/m8-plan.md`](m8-plan.md).** *Not a feature milestone.* M0–M7 got the
-engines feature-complete (`v0.10.0-library`); M8 makes it dependable and
-public. H0 package identity + Changesets → H1 freeze/document the public API →
-H2 real-content corpus (`scripts/fetch-corpus.mjs`, `pnpm test:corpus`) → H3
-robustness/fuzz → H4 Firefox + WebKit + e2e de-flake → H5 perf/size budgets →
-H6 iframe security + a11y → H7 CI/CD + `npm publish --provenance` → H8 deploy
-the demo (Cloudflare Pages / `pore.suryatmaja.dev`, PWA) → H9 per-package
-quickstarts + tag `v1.0.0`.
+engines feature-complete (`v0.10.0-library`); M8 makes it dependable, embeddable
+and public. H0 rename packages → **`porejs`** / **`porejs-react`** + Changesets
+→ H1 freeze/document the public API (ESM-only) → **H2 embeddable in a host app**
+(`examples/host-app/`, input-listener + singleton isolation audit,
+`document.title` composition) → H3 real-content corpus
+(`scripts/fetch-corpus.mjs`, `pnpm test:corpus`) → H4 robustness/fuzz → H5
+Firefox + WebKit + e2e de-flake → H6 perf/size budgets → H7 iframe security +
+a11y → H8 CI/CD + `npm publish --provenance` → H9 deploy the demo on the
+owner's **homelab** (Dockerfile + compose, `pore.suryatmaja.dev`) → H10
+per-package quickstarts + tag `v1.0.0`.
 
-**Scope boundary for M8:** no new reader features. The one allowed product
-change is re-homing the offline-download control (removed from the rail
-post-M7). F3b spreads stay deferred.
+**Scope boundary for M8:** no new reader features. The offline-download control
+(removed from the rail post-M7) is cut for good. F3b spreads stay deferred.
 
-**Open questions (see plan §Open questions):** the npm name (`@pore` may be
-unclaimable → `@surytmj/*` or unscoped), `1.0.0` now vs `1.0.0-rc`, ESM-only,
-deploy host, the offline-download UI, corpus in-repo vs fetched. H8 needs the
-owner for host account + DNS.
+**Decisions locked (plan §Decisions):** names `porejs` / `porejs-react`;
+`1.0.0-rc` through M8 then `1.0.0`; ESM-only; homelab deploy; offline-download
+UI cut; corpus fetched + SHA-pinned. H9 needs the owner for the homelab + DNS.
 
 <details><summary>earlier focus — M6 editorial redesign (done, <code>v0.9.0-editorial</code>)</summary>
 

@@ -179,9 +179,10 @@ M7: [`docs/m7-plan.md`](docs/m7-plan.md) — done (L0–L6, `v0.10.0-library`) �
 bookmarks, home shelf, annotations review, export / import, `?cfi=` deep
 links. `docs/portability-format.md` is the bundle schema.
 
-M8: [`docs/m8-plan.md`](docs/m8-plan.md) — **scoped, not started** (H0–H9,
-target `v1.0.0`) — hardening (real-content corpus, robustness, cross-browser,
-perf, security/a11y), npm publish, demo deploy.
+M8: [`docs/m8-plan.md`](docs/m8-plan.md) — **scoped, not started** (H0–H10,
+target `v1.0.0`) — rename to `porejs` / `porejs-react`, freeze the API, make it
+embeddable in a host app, hardening (real-content corpus, robustness,
+cross-browser, perf, security/a11y), npm publish, homelab deploy.
 
 Live status: [`docs/agent-worklog.md`](docs/agent-worklog.md).
 

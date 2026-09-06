@@ -1,266 +1,311 @@
-# Pore.js — M8 Plan (hardening, deploy, publish)
+# Pore.js — M8 Plan (hardening, embed, publish, deploy)
 
-**Goal:** take Pore.js from "feature-complete demo" to "a thing people can
-actually depend on." Freeze and document the public API, prove the engines
-against **real-world content** (not just synthetic fixtures), pass on **more
-than one browser**, set performance/size budgets, tighten security + a11y,
-**publish `@pore/reader-core` + `@pore/reader-react` to npm**, and **deploy the
-demo** at a public URL. Ends at **`v1.0.0`**.
+**Goal:** take Pore.js from "feature-complete demo" to "a reader another site
+can drop in." Freeze and document the public API, make the packages **cleanly
+embeddable in someone else's web app** (a manga library, a comics site — they
+provide a mount point + a content source, Pore.js is the whole reader), prove
+the engines against **real-world content**, pass on **more than one browser**,
+set perf/size budgets, tighten security + a11y, **publish `porejs` +
+`porejs-react` to npm**, and **deploy the demo on the owner's homelab**. Ends at
+**`v1.0.0`**.
 
-**Not a feature milestone.** No new reader capabilities. The one allowed
-product change is re-homing the offline-download control (removed from the rail
-in the post-M7 trim) — see H8 / open question 5. F3b (fixed-layout spreads)
+**Not a feature milestone.** No new reader capabilities. The offline-download
+control removed from the rail post-M7 is **cut for good** — the demo needs the
+network for the library and the reader anyway; `useDownload` / `CachedSource`
+MediaCache stay in the library for other consumers. F3b (fixed-layout spreads)
 stays deferred.
 
-**Design refs:** [`reader-engine-design.md`](reader-engine-design.md) §4/§11,
-[`adr/0001-core-surface.md`](adr/0001-core-surface.md) (the surface this
-milestone finally freezes), [`integration.md`](integration.md),
+**Design refs:** [`reader-engine-design.md`](reader-engine-design.md) §2 (the
+source seam), §4/§11, [`adr/0001-core-surface.md`](adr/0001-core-surface.md)
+(the surface this milestone finally freezes), [`integration.md`](integration.md),
 [`architecture.md`](architecture.md). Builds on `v0.10.0-library`. Target tag:
 **`v1.0.0`**.
 
-Sequential-ish, one commit per task. H2–H6 are largely independent and can
-reorder; H0/H1 come first, H7 needs them all, H8/H9 ship it.
+Sequential-ish, one commit per task. H3–H7 are largely independent and can
+reorder; H0–H2 come first, H8 needs them all, H9/H10 ship it.
+
+---
+
+## Decisions (2026-09-06)
+
+1. **npm names — `porejs` (core) + `porejs-react`.** `pore` is taken; unscoped
+   and consistent beats an unowned scope. `@pore/*` in the code → `porejs` /
+   `porejs-react` in H0 (`apps/demo` stays private, name unchanged).
+2. **`1.0.0-rc.1` through M8, cut `1.0.0` at H10** once corpus + cross-browser
+   are green — the RC window is the last shake-out.
+3. **ESM-only.** No CJS build; documented in H1.
+4. **Deploy: the owner's homelab**, not a PaaS. H9 ships a `Dockerfile` +
+   compose stanza; the homelab's reverse proxy serves it and
+   `pore.suryatmaja.dev` points there.
+5. **Offline-download UI: cut.** Not re-added. Engine support stays.
+6. **Corpus: fetched + SHA-256 pinned**, not committed (bar the few-KB items).
 
 ---
 
 ## Why this order
 
 ```
-H0 identity ─→ H1 API freeze ─────────────┐
-                                          │
-H2 corpus ─→ H3 robustness ───────────────┼─→ H7 CI/CD ─→ H8 deploy ─→ H9 v1.0.0
-H4 cross-browser + e2e de-flake ──────────┤
-H5 perf + size budget ────────────────────┤
-H6 security + a11y hardening ─────────────┘
+H0 identity ─→ H1 API freeze ─→ H2 embeddable ─┐
+                                               │
+H3 corpus ─→ H4 robustness ────────────────────┼─→ H8 CI/CD ─→ H9 deploy ─→ H10 v1.0.0
+H5 cross-browser + e2e de-flake ───────────────┤
+H6 perf + size budget ─────────────────────────┤
+H7 security + a11y hardening ──────────────────┘
 ```
 
 `H0` sorts out names/versioning so nothing downstream churns. `H1` freezes what
-`H7` will publish. `H2`–`H6` are the actual hardening and can run in parallel.
-`H7` wires the pipeline. `H8` puts the demo online. `H9` cuts `1.0.0`.
+`H8` publishes; `H2` proves that frozen surface is enough to embed. `H3`–`H7`
+are the hardening and run in parallel. `H8` wires the pipeline, `H9` puts the
+demo on the homelab, `H10` cuts `1.0.0`.
 
 ---
 
 ## H0 — Package identity & release tooling · S
 
-- [ ] **Settle the npm name** (open question 1). Check whether `@pore` org is
-      claimable; if not, `@surytmj/reader-core` / `@surytmj/reader-react`, or
-      unscoped `porejs` / `porejs-react`. Rename package `name`s, all
-      `workspace:*` refs, imports in `apps/demo`, and every `@pore/…` in docs.
-- [ ] Fix `repository.url` (`srytmj/pore.js` → `srytmj/pore-js`), add
-      `homepage`, `bugs`, `keywords`, `publishConfig.access: "public"` to the
-      two publishable packages.
-- [ ] Per-package `README.md` + `LICENSE` (copy root MIT) so the npm page isn't
-      blank. `files` already `["dist"]` — verify `dist` is the only thing
-      packed (`npm pack --dry-run`).
-- [ ] Add **Changesets** (`@changesets/cli`) — `pnpm changeset`, config,
-      `CONTRIBUTING` note. Bump the three packages to **`1.0.0-rc.1`**
-      (`apps/demo` stays private/unversioned).
-- [ ] `.npmrc` / `provenance` groundwork for H7.
+- [ ] **Rename the packages** — `@pore/reader-core` → **`porejs`**,
+      `@pore/reader-react` → **`porejs-react`**. Every `name`, `workspace:*`
+      ref, `apps/demo` import, and `@pore/…` mention in `docs/` + `README.md` +
+      `CLAUDE.md`.
+- [ ] Fix `repository.url` (`srytmj/pore.js` → `srytmj/pore-js`); add
+      `homepage`, `bugs`, `keywords`, `publishConfig.access: "public"` to both
+      publishable packages.
+- [ ] Per-package `README.md` + `LICENSE` (copy root MIT). `files` is
+      `["dist"]` — confirm with `npm pack --dry-run`.
+- [ ] Add **Changesets** (`@changesets/cli`) + a `CONTRIBUTING` note. Both
+      packages to **`1.0.0-rc.1`**.
+- [ ] `.npmrc` / provenance groundwork for H8.
 
-**Done when:** `npm pack --dry-run` in each package shows a clean, minimal
-tarball with a real README, and `pnpm changeset` works.
+**Done when:** `npm pack --dry-run` shows a clean tarball with a real README,
+and `pnpm changeset` works.
 
 ---
 
 ## H1 — Freeze the public API · M
 
-- [ ] Audit `reader-core/src/index.ts` + `reader-react/src/index.ts` against
-      **ADR 0001**. Anything not meant to be public → stop exporting or move
-      behind an `/internal` subpath. Write down what each export is *for*.
-- [ ] **API-surface guard**: a snapshot test (hand-rolled
-      `expect(sortedExportNames).toMatchSnapshot()` per package, or
-      `@microsoft/api-extractor`) so an accidental export fails CI. Run in the
-      `check` job.
-- [ ] **ESM-only, on purpose** (open question 3): document it in
-      `integration.md` ("Node ≥ 20, `"type": "module"`; no CJS build"). Revisit
-      only if a real consumer needs CJS.
-- [ ] **`docs/stability.md`** — what `v1.x` SemVer covers (the two packages'
-      documented exports, `data-pore-*` hooks, event names, `Position` /
-      `HighlightRecord` / `Bookmark` shapes), what is `@experimental`
-      (`OpdsSource` 2.0 bits, TTS voices, anything marked), and the
-      deprecation policy.
-- [ ] `reader-react` still ships **no CSS** — assert it (`dist` has no `.css`).
+- [ ] Audit `porejs`'s + `porejs-react`'s `index.ts` against **ADR 0001**.
+      Anything not meant to be public → unexport or move behind `/internal`.
+      Note what each export is *for*.
+- [ ] **API-surface guard**: a per-package snapshot test of the sorted export
+      names (or `@microsoft/api-extractor`) so an accidental export fails CI.
+- [ ] **ESM-only, on purpose** — document in `integration.md` (Node ≥ 20,
+      `"type": "module"`, no CJS).
+- [ ] **`docs/stability.md`** — what `v1.x` SemVer covers (documented exports,
+      `data-pore-*` hooks, event names, `Position` / `HighlightRecord` /
+      `Bookmark` / `ReaderSource` / `Manifest` shapes), what is
+      `@experimental`, the deprecation policy.
+- [ ] Assert `porejs-react/dist` ships **no `.css`**.
+- [ ] **Land the last additive shapes before the freeze** — notably `Manifest`
+      metadata for the document title (`title`, optional `subtitle` / `volume`,
+      and chapter `label` already exists). See H2's title bullet.
 
-**Done when:** the exported surface is deliberate, snapshotted, and
-`stability.md` says what a `1.0` consumer can rely on.
-
----
-
-## H2 — Real-world content corpus · M
-
-The engines have only ever seen `scripts/gen-fixtures.mjs` output. That is the
-biggest unknown before `1.0`.
-
-- [ ] **`scripts/fetch-corpus.mjs`** — pulls a small set of **public-domain /
-      openly-licensed** books into `fixtures/corpus/` (gitignored), verified by
-      SHA-256:
-  - a Standard Ebooks EPUB3 (rich CSS, footnotes, TOC depth)
-  - a Project Gutenberg EPUB (old-school, messy markup)
-  - a real **fixed-layout** EPUB (children's / comic)
-  - a genuine **RTL manga** CBZ and a **vertical-JP** book
-  - a multi-column / scanned **PDF** and a text PDF with an outline
-  - one deliberately **huge** item (≥ 800 pp)
-- [ ] **`pnpm test:corpus`** (Vitest, tagged, not in the default `test` run):
-      for each — `getManifest` → paginate → generate an anchor mid-book →
-      re-resolve it → `serializeCfi`/`parseCfi`/`resolveCfiElement` round-trip
-      → run a search → assert nothing throws and positions are plausible.
-- [ ] Commit only the tiny ones; CI fetches the rest (cached by hash).
-- [ ] File a bug per real breakage found; fix the cheap ones here, defer the
-      rest with a note.
-
-**Done when:** `pnpm test:corpus` is green against a dozen real books and any
-deferred breakage is written down.
+**Done when:** the surface is deliberate, snapshotted, and `stability.md` says
+what a `1.0` consumer can rely on.
 
 ---
 
-## H3 — Robustness / failure modes · M
+## H2 — Embeddable in a host app · M
 
-Never a blank screen. Every bad input → a clean `reader:error` + the demo's
+The point of the library: a manga/comics/book site provides **a content source
+and a mount point**, and gets the whole reader — pagination, themes, TOC,
+highlights, bookmarks, search, TTS — without building any of it.
+
+- [ ] **`examples/host-app/`** — a standalone minimal app (NOT the demo, no
+      `apps/demo` chrome): a fake "library" page (grid of series) where
+      clicking one mounts `<Reader>` in a panel. Its `ReaderSource` pulls from
+      the example's *own* (fake) REST-ish API — `getManifest` / `getPage` /
+      `getFile` / `loadProgress` / `saveProgress` + optional
+      `loadHighlights` / `loadBookmarks`. Proves: implement one interface, get
+      a reader.
+- [ ] **Isolation audit + fixes:**
+  - `porejs-react` ships zero CSS; the headless components carry only
+    `data-pore-*` hooks. ✓ (assert in H1) — verify nothing leaks global styles.
+  - the text engine's `<iframe sandbox>` keeps publisher CSS *inside*.
+  - **engine input listeners are scoped to its own focused root**, never
+    `document` / `window` — an embedded reader must not eat the host's
+    keyboard shortcuts or scroll when it doesn't have focus. Audit
+    `create-image-engine.ts` / `create-text-engine.ts`; fix any global binding.
+  - **no module-level singletons / globals** that break a second `<Reader>` on
+    the same page. Test two instances side by side.
+  - all URL / `localStorage` writes are **opt-in** — `useReaderHistory`,
+    `createSettingsPersistence` are things the host chooses to call; the host
+    owns routing and persistence (via its `ReaderSource`).
+- [ ] **Document title while reading.** `useReaderHistory` composes
+      `document.title` from the manifest + current position:
+  - a dropped local file → **the file name** (minus the `.epub` / `.cbz`);
+  - a real work → **`<title> · Vol N · Ch M`** when the manifest / current
+    chapter carry them (e.g. `Solo Leveling · Vol 2 · Ch 14`), else the title
+    alone, else `<title> · N%`;
+  - a `formatTitle?: (ctx) => string` option so an embedding host fully
+    overrides it. `Manifest` gains optional `subtitle` / `volume` (chapter
+    `label` already exists) — additive, lands in H1 before the freeze. The
+    demo's ad-hoc `document.title` writes move onto this.
+- [ ] **`integration.md`**: lead with the embed story — "implement
+      `ReaderSource`, give `<Reader>` a `bookId` + a mount, style the
+      `data-pore-*` bits, done", with the `examples/host-app` source as the
+      worked example. A "what the host still owns" list (auth, the content API,
+      routing, storage, layout around the reader).
+- [ ] Playwright against `examples/host-app`: open a title, read, turn pages,
+      progress round-trips through the host source, a second reader instance
+      coexists.
+
+**Done when:** `examples/host-app` is a believable third-party integration and
+the reader provably doesn't reach outside its own box.
+
+---
+
+## H3 — Real-world content corpus · M
+
+- [ ] **`scripts/fetch-corpus.mjs`** → `fixtures/corpus/` (gitignored,
+      SHA-256-verified), public-domain / openly-licensed only: a Standard
+      Ebooks EPUB3, a Project Gutenberg EPUB, a real fixed-layout EPUB, a
+      genuine RTL manga CBZ, a vertical-JP book, a multi-column/scanned PDF, a
+      text PDF with an outline, and one ≥ 800-page item.
+- [ ] **`pnpm test:corpus`** (Vitest, tagged, out of the default run): per
+      book — `getManifest` → paginate → anchor mid-book → re-resolve →
+      `serializeCfi`/`parseCfi`/`resolveCfiElement` round-trip → search →
+      assert nothing throws, positions are plausible.
+- [ ] Commit only the tiny items; CI fetches the rest (cached by hash).
+- [ ] A bug per real breakage; fix the cheap ones, defer the rest with a note.
+
+**Done when:** `pnpm test:corpus` is green against a dozen real books.
+
+---
+
+## H4 — Robustness / failure modes · M
+
+Never a blank screen — every bad input → a clean `reader:error` + the demo's
 error card.
 
 - [ ] Table-driven tests per source/engine: truncated ZIP, not-a-ZIP, 0-byte,
-      wrong extension/MIME, missing/ः malformed OPF, `container.xml` with no
-      rootfile, cyclic or dangling TOC `href`, CBZ with non-image entries,
-      encrypted PDF, PDF with 0 pages, an image page 100000 px wide.
-- [ ] Each returns/emits an error with a useful `message` and (where known) a
-      page/spine index — no unhandled rejection, no thrown-through.
-- [ ] e2e: drop a junk file → the demo shows the error card, Home still works.
-- [ ] Guard rails: max manifest size, max page dimension clamp, a load timeout.
+      wrong MIME, missing/malformed OPF, `container.xml` with no rootfile,
+      cyclic or dangling TOC `href`, CBZ with non-image entries, encrypted PDF,
+      0-page PDF, a 100000-px-wide image page.
+- [ ] Each returns/emits a useful error (`message` + page/spine where known) —
+      no unhandled rejection, no throw-through.
+- [ ] e2e: drop junk → error card shows, Home still works.
+- [ ] Guard rails: max manifest size, page-dimension clamp, load timeout.
 
-**Done when:** the fuzz table is green and a corrupt file can't white-screen
-the reader.
+**Done when:** the fuzz table is green and a corrupt file can't white-screen.
 
 ---
 
-## H4 — Cross-browser + e2e de-flake · M
+## H5 — Cross-browser + e2e de-flake · M
 
-- [ ] Playwright **projects** for `firefox` and `webkit` alongside `chromium`.
-- [ ] Fix what breaks: CSS multicol pagination math, **Custom Highlight API →
-      `<mark>` fallback** (Safari), `env(safe-area-inset-*)`, Fullscreen API
-      differences, `srcdoc` + `sandbox` quirks, `ResizeObserver` timing.
+- [ ] Playwright **projects** for `firefox` and `webkit` next to `chromium`.
+- [ ] Fix breakage: multicol pagination math, **Custom Highlight API → `<mark>`
+      fallback** (Safari), `env(safe-area-inset-*)`, Fullscreen API diffs,
+      `srcdoc`+`sandbox` quirks, `ResizeObserver` timing.
 - [ ] **Support matrix** in `README.md` (Chromium / Firefox / Safari + min
       versions; iOS Safari notes).
-- [ ] **De-flake**: replace timing `waitForTimeout`s and the `turn()` focus
-      race (found in the post-M7 trim) with state polling; `trace: on-first-retry`;
-      1 retry in CI only. Target: 3 consecutive green full runs.
+- [ ] **De-flake**: replace `waitForTimeout`s and the `turn()` focus race (hit
+      in the post-M7 trim) with state polling; `trace: on-first-retry`; 1 retry
+      in CI only. Target: 3 consecutive green full runs.
 
 **Done when:** the full e2e suite passes on all three engines, 3× in a row.
 
 ---
 
-## H5 — Performance & size budget · S–M
+## H6 — Performance & size budget · S–M
 
-- [ ] Scenario harness: 1000-page PDF, ~400-chapter EPUB, ~3000-image webtoon.
-      Measure first-page TTI, `paginate` ms, peak JS heap under continuous
-      virtualization, spread rebuild time.
-- [ ] **`size-limit`** on `@pore/reader-core` (with and without `pdfjs-dist` in
-      the graph) and `@pore/reader-react`; commit the numbers as budgets.
-- [ ] Document the **pdf.js code-split** story in `integration.md`
-      (`setPdfWorkerSrc`, lazy `import()`), and that `reader-core` without PDF
-      should tree-shake `pdfjs-dist` out.
-- [ ] A perf smoke in CI (soft-fail / annotation only).
+- [ ] Scenario harness: 1000-page PDF, ~400-chapter EPUB, ~3000-image webtoon —
+      first-page TTI, `paginate` ms, peak JS heap under virtualization, spread
+      rebuild time.
+- [ ] **`size-limit`** on `porejs` (with and without `pdfjs-dist` in the graph)
+      and `porejs-react`; commit the numbers as budgets.
+- [ ] Document the **pdf.js code-split** in `integration.md` (`setPdfWorkerSrc`,
+      lazy `import()`); `porejs` without PDF should tree-shake `pdfjs-dist`.
+- [ ] Perf smoke in CI (soft-fail / annotation only).
 
 **Done when:** budgets are written down and CI flags regressions.
 
 ---
 
-## H6 — Security & a11y hardening · M
+## H7 — Security & a11y hardening · M
 
-- [ ] **Security review** of the text engine iframe: confirm `sandbox` has no
-      `allow-scripts`, resource rewrite (`rewrite.ts`) covers every external
-      ref, no author JS or top-navigation is possible. A **CSP recipe** for
-      host apps in `integration.md`. Document the EPUB-HTML trust model
-      (publisher CSS on by default; scripts never run).
-- [ ] **`docs/accessibility.md`**: a full keyboard-only walkthrough of the demo
-      (open → read → TOC → highlight → bookmark → settings → search → home),
-      a screen-reader pass with NVDA + VoiceOver (findings, not just "ran
-      axe"), `prefers-reduced-motion` and `forced-colors` audits.
-- [ ] Broaden axe past the current smoke checks; fix real violations.
+- [ ] **Security review** of the text-engine iframe: `sandbox` has no
+      `allow-scripts`, `rewrite.ts` covers every external ref, no author JS or
+      top-navigation possible. A **CSP recipe** for host apps in
+      `integration.md`. Document the EPUB-HTML trust model (publisher CSS on by
+      default; scripts never run).
+- [ ] **`docs/accessibility.md`**: a full keyboard-only walkthrough (open →
+      read → TOC → highlight → bookmark → settings → search → home), an NVDA +
+      VoiceOver pass (findings, not "ran axe"), `prefers-reduced-motion` and
+      `forced-colors` audits.
+- [ ] Broaden axe past the smoke checks; fix real violations.
 
-**Done when:** the iframe threat model is documented, and a keyboard-only user
+**Done when:** the iframe threat model is documented and a keyboard-only user
 can do everything the demo offers.
 
 ---
 
-## H7 — CI/CD + publish pipeline · S
+## H8 — CI/CD + publish pipeline · S
 
-- [ ] CI matrix: node 20 + 22; the `e2e` job runs chromium + firefox + webkit.
-      Add the API-surface guard, `size-limit`, coverage upload.
-- [ ] **`release.yml`** — `changesets/action`: on merge to `main` it opens/updates
-      a "Version Packages" PR; merging that PR runs
-      `pnpm -r publish --provenance --access public` and pushes git tags.
-- [ ] Playwright HTML report + traces as artifacts on failure.
+- [ ] CI matrix: node 20 + 22; the `e2e` job runs chromium + firefox + webkit;
+      add the API-surface guard, `size-limit`, coverage upload.
+- [ ] **`release.yml`** — `changesets/action`: merge to `main` opens/updates a
+      "Version Packages" PR; merging *that* runs `pnpm -r publish --provenance
+      --access public` (publishes `porejs` + `porejs-react`), pushes tags, and
+      builds + pushes the demo image to GHCR (H9).
+- [ ] Playwright HTML report + traces as failure artifacts.
 - [ ] Doc: required status checks + branch protection for `main`.
 
-**Done when:** merging a release PR publishes both packages to npm with
-provenance, tagged, no manual steps.
+**Done when:** merging a release PR publishes both packages with provenance,
+tags the repo, and pushes a fresh demo image — no manual steps.
 
 ---
 
-## H8 — Deploy the demo · S · *needs the owner*
+## H9 — Deploy the demo (homelab) · S · *needs the owner*
 
-- [ ] **Pick a host** (open question 4) — recommend **Cloudflare Pages**
-      (free, global, simple custom domain, good cache control); GitHub Pages is
-      the fallback.
-- [ ] Build pipeline runs `pnpm gen:fixtures` before `vite build`; verify
-      base-path / asset URLs on the target origin.
-- [ ] **PWA finish**: `manifest.webmanifest` + maskable icons + `theme-color`,
-      the existing `sw.js` precaches the built shell (offline-capable landing +
-      last book), an update prompt. Lighthouse PWA + perf pass.
-- [ ] **Re-home the offline-download control** (open question 5): a small
-      toggle in the Settings accordion (`useDownload` is still wired), or
-      formally cut the feature. Recommend: re-add, so "download for offline"
-      is demoable.
-- [ ] Cache headers (immutable hashed assets, revalidate `index.html` + `sw.js`).
-- [ ] Deploy Action; wire **`pore.suryatmaja.dev`** (DNS is the owner's).
-- [ ] `README.md`: screenshots + a short demo GIF, and the live link.
+- [ ] **`apps/demo/Dockerfile`** — multi-stage: install → `pnpm gen:fixtures`
+      → `pnpm --filter @pore/demo build` → copy `dist` into `nginx:alpine` /
+      `caddy`. Static config: SPA fallback to `index.html`, immutable
+      long-cache for hashed `/assets/*`, no-cache for `index.html` + `sw.js`,
+      correct `Content-Type` for `.webmanifest` and pdf.js `.wasm`.
+- [ ] **`docker-compose.yml`** stanza (or a `docker run` note) for the homelab
+      — one container, one port, `/` healthcheck.
+- [ ] Verify base-path / asset URLs at the deployed origin (Vite `base` if not
+      `/`).
+- [ ] **Installable PWA** — `manifest.webmanifest` + maskable icons +
+      `theme-color`. Lightweight: no offline-first goal; `sw.js` caches the app
+      shell for a fast repeat load + an update prompt.
+- [ ] **`release.yml` pushes the image to GHCR** on the `v*` tag; the homelab
+      pulls it (watchtower / webhook / manual — owner's call).
+- [ ] Owner points **`pore.suryatmaja.dev`** at the homelab (tunnel or
+      port-forward + reverse proxy) — DNS + proxy is the owner's.
+- [ ] `README.md`: screenshots + a short demo GIF + the live link.
 
-**Done when:** `https://pore.suryatmaja.dev` serves the demo, installs as a
-PWA, and works offline after first load.
+**Done when:** `docker compose up` on the homelab serves the demo at
+`https://pore.suryatmaja.dev`, and the image rebuilds on tag.
 
 ---
 
-## H9 — Docs & `v1.0.0` · S
+## H10 — Docs & `v1.0.0` · S
 
-- [ ] Per-package `README.md` with a real 10-line quickstart (not "clone and
-      run the demo").
-- [ ] **`docs/getting-started.md`** — add `<Reader>` to a fresh Vite/Next app,
-      wire a source, style the headless bits.
+- [ ] Per-package `README.md` with a real 10-line quickstart — for
+      `porejs-react` the quickstart **is the embed story** (implement
+      `ReaderSource`, mount `<Reader>`).
+- [ ] **`docs/getting-started.md`** — add `<Reader>` to a fresh Vite/Next app;
+      the manga-library host is the running example (cross-link
+      `examples/host-app`).
 - [ ] API reference: typedoc into `docs/api/` (or a hosted link).
-- [ ] README badges: CI, npm version, bundle size, license.
-- [ ] `CHANGELOG.md` `## v1.0.0`; Changesets bump `1.0.0-rc.* → 1.0.0`; tag
+- [ ] README badges: CI, npm version (`porejs`, `porejs-react`), bundle size,
+      license.
+- [ ] `CHANGELOG.md` `## v1.0.0`; Changesets `1.0.0-rc.* → 1.0.0`; tag
       **`v1.0.0`**.
 - [ ] Flip "current milestone" pointers: `CLAUDE.md`, `README.md`,
       `docs/ai-agent-guide.md`, `docs/agent-worklog.md`.
 
-**Done when:** `npm i @pore/reader-react` + the getting-started guide gets a
-working reader on screen, and `v1.0.0` is tagged and published.
+**Done when:** `npm i porejs-react`, follow getting-started, and a working
+reader is on screen inside a host app — and `v1.0.0` is tagged and published.
 
 ---
 
 ## Cut from M8 / still deferred
 
 - **F3b — fixed-layout two-page spreads.** Engine reshape; its own milestone.
+- **Offline-download demo UI.** Cut (engine support stays).
 - **CJS build.** ESM-only unless a real consumer blocks on it.
 - **Cross-device sync / a backend.** Project A (`WhiteArchiveSource`).
-- **Import from KOReader / Calibre / Readwise**, **collections / tags /
-  reading goals**, **bottom-edge menu bar**, **OPDS 2.0** — unchanged cut list.
-- **A component playground / Storybook** — nice, not `1.0`-blocking.
-
----
-
-## Open questions — settle before H0
-
-1. **npm name.** Can we get the `@pore` org? If not: `@surytmj/*` (matches the
-   GitHub handle) or unscoped `porejs` / `porejs-react`. *Leaning:* try
-   `@pore`, fall back to `@surytmj/*`.
-2. **`1.0.0` now, or stay `0.x`?** The API has moved every milestone. *Leaning:*
-   publish `1.0.0-rc.1` during M8, cut `1.0.0` at H9 once the corpus +
-   cross-browser runs are green — the RC period *is* the last shake-out.
-3. **ESM-only?** *Leaning:* yes, document it, don't build CJS.
-4. **Deploy host.** *Leaning:* Cloudflare Pages.
-5. **Offline-download UI.** Re-add as a Settings toggle, or cut the feature
-   from the demo entirely? *Leaning:* re-add (small), the engine support is
-   already there.
-6. **Corpus in-repo vs fetched.** *Leaning:* fetch + SHA-256 (light repo, no
-   licensing drift); commit only the few-KB items.
+- **Import from KOReader / Calibre / Readwise**, **collections / tags / reading
+  goals**, **bottom-edge menu bar**, **OPDS 2.0** — unchanged cut list.
+- **Storybook / component playground** — nice, not `1.0`-blocking.
