@@ -1,7 +1,7 @@
 import * as RSlider from '@radix-ui/react-slider';
 import * as RSwitch from '@radix-ui/react-switch';
 import * as RTabs from '@radix-ui/react-tabs';
-import { useId, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 
 /**
  * Headless field primitives for reader chrome. Behaviour comes from Radix;
@@ -148,6 +148,62 @@ export interface TabDef {
   id: string;
   label: string;
   content: ReactNode;
+}
+
+/**
+ * The same `TabDef[]` rendered as stacked collapsible sections instead of a tab
+ * strip — for narrow chrome like a sidebar rail. Controlled (not native
+ * `<details>`) so the panels can be height-animated by the consumer's CSS —
+ * every panel stays mounted; `data-state="open" | "closed"` is the hook.
+ *
+ * Headless: `data-pore-accordion*` attributes, no styles. `exclusive` (default
+ * `true`) keeps one section open at a time. `defaultOpen` is the id open on
+ * mount (defaults to the first).
+ */
+export function Accordion({
+  items,
+  exclusive = true,
+  defaultOpen,
+  className = 'pore-accordion',
+}: {
+  items: TabDef[];
+  exclusive?: boolean;
+  defaultOpen?: string;
+  className?: string;
+}) {
+  const initial = defaultOpen ?? items[0]?.id;
+  const [open, setOpen] = useState<string[]>(initial ? [initial] : []);
+  const toggle = (id: string) =>
+    setOpen((cur) => {
+      const isOpen = cur.includes(id);
+      if (exclusive) return isOpen ? [] : [id];
+      return isOpen ? cur.filter((x) => x !== id) : [...cur, id];
+    });
+
+  return (
+    <div className={className} data-pore-accordion>
+      {items.map((t) => {
+        const isOpen = open.includes(t.id);
+        const state = isOpen ? 'open' : 'closed';
+        return (
+          <div key={t.id} data-pore-accordion-item data-state={state}>
+            <button
+              type="button"
+              data-pore-accordion-summary
+              data-state={state}
+              aria-expanded={isOpen}
+              onClick={() => toggle(t.id)}
+            >
+              {t.label}
+            </button>
+            <div data-pore-accordion-panel data-state={state} inert={!isOpen}>
+              <div data-pore-accordion-panel-inner>{t.content}</div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export function Tabs({

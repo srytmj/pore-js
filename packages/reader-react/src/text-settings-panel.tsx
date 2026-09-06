@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import type { TextEngineSettings } from '@pore/reader-core';
 import { useReaderSettings } from './reader.js';
-import { SelectField, SliderField, SwitchField, Tabs, type TabDef } from './primitives.js';
+import { Accordion, SelectField, SliderField, SwitchField, Tabs, type TabDef } from './primitives.js';
 
-/** The Text/Theme/Navigation tab set for an EPUB or PDF. Behaviour via Radix Tabs. */
+/** The Text/Theme/Navigation section set for an EPUB or PDF — tabs, or a stacked accordion for narrow chrome. */
 export function TextSettingsPanel({
   trailing,
   extraTabs = [],
+  layout = 'tabs',
 }: {
   trailing?: React.ReactNode;
   extraTabs?: TabDef[];
+  layout?: 'tabs' | 'accordion';
 }) {
   const [s, set] = useReaderSettings<TextEngineSettings>();
   const [tab, setTab] = useState('text');
@@ -145,5 +147,6 @@ export function TextSettingsPanel({
     ...extraTabs,
   ];
 
+  if (layout === 'accordion') return <Accordion items={tabs} />;
   return <Tabs tabs={tabs} value={tab} onValueChange={setTab} {...(trailing ? { trailing } : {})} />;
 }

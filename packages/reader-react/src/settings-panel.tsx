@@ -3,7 +3,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { DEFAULT_KEYMAP, type ActionId, type ImageEngineSettings } from '@pore/reader-core';
 import { useReaderKeymap, useReaderKind, useReaderSettings } from './reader.js';
 import { TextSettingsPanel } from './text-settings-panel.js';
-import { SelectField, SliderField, SwitchField, Tabs, type TabDef } from './primitives.js';
+import { Accordion, SelectField, SliderField, SwitchField, Tabs, type TabDef } from './primitives.js';
 
 const ACTION_LABELS: Record<ActionId, string> = {
   'toggle-menu': 'Toggle menu',
@@ -66,9 +66,11 @@ function KeybindEditor() {
 function ImageSettingsPanel({
   trailing,
   extraTabs = [],
+  layout = 'tabs',
 }: {
   trailing?: ReactNode;
   extraTabs?: TabDef[];
+  layout?: 'tabs' | 'accordion';
 }) {
   const [s, set] = useReaderSettings<ImageEngineSettings>();
   const tabs: TabDef[] = [
@@ -278,20 +280,31 @@ function ImageSettingsPanel({
   ];
 
   const [tab, setTab] = useState('layout');
+  if (layout === 'accordion') return <Accordion items={tabs} />;
   return <Tabs tabs={tabs} value={tab} onValueChange={setTab} {...(trailing ? { trailing } : {})} />;
 }
 
-/** The tab set for the current book kind — no dialog chrome. */
+/**
+ * The settings section set for the current book kind — no dialog chrome.
+ * `layout="accordion"` renders stacked `<details>` sections instead of a tab
+ * strip (for narrow chrome like a sidebar rail).
+ */
 export function SettingsPanelBody({
   trailing,
   extraTabs,
+  layout,
 }: {
   trailing?: ReactNode;
   /** Extra tabs appended after the built-in ones (e.g. an app's own settings). */
   extraTabs?: TabDef[];
+  layout?: 'tabs' | 'accordion';
 }) {
   const kind = useReaderKind();
-  const props = { ...(trailing ? { trailing } : {}), ...(extraTabs ? { extraTabs } : {}) };
+  const props = {
+    ...(trailing ? { trailing } : {}),
+    ...(extraTabs ? { extraTabs } : {}),
+    ...(layout ? { layout } : {}),
+  };
   return kind === 'text' ? <TextSettingsPanel {...props} /> : <ImageSettingsPanel {...props} />;
 }
 

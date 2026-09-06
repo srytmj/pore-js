@@ -85,6 +85,7 @@ export {
   SliderField,
   SwitchField,
   Tabs as SettingsTabs,
+  Accordion as SettingsAccordion,
 } from './primitives.js';
 export type { TabDef } from './primitives.js';
 

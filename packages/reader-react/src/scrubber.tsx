@@ -22,6 +22,8 @@ export interface ReaderScrubberProps {
   ticks?: boolean;
   /** Custom label. Return `false` (or pass `label={false}`) to hide it. */
   label?: ((info: ScrubberLabelInfo) => ReactNode) | false;
+  /** Direction for the slider track (e.g. 'rtl' for manga). Default 'ltr'. */
+  dir?: 'ltr' | 'rtl';
 }
 
 function defaultLabel(i: ScrubberLabelInfo): ReactNode {
@@ -37,7 +39,7 @@ function defaultLabel(i: ScrubberLabelInfo): ReactNode {
  * keyboard-seekable and labelled). Chapter tick marks, a live "Ch 3/12 · 47%"
  * label. Renders nothing until the book has more than one page.
  */
-export function ReaderScrubber({ className, ticks = true, label }: ReaderScrubberProps) {
+export function ReaderScrubber({ className, ticks = true, label, dir = 'ltr' }: ReaderScrubberProps) {
   const loc = useReaderLocation();
   const progress = useReaderProgress();
   const chapters = useReaderChapters();
@@ -68,6 +70,7 @@ export function ReaderScrubber({ className, ticks = true, label }: ReaderScrubbe
       <RSlider.Root
         className="pore-scrubber__slider"
         data-pore-scrubber-slider
+        dir={dir}
         min={0}
         max={max}
         step={1}
