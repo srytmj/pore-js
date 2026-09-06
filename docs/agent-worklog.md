@@ -42,8 +42,8 @@ portability (a feature milestone): L0 engine groundwork (`goToCfi` +
 `loadBookmarks`/`saveBookmarks`) → L1 bookmarks (`useBookmarks` +
 `<BookmarksPanel>`) → L2 library/home (a `useLibrary()` shelf) → L3 annotations
 review → L4 export/import (versioned JSON, `docs/portability-format.md`) → L5
-share-a-passage (`?cfi=` deep links) → L6 release. 6 open questions in the plan.
-Not started.
+share-a-passage (`?cfi=` deep links) → L6 release. Open questions decided
+(see plan). **L0 · L1 · L2 done**; L3 next.
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -60,6 +60,21 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-06 — M7 L2: library / home shelf
+- **What:** `apps/demo/src/use-library.ts` — `useLibrary()` over `openKvStore()`
+  (one key `pore:demo:library` → `LibraryEntry[]`: `{ id, title, glyph, kind:
+  'sample' | 'file', lastOpened, percent }`). `record()` on open (create/bump,
+  keep prior percent), `setProgress()` from `<Reader onPositionChange>`
+  (dead-zoned), `remove()`; cap 24, newest first. `relativeTime()` helper.
+  `<Landing>` gained a "Continue reading" section above "Open your own": glyph +
+  title + `"42% · 3 min ago"` + progress track + `✕` forget. Sample rows resume
+  in place; file rows re-open the picker (handles don't persist).
+- **State:** committed, `docs/m7-plan.md` L2 marked done. 259 unit · 40 e2e ·
+  lint 0 · typecheck clean.
+- **Notes:** removing an entry doesn't yet clear its cached download / annotation
+  stores — deferred to L6. File System Access API for real re-openable dropped
+  files still deferred (open question #3).
 
 ## 2026-09-06 — M7 L1: bookmarks
 - **What:** `useBookmarks()` (reader-react, over handle + source) —

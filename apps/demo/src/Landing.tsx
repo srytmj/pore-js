@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { relativeTime, type LibraryEntry } from './use-library.js';
 
 export type ModeGlyph = 'spread' | 'strip' | 'text' | 'vertical' | 'rtl' | 'page' | 'pdf';
 
@@ -84,10 +85,16 @@ export function Landing({
   books,
   onFiles,
   onSample,
+  recent = [],
+  onResume,
+  onForget,
 }: {
   books: SampleBook[];
   onFiles: (files: FileList | File[]) => void;
   onSample: (id: string) => void;
+  recent?: LibraryEntry[];
+  onResume?: (entry: LibraryEntry) => void;
+  onForget?: (id: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -101,6 +108,49 @@ export function Landing({
             scratch, with its own pagination engine and no backend.
           </p>
         </header>
+
+        {recent.length > 0 && (
+          <section className="landing__section" aria-labelledby="landing-recent">
+            <h2 className="landing__h2" id="landing-recent">
+              Continue reading
+            </h2>
+            <ul className="landing__recent">
+              {recent.map((e) => (
+                <li key={e.id} className="landing__recent-item">
+                  <button
+                    type="button"
+                    className="landing__recent-open"
+                    onClick={() => (e.kind === 'file' ? inputRef.current?.click() : onResume?.(e))}
+                  >
+                    <Glyph kind={e.glyph} />
+                    <span className="landing__recent-body">
+                      <span className="landing__recent-title">{e.title}</span>
+                      <span className="landing__recent-meta">
+                        {e.percent > 0 ? `${Math.round(e.percent * 100)}% · ` : ''}
+                        {relativeTime(e.lastOpened)}
+                        {e.kind === 'file' ? ' · re-pick the file' : ''}
+                      </span>
+                      <span className="landing__recent-track" aria-hidden>
+                        <span
+                          className="landing__recent-fill"
+                          style={{ width: `${Math.round(e.percent * 100)}%` }}
+                        />
+                      </span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="landing__recent-forget"
+                    aria-label={`Remove ${e.title} from library`}
+                    onClick={() => onForget?.(e.id)}
+                  >
+                    ✕
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="landing__section" aria-labelledby="landing-open">
           <h2 className="landing__h2" id="landing-open">

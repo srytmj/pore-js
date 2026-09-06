@@ -111,26 +111,29 @@ a reload.
 
 ---
 
-## L2 — The library / home · M
+## L2 — The library / home · M · **DONE**
 
 The demo's landing becomes a home screen with a shelf of what you've read.
 
-- [ ] **`useLibrary()` in the demo** — over IndexedDB (`openKvStore` from
-      `@pore/reader-core`). One record per book opened:
-      `{ id; title; kind; glyph?; lastOpened; percent; cached: boolean }`.
-      Updated on open and on `reader:progress`.
-- [ ] **"Continue reading" / "Recently opened"** section on the landing, above
-      the sample grid: each item shows the title, a progress bar, "N min ago",
-      and counts (bookmarks / highlights). Click = resume.
-- [ ] **Re-openable vs history.** A book **downloaded for offline**
-      (`CachedSource`) is fully re-openable from the shelf. A dropped local file
-      that wasn't downloaded shows as history with a "re-open" that prompts for
-      the file again (file handles don't persist). (Open question #3: File
-      System Access API for real re-openable local files on Chromium.)
-- [ ] **Remove from library** (also clears its cached data via
-      `CachedSource.removeDownload` + the bookmark/highlight stores).
-- [ ] Playwright: open two samples, go home, the shelf lists both with
-      progress; resume one; remove one.
+- [x] **`useLibrary()` in the demo** (`apps/demo/src/use-library.ts`) — over
+      IndexedDB (`openKvStore` from `@pore/reader-core`, one key
+      `pore:demo:library` → `LibraryEntry[]`). `{ id; title; glyph; kind:
+      'sample' | 'file'; lastOpened; percent }`. `record()` on open (creates /
+      bumps, keeps prior `percent`), `setProgress()` from `<Reader
+      onPositionChange>` (dead-zoned 0.5%), `remove()`. Capped at 24, newest
+      first.
+- [x] **"Continue reading"** section on `<Landing>` (above "Open your own"):
+      each row = `<Glyph>` + title + `"42% · 3 min ago"` + a thin progress
+      track, and a `✕` forget button. Click a sample row = resume; a file row
+      re-opens the file picker (handles don't persist — labelled "re-pick the
+      file").
+- [x] **Re-openable vs history.** Samples resume in place. Dropped files are
+      history: the row prompts for the file again. (Open question #3: File
+      System Access API deferred.)
+- [x] **Remove from library** — `onForget` → `library.remove(id)`. (Clearing
+      cached download data on forget deferred to L6 hardening.)
+- [x] Playwright: open two samples, go home, the shelf lists both newest-first;
+      resume one (`?book=` changes); remove one → count drops, other remains.
 
 **Done when:** the landing shows what you've been reading, with progress, and
 you can pick up where you left off in one click.

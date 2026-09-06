@@ -8,6 +8,8 @@ import { Landing, type SampleBook } from './Landing.js';
 import { useMenuBar } from './use-menu-bar.js';
 import { useFullscreen } from './use-fullscreen.js';
 import { readerFontFaceCss } from './reader-fonts.js';
+import { useLibrary } from './use-library.js';
+import type { ModeGlyph } from './Landing.js';
 
 export function useAnimations() {
   const [animate, setAnimate] = useState(() => {
@@ -84,6 +86,7 @@ export function App() {
   const [isFullscreen, toggleFullscreen] = useFullscreen();
   const [animate, toggleAnimate] = useAnimations();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const library = useLibrary();
   // A docked bar takes real space — inset the reader so it isn't covered.
   const isDocked = menu.behaviour === 'always' && !isFullscreen;
   // one rail: menu + inline settings accordion. Width is constant whether or
@@ -104,7 +107,13 @@ export function App() {
     if (!('length' in files) || files.length === 0) return;
     setNotice(null);
     const local = new LocalFileSource(files);
-    setView({ kind: 'file', source: new CachedSource(local), bookId: local.bookId, name: local.bookId });
+    const first = files[0];
+    const name = (first && 'name' in first ? first.name : '') || local.bookId;
+    const ext = name.toLowerCase().split('.').pop() ?? '';
+    const glyph: ModeGlyph =
+      ext === 'pdf' ? 'pdf' : ext === 'epub' ? 'text' : ext === 'cbz' || ext === 'zip' ? 'spread' : 'strip';
+    setView({ kind: 'file', source: new CachedSource(local), bookId: local.bookId, name });
+    library.record({ id: local.bookId, title: name.replace(/\.[^.]+$/, ''), glyph, kind: 'file' });
     void local.getManifest(local.bookId).then(() => {
       if (local.fixedLayout) setNotice('Fixed-layout EPUB — pre-paginated view (beta)');
     });
@@ -113,6 +122,8 @@ export function App() {
   const openSample = (id: string) => {
     setNotice(null);
     setView({ kind: 'sample', bookId: id });
+    const b = BOOKS.find((x) => x.id === id);
+    if (b) library.record({ id, title: b.label, glyph: b.glyph, kind: 'sample' });
   };
 
   const goHome = () => {
@@ -144,13 +155,23 @@ export function App() {
       onDrop={onDrop}
     >
       {view.kind === 'landing' ? (
-        <Landing books={BOOKS} onFiles={openFiles} onSample={openSample} />
+        <Landing
+          books={BOOKS}
+          onFiles={openFiles}
+          onSample={openSample}
+          recent={library.entries}
+          onResume={(e) => (e.kind === 'sample' ? openSample(e.id) : undefined)}
+          onForget={library.remove}
+        />
       ) : (
         <ReaderProvider source={source}>
           <Reader
             key={activeBook}
             bookId={activeBook}
             fontFaceCss={readerFontFaceCss}
+            onPositionChange={(loc) => {
+              if (activeBook) library.setProgress(activeBook, loc.percent);
+            }}
             {...(animate ? { transitions: defaultTransitions } : {})}
             className={hostClass}
             {...(sample?.settings ? { initialSettings: sample.settings } : {})}

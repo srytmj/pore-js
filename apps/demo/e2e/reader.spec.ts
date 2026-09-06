@@ -40,6 +40,31 @@ test.describe('Pore.js demo — landing', () => {
     await expect(page.locator('.loc')).toContainText('1/12');
   });
 
+  test('library shelf: open two samples, resume from the shelf, remove one', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('.landing__samples').getByRole('button', { name: /Novel/ }).click();
+    await expect(page.frameLocator('iframe.pore-text__frame').locator('h1')).toBeVisible();
+    await page.getByRole('button', { name: 'Back to start' }).click();
+
+    await page.locator('.landing__samples').getByRole('button', { name: /Manga/ }).click();
+    await expect(page.locator('.loc')).toContainText('1/12');
+    await page.getByRole('button', { name: 'Back to start' }).click();
+
+    const shelf = page.locator('.landing__recent');
+    await expect(shelf).toBeVisible();
+    await expect(shelf.locator('.landing__recent-item')).toHaveCount(2);
+    // most-recent first
+    await expect(shelf.locator('.landing__recent-title').first()).toHaveText('Manga');
+
+    await shelf.locator('.landing__recent-open', { hasText: 'Manga' }).click();
+    await expect(page).toHaveURL(/[?&]book=demo-manga/);
+    await page.getByRole('button', { name: 'Back to start' }).click();
+
+    await page.getByRole('button', { name: 'Remove Manga from library' }).click();
+    await expect(shelf.locator('.landing__recent-item')).toHaveCount(1);
+    await expect(shelf.locator('.landing__recent-title').first()).toHaveText('Novel (EPUB)');
+  });
+
   test('landing page has no critical/serious axe violations', async ({ page }) => {
     await page.goto('/');
     await page.locator('.landing').waitFor();

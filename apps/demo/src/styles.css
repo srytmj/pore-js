@@ -141,6 +141,36 @@
   .landing__sample-blurb {
     @apply text-[0.78rem] leading-snug text-muted;
   }
+  .landing__recent {
+    @apply m-0 flex list-none flex-col gap-2 p-0;
+  }
+  .landing__recent-item {
+    @apply flex items-stretch gap-1;
+  }
+  .landing__recent-open {
+    @apply flex flex-1 items-center gap-3 rounded-[var(--radius-panel)] border border-line bg-surface px-4 py-3 text-left transition-all;
+  }
+  .landing__recent-open:hover {
+    @apply -translate-y-0.5 border-fg/30 shadow-[var(--shadow-popover)];
+  }
+  .landing__recent-body {
+    @apply flex min-w-0 flex-1 flex-col gap-1;
+  }
+  .landing__recent-title {
+    @apply truncate text-[0.92rem] font-semibold;
+  }
+  .landing__recent-meta {
+    @apply text-[0.76rem] text-muted;
+  }
+  .landing__recent-track {
+    @apply mt-0.5 h-1 w-full overflow-hidden rounded-full bg-fg/10;
+  }
+  .landing__recent-fill {
+    @apply block h-full rounded-full bg-fg/50;
+  }
+  .landing__recent-forget {
+    @apply flex w-9 items-center justify-center rounded-[var(--radius-control)] border border-line bg-surface text-muted transition-colors hover:border-fg/30 hover:text-fg;
+  }
   .landing__footer {
     @apply flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-line pt-6 text-[0.78rem] leading-relaxed text-muted;
   }
