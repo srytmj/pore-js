@@ -62,7 +62,7 @@ public surface frozen (`porejs` + opt-in `porejs/internal`, pinned by
 composition). **H3 done** — `pnpm test:corpus` green against 3 real Gutenberg
 EPUBs (no engine bug in parse/CFI/search); CI `corpus` job. Set can grow (CBZ /
 vertical-JP / fixed-layout / big PDF sources still wanted, not 1.0-blocking).
-**H4 done** — fixed a white-screen bug (Reader swallowed fatal load errors), 15 fuzz cases, error-card e2e. **H5 done** — 2 real Safari/WebKit bugs fixed (PDF canvas fallback, sandboxed-iframe events); e2e 3-browser matrix. **H6 done** — size-limit budgets (CI) + O(n²) perf guard rails. **H7 (security + a11y) next** — iframe CSP/sandbox half already done in H5.
+**H4 done** — fixed a white-screen bug (Reader swallowed fatal load errors), 15 fuzz cases, error-card e2e. **H5 done** — 2 real Safari/WebKit bugs fixed (PDF canvas fallback, sandboxed-iframe events); e2e 3-browser matrix. **H6 done** — size-limit budgets (CI) + O(n²) perf guard rails. **H7 done** — CSP recipe + `docs/accessibility.md` + Esc-to-close + forced-colors fallback + WCAG 2.1 axe (manual NVDA/VoiceOver pass still owed for 1.0). **H8 (CI/CD + npm publish) next**, then H9 homelab deploy (needs owner), H10 tag `v1.0.0`.
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -79,6 +79,21 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-07 — M8 H7: security recipe + a11y hardening
+- **What:** iframe-security half was H5 — H7 adds the **CSP recipe + EPUB trust
+  model** to `integration.md §0` and a new **`docs/accessibility.md`** (keyboard
+  map, ARIA/announcer, automated coverage, the manual-SR gap). Demo: **`Esc`
+  closes the top panel + restores focus** (new `Chrome.tsx` handler; the panels
+  are plain divs); `@media (forced-colors: active)` fallback (system-colour
+  borders + `Highlight` focus/active); axe helper broadened to WCAG 2.1 A/AA.
+  New e2e: keyboard traversal + forced-colors. Stabilised the
+  synthetic-selection tests (wait for `.selection-toolbar`).
+- **State:** committed + pushed (`fe00985`). 293 unit · chromium 46/46 +
+  webkit 44/44 (2 TTS skips) — 2 WebKit tests still flake first-try under full
+  parallel, green on CI's retries (logged in known-issues).
+- **Notes:** **NVDA + VoiceOver manual pass still owed for 1.0** — automated
+  a11y is a floor. **H8 (CI/CD + npm publish) next.**
 
 ## 2026-09-07 — M8 H6: size budgets + perf guard rails
 - **What:** `size-limit` (`.size-limit.json`, `pnpm size`, CI `check` job) —
