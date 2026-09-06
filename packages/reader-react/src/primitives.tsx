@@ -106,12 +106,12 @@ export function SliderField({
         step={step}
         value={[value]}
         onValueChange={([v]) => v !== undefined && onValueChange(v)}
-        aria-label={label}
       >
         <RSlider.Track data-pore-slider-track className="pore-slider__track">
           <RSlider.Range data-pore-slider-range className="pore-slider__range" />
         </RSlider.Track>
-        <RSlider.Thumb data-pore-slider-thumb className="pore-slider__thumb" />
+        {/* the Thumb is the element with role="slider" — it needs the name */}
+        <RSlider.Thumb data-pore-slider-thumb className="pore-slider__thumb" aria-label={label} />
       </RSlider.Root>
     </Field>
   );

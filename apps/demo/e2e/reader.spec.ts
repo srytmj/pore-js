@@ -400,6 +400,24 @@ test.describe('Pore.js demo — M3', () => {
     expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
   });
 
+  test('dark theme: the chrome is still axe clean (contrast on the dark palette)', async ({
+    page,
+  }) => {
+    await page.goto('/?book=demo-manga'); // image book → shell dark toggle
+    await page.getByRole('button', { name: /theme/i }).first().click();
+    await expect(page.locator('html')).toHaveClass(/dark/);
+    await page.getByRole('button', { name: 'Reader settings' }).click();
+    const results = await new AxeBuilder({ page })
+      .exclude('iframe.pore-text__frame')
+      .withTags(['wcag2a', 'wcag2aa'])
+      .disableRules(['region'])
+      .analyze();
+    const serious = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    );
+    expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+  });
+
   test('settings accordion: sections expand one at a time, controls reachable, axe clean', async ({
     page,
   }) => {

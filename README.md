@@ -81,10 +81,19 @@ const source = new CachedSource(new DemoSource()); // swap DemoSource for your o
 - **Position** (`loadProgress` / `saveProgress`) is a small opaque JSON value —
   store it verbatim; it round-trips across devices and viewport sizes.
 
-## Status — reading comfort (`v0.8.0-comfort`)
+## Status — editorial redesign (`v0.9.0-editorial`)
+
+**Editorial UI redesign (M6):** the demo has a quiet, reading-first identity —
+warm paper palette, bundled Hanken Grotesk + Literata, no decorative accent
+(`docs/design-language.md`). The menu bar is one collapsible rail with settings
+inline as a height-animated accordion (a new headless `Accordion` primitive; a
+`layout` prop on the settings panels). A `<Reader fontFaceCss>` prop wires the
+reader's Serif / Sans options to bundled webfonts. New editorial landing page.
+Webtoon strips honour the reader's `maxWidth`. Mobile: the rail overlays and
+starts collapsed. See `docs/m6-plan.md`.
 
 **Reading-comfort chrome + annotation polish (M5):** the demo's menu bar sits
-on the top, left or right edge for every engine and can auto-hide when idle
+on the left or right edge for every engine and can auto-hide when idle
 (fullscreen forces it); `<SettingsPanel>` gained an `extraTabs` prop. Highlights
 now take a **note** — `updateHighlight()` on the handle / `useReaderSelection()`
 — edited in a reusable headless `<HighlightsPanel>`. PDF highlights: Shift-drag
@@ -155,9 +164,9 @@ M4: [`docs/m4-plan.md`](docs/m4-plan.md) — done (F1–F6, `v0.7.0-annotate`).
 M5: [`docs/m5-plan.md`](docs/m5-plan.md) — done (G1 · F2b · F2c ·
 F6, `v0.8.0-comfort`; F3b deferred).
 
-M6: [`docs/m6-plan.md`](docs/m6-plan.md) — **in progress** — an editorial UI
-redesign of the demo (quiet aesthetic, accent-less, bundled fonts). Target
-`v0.9.0-editorial`.
+M6: [`docs/m6-plan.md`](docs/m6-plan.md) — done (D0–D7, `v0.9.0-editorial`) —
+an editorial UI redesign of the demo. `docs/design-language.md` is the
+reference.
 
 Live status: [`docs/agent-worklog.md`](docs/agent-worklog.md).
 

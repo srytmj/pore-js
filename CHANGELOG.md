@@ -1,31 +1,64 @@
 # Changelog
 
-## Unreleased
+## v0.9.0-editorial — 2026-09-06
 
-M6 (in progress) — editorial UI redesign of the demo. See `docs/m6-plan.md`.
+M6 — an editorial redesign of the demo (`docs/m6-plan.md`,
+`docs/design-language.md`). Quiet, reading-first: warm paper, strong
+typography, chrome that recedes. No engine behaviour changed.
 
-- **The menu bar is now a single collapsible rail.** It sits on the left or
-  right edge (`docs/m6-plan.md` D1), collapses to an icon-only strip
-  (shadcn-style), and **settings live in the same rail** — clicking *Settings*
-  expands its sub-sections inline as a stacked accordion (Text / Theme /
-  Navigation / Menu bar for EPUB; Layout / Image fit / Behavior / Keybinds for
-  images), one section open at a time, with a height animation. No more modal
-  dialog, no separate slide-over panel. New headless `Accordion` primitive in
-  `@pore/reader-react` (controlled, `data-pore-accordion*` hooks, no CSS);
-  `SettingsPanelBody` / `TextSettingsPanel` / `ImageSettingsPanel` take a
-  `layout?: 'tabs' | 'accordion'` prop.
-- **Menu bar controls**: page nav (Prev / Next), Theme and Pin as one row above
-  Settings, Fullscreen (real Fullscreen API), Download-for-offline, a
-  page-turn-animations toggle in the Menu bar section. Icons are lucide SVGs.
-- **Webtoon image width** — the continuous-vertical strip now honours the
-  reader's `maxWidth`: pages are centred and capped so a webtoon is readable at
-  a comfortable size on a wide screen. The layout re-estimates when the width
-  changes (`create-image-engine.ts` `stripWidth()`).
-- Autoscroll was removed from the demo UI (the engine capability stays).
-- `useAutoHide` again wakes on real pointer / key / wheel / touch activity;
-  `useFullscreen` uses the real Fullscreen API.
-- Only the top / left / right menu placements remain (`menuPosition` values);
-  the top placement was dropped from the demo.
+### Design language (D0)
+
+- **Warm, accent-less palette.** `@theme` rebuilt on warm neutrals
+  (`#faf7f1` / `#17150f`); `--color-accent` removed — active controls fill with
+  the ink. One functional colour, `--color-focus`, plus `--color-danger`. Soft
+  warm-tinted `--shadow-panel` / `--shadow-popover`. The four reading themes
+  (`THEME_COLORS`) warmed to match.
+- **Bundled fonts.** Hanken Grotesk (UI) + Literata (display / reading serif),
+  self-hosted via `@fontsource-variable` — the Google Fonts CDN link is gone.
+
+### Reader chrome (D1)
+
+- **The menu bar is one collapsible rail** on the left or right edge; it
+  collapses to an icon-only strip. **Settings live in the same rail** — the
+  *Settings* button expands its sub-sections inline as a height-animated
+  accordion, one open at a time. No modal dialog, no slide-over. New headless
+  `Accordion` primitive (`SettingsAccordion`); `SettingsPanelBody` /
+  `TextSettingsPanel` / `ImageSettingsPanel` take `layout?: 'tabs' |
+  'accordion'`.
+- Controls: Prev / Next, Theme + Pin as one row above Settings, Fullscreen
+  (real Fullscreen API), Download-for-offline, a page-turn-animations toggle.
+  lucide SVG icons. `useAutoHide` wakes on real pointer/key/wheel/touch again.
+- Only left / right placements remain; the demo dropped the top placement.
+
+### Panels, landing, reading surface (D2–D4)
+
+- Highlights panel + note editor + swatches restyled; the resume toast,
+  `.notice` and the OPDS error banner moved onto the ink / `--color-danger`
+  tokens.
+- **New landing page** — left-aligned serif masthead, a real statement, sample
+  cards each with a small inline-SVG layout diagram, and a footer (GitHub, the
+  Project A / B story, licence).
+- **Reader font menu wired to the bundled faces.**
+  `CreateTextEngineOptions.fontFaceCss` (and `<Reader fontFaceCss>`) injects an
+  `@font-face` sheet into the reading iframe; Serif → Literata, Sans → Hanken
+  Grotesk (graceful fallback when no font is injected). Reading rhythm nudges:
+  `hyphens` when justified, `orphans/widows`, `text-wrap: balance` on headings.
+
+### Webtoon width (M6)
+
+- The continuous-vertical strip honours the reader's `maxWidth` — pages are
+  centred and capped so a webtoon reads at a comfortable size on a wide screen
+  (`create-image-engine.ts` `stripWidth()`).
+
+### Motion, responsive, hardening (D5–D7)
+
+- One `:focus-visible` ring everywhere from `--color-focus`; a global
+  `prefers-reduced-motion` block.
+- Mobile (`≤ 640px`): the rail overlays instead of docking and starts
+  collapsed; the toast sits at the top edge.
+- Autoscroll removed from the demo UI (the engine capability stays). Playwright
+  suite rewritten for the new chrome + a dark-mode axe scan added — 38 e2e,
+  256 unit, all green.
 
 ## v0.8.0-comfort — 2026-09-06
 

@@ -28,6 +28,19 @@ lives in a chat transcript but not in git history.
 
 ## Current focus
 
+**M6 shipped — `v0.9.0-editorial`.** Editorial redesign of the demo, D0–D7:
+warm accent-less palette + self-hosted Hanken Grotesk / Literata (D0); one
+collapsible menu rail with an inline settings accordion (D1, a new headless
+`Accordion` primitive); panel restyle onto tokens (D2); new editorial landing
+(D3); reader font menu wired to the bundled faces via `<Reader fontFaceCss>`
+(D4); one focus ring + global reduced-motion (D5); mobile rail overlay (D6);
+dark-axe test + tag (D7). 38 e2e · 256 unit · lint 0 · all green.
+`docs/design-language.md` is the token reference. Next milestone not scoped —
+a "Library & portability" feature milestone (bookmarks / shelf / export / CFI
+deep-links) is the strongest M7 candidate.
+
+<details><summary>earlier "current focus" — M6 scoping</summary>
+
 **M6 scoped, not started — `docs/m6-plan.md`, target `v0.9.0-editorial`.** A
 design pass, not a feature milestone: the demo works but doesn't look finished
 (icon-soup chrome, raw `<select>`s, doubled status, bare settings form, thin
@@ -41,6 +54,24 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-06 — M6 D2–D7 + release `v0.9.0-editorial`
+- **D2** — highlights panel / note editor / swatches restyled; toast, `.notice`,
+  OPDS error banner moved off hard-coded colours onto the ink / danger tokens.
+- **D3** — `Landing.tsx` rebuilt: serif masthead + statement, sample cards with
+  inline-SVG layout glyphs, a real footer. `SampleBook` gained `glyph`.
+- **D4** — `CreateTextEngineOptions.fontFaceCss` / `<Reader fontFaceCss>` injects
+  `@font-face` into the reading iframe (`#pore-fonts`); `reader-fonts.ts` builds
+  it from the `@fontsource` woff2. `FONT_STACKS` serif/sans → Literata/Hanken.
+  Reading-rhythm nudges in `buildBaseStylesheet`.
+- **D5** — one `:focus-visible` ring via a `:where()` base rule; global
+  `prefers-reduced-motion` neutraliser.
+- **D6** — `@media (max-width:640px)`: rail overlays (no content push), starts
+  collapsed on a narrow first load; toast moved to the top edge.
+- **D7** — dark-mode chrome axe test added (found + fixed a Radix slider-thumb
+  missing its accessible name); CHANGELOG `v0.9.0-editorial`, README, CLAUDE.md.
+- **State:** committed + tagged + pushed. 38 e2e · 256 unit · typecheck ·
+  lint 0 — all green. `docs/design-language.md` written in D0.
 
 ## 2026-09-06 — M6 D0: design language (warm palette, accent-less, self-hosted fonts)
 - **What:** rewrote the `@theme` block — warm paper palette (`#faf7f1` /

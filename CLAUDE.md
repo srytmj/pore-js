@@ -51,5 +51,8 @@ plus scrubber/loading-error/PDF-search/RTL/end-page follow-ups on `main`);
 fixed-layout EPUB, `OpdsSource`, TTS (`docs/m4-plan.md`). **M5 done**
 (`v0.8.0-comfort`) — menu-bar placement/auto-hide, highlight notes +
 `<HighlightsPanel>`, PDF Shift-drag highlights (`docs/m5-plan.md`); F3b
-(fixed-layout spreads) deferred. Next milestone not yet scoped. See
-`docs/agent-worklog.md` for live status.
+(fixed-layout spreads) deferred. **M6 done** (`v0.9.0-editorial`) — editorial
+UI redesign of the demo: warm accent-less palette, bundled fonts, one
+collapsible menu rail with an inline settings accordion, new landing
+(`docs/m6-plan.md`, `docs/design-language.md`). Next milestone not yet scoped.
+See `docs/agent-worklog.md` for live status.

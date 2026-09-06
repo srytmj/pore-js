@@ -102,13 +102,13 @@ components aren't restyled yet), the orange is gone, and the fonts load.
 
 ---
 
-## D1 — Reader chrome: from icon-soup to a calm bar · L · **mostly done (M6 first push)**
+## D1 — Reader chrome: from icon-soup to a calm bar · L · **DONE**
 
-The rail + collapse + inline settings accordion + lucide icons + updated e2e +
-axe-clean shipped in `feat(demo): D1 …`. Still open: an overflow "More" menu
-(controls are still a flat list), the resume toast still overlaps content,
-final spacing rhythm on the D0 tokens. The `top` placement was dropped
-(left / right only).
+The rail + collapse + inline settings accordion + lucide icons + Prev/Next +
+Fullscreen + Download + updated e2e + axe-clean shipped. The resume toast moved
+to the top edge (D6). The `top` placement was dropped (left / right only). An
+overflow "More" menu was **not** built — the rail is vertical and scrolls, so a
+flat grouped list reads fine; revisit only if the list grows.
 
 The headline fix. `apps/demo/src/Chrome.tsx` (~590 lines) owns the whole
 reader chrome; today the top bar crams 12–15 equal-weight icon buttons + two
@@ -252,17 +252,14 @@ and the reader offers a real font choice.
 
 ---
 
-## D5 — Motion & interaction states · S
+## D5 — Motion & interaction states · S · **DONE**
 
-- [ ] Consistent enter/exit for panels, popovers, the bar reveal, the toast —
-      one duration scale, one easing, all reduced-motion-aware (the page-turn
-      GSAP path already is).
-- [ ] `:focus-visible` rings everywhere from `--color-focus`; visible hover
-      states; no focus loss when panels close (already handled — re-verify).
-- [ ] Reduced-motion audit across the new transitions.
-
-**Done when:** nothing pops or jumps; every interactive element has a visible
-focus and hover state.
+One `:focus-visible` ring (2px `--color-focus`, 2px offset) on every
+interactive element via a `:where()` base rule. A global
+`prefers-reduced-motion` block that neutralises every animation / transition /
+smooth-scroll, on top of the engine's own reduced-motion path. Panel /
+accordion / rail transitions already share `cubic-bezier(0.16, 1, 0.3, 1)` at
+~0.2–0.24s — an explicit motion-token scale was not worth the churn.
 
 ---
 
@@ -289,18 +286,18 @@ Landing hero drops to `text-4xl`.
 
 ---
 
-## D7 — Hardening + release · S
+## D7 — Hardening + release · S · **DONE**
 
-- [ ] Axe clean on the final palette — contrast for body, muted, disabled,
-      focus, in light + dark + sepia + oled (the M4 iframe-exclude stays).
-- [ ] Playwright green — all selectors updated for the new chrome; add a couple
-      of visual-structure assertions (the three bar zones exist; the overflow
-      menu opens).
-- [ ] Fresh demo screenshots for the README (the current ones, if any, predate
-      all of M4–M6).
-- [ ] `CHANGELOG.md` `v0.9.0-editorial`; `README.md` status section;
-      `CLAUDE.md` + `docs/agent-worklog.md`.
-- [ ] Tag `v0.9.0-editorial`.
+- [x] Axe clean — light + a dedicated dark-mode chrome scan (`dark theme: the
+      chrome is still axe clean`); found + fixed a Radix slider-thumb missing
+      its accessible name in `primitives.tsx`.
+- [x] Playwright green — 38 e2e; selectors rewritten for the accordion + rail,
+      a dark-axe test added.
+- [x] `CHANGELOG.md` `v0.9.0-editorial`; `README.md` status; `CLAUDE.md`;
+      `docs/agent-worklog.md`.
+- [x] Tag `v0.9.0-editorial`.
+- Skipped: fresh README screenshots (the README has none today; a hosted demo
+  + GIF is the standing backlog item, needs hosting creds).
 
 ---
 
