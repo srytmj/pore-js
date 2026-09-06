@@ -42,6 +42,22 @@ M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
 
+## 2026-09-06 — M6 D0: design language (warm palette, accent-less, self-hosted fonts)
+- **What:** rewrote the `@theme` block — warm paper palette (`#faf7f1` /
+  `#17150f`), removed `--color-accent`/`--color-accent-fg` (active controls now
+  fill with ink, `bg-fg text-canvas`), added `--color-focus` (one functional
+  blue) + `--color-danger`, soft `--shadow-panel`/`--shadow-popover` tokens.
+  All ~15 `*-accent` utility usages repointed. `THEME_COLORS` in
+  `create-text-engine.ts` warmed to match (light/sepia/dark/oled). Fonts
+  self-hosted via `@fontsource-variable/hanken-grotesk` (UI) +
+  `@fontsource-variable/literata` (display/reading) — imported in `main.tsx`,
+  Google Fonts `<link>` removed. `docs/design-language.md` written. e2e
+  theme-hex assertions updated (2 tests).
+- **State:** committed. build ✓ · typecheck ✓ · lint 0 ✓ · 256 unit ✓ ·
+  37 e2e ✓ (axe holds on the new palette). Browser-verified.
+- **Notes:** explicit modular type/space token scale deferred (Tailwind
+  defaults fine). D2–D6 now build on these tokens.
+
 ## 2026-09-06 — M6 D1 landed: menu rail + inline settings accordion, e2e green
 - **What:** finished the parallel M6 chrome work (see next entry) to a
   committable state. Split into 3 commits: `feat(core)` webtoon maxWidth,

@@ -54,10 +54,18 @@ reorder. D5/D6 sweep across everything D1–D4 produced. D7 ships it.
 
 ---
 
-## D0 — Design language: tokens, palette, type, fonts · M
+## D0 — Design language: tokens, palette, type, fonts · M · **DONE**
 
-The foundation. No visible feature — it re-bases every colour, size and font
-the rest of M6 uses.
+Shipped. `docs/design-language.md` is the reference. Warm paper palette
+(`#faf7f1` / `#17150f`), `--color-accent` removed (active controls fill with
+ink), `--color-focus` + `--color-danger` added, soft `--shadow-panel` /
+`--shadow-popover`. Fonts self-hosted via `@fontsource-variable` — Hanken
+Grotesk (UI) + Literata (display / reading serif); Google Fonts CDN link gone.
+`THEME_COLORS` warmed to match. e2e theme-hex assertions updated. An explicit
+modular type / space token scale was deferred — Tailwind's defaults are fine
+for now.
+
+<details><summary>Original checklist</summary>
 
 - [ ] **Palette.** Rebuild the `@theme` block in `styles.css`:
       - Warm neutrals, not the current near-grey. Light ground ~`#faf7f1`,
@@ -90,9 +98,17 @@ the rest of M6 uses.
 **Done when:** the demo renders on the new tokens (even if individual
 components aren't restyled yet), the orange is gone, and the fonts load.
 
+</details>
+
 ---
 
-## D1 — Reader chrome: from icon-soup to a calm bar · L
+## D1 — Reader chrome: from icon-soup to a calm bar · L · **mostly done (M6 first push)**
+
+The rail + collapse + inline settings accordion + lucide icons + updated e2e +
+axe-clean shipped in `feat(demo): D1 …`. Still open: an overflow "More" menu
+(controls are still a flat list), the resume toast still overlaps content,
+final spacing rhythm on the D0 tokens. The `top` placement was dropped
+(left / right only).
 
 The headline fix. `apps/demo/src/Chrome.tsx` (~590 lines) owns the whole
 reader chrome; today the top bar crams 12–15 equal-weight icon buttons + two

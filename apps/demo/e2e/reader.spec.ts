@@ -190,11 +190,11 @@ test.describe('Pore.js demo', () => {
       await btn.click();
       await page.waitForTimeout(150);
     }
-    await expect.poll(bg).toBe('#fdfdfb'); // light
+    await expect.poll(bg).toBe('#faf7f1'); // light
     await btn.click();
-    await expect.poll(bg).toBe('#f4ecd8'); // sepia
+    await expect.poll(bg).toBe('#f2e7d3'); // sepia
     await btn.click();
-    await expect.poll(bg).toBe('#1a1a1a'); // dark
+    await expect.poll(bg).toBe('#17150f'); // dark
   });
 
   test('url-and-title history: ?p= updates and back/forward paginate', async ({ page }) => {
@@ -275,7 +275,7 @@ test.describe('Pore.js demo — EPUB', () => {
       .frameLocator('iframe.pore-text__frame')
       .locator('#pore-base-style')
       .textContent();
-    expect(bg).toContain('#1a1a1a');
+    expect(bg).toContain('#17150f');
   });
 });
 

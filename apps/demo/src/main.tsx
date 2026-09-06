@@ -1,5 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+// self-hosted, bundled — no CDN. Hanken Grotesk = UI, Literata = reading serif.
+import '@fontsource-variable/hanken-grotesk/wght.css';
+import '@fontsource-variable/literata/wght.css';
 import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import { setPdfWorkerSrc } from '@pore/reader-core';
 import { App } from './App.js';

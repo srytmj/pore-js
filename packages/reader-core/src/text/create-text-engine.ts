@@ -55,10 +55,11 @@ const THEME_COLORS: Record<
   TextEngineSettings['theme'],
   { color: string; background: string; dark: boolean }
 > = {
-  light: { color: '#111', background: '#fdfdfb', dark: false },
-  sepia: { color: '#5b4636', background: '#f4ecd8', dark: false },
-  dark: { color: '#cdcdcd', background: '#1a1a1a', dark: true },
-  oled: { color: '#c8c8c8', background: '#000', dark: true },
+  // warm, editorial — mirrors the demo shell palette (docs/design-language.md)
+  light: { color: '#23201a', background: '#faf7f1', dark: false },
+  sepia: { color: '#4a3f30', background: '#f2e7d3', dark: false },
+  dark: { color: '#d8d1c4', background: '#17150f', dark: true },
+  oled: { color: '#cfc8bb', background: '#000000', dark: true },
 };
 
 const SAVE_DEBOUNCE_MS = 800;
