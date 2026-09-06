@@ -12,7 +12,16 @@ export interface ImagePage {
   chapterId?: string;
 }
 
-export interface ImageManifest {
+/** Bibliographic metadata a source can attach to any manifest, for the reader
+ * chrome / document title. All optional — `title` is the only required label. */
+export interface ManifestMeta {
+  /** e.g. a series or edition line under the title. */
+  subtitle?: string;
+  /** Volume label when the book is one volume of a series (`"2"`, `"Vol. II"`). */
+  volume?: string | number;
+}
+
+export interface ImageManifest extends ManifestMeta {
   bookId: string;
   type: 'image';
   title: string;
@@ -23,7 +32,7 @@ export interface ImageManifest {
   preferredLayout?: LayoutMode;
 }
 
-export interface TextManifest {
+export interface TextManifest extends ManifestMeta {
   bookId: string;
   type: 'epub' | 'pdf' | 'cbz';
   title: string;

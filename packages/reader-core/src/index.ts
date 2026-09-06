@@ -1,22 +1,32 @@
 /**
- * porejs — framework-agnostic reader engine.
+ * porejs — framework-agnostic web reader engine.
  *
- * Public surface is intentionally small; see docs/reader-engine-design.md §4
- * and docs/image-engine-spec.md §10.
+ * This module is the **stable public surface** (SemVer-covered from 1.0 — see
+ * docs/stability.md). Lower-level building blocks live in `porejs/internal`
+ * and are not part of the contract.
  */
 
-export const VERSION = '0.0.0';
+/** Package version, injected at build time. */
+export const VERSION: string =
+  typeof __POREJS_VERSION__ === 'string' ? __POREJS_VERSION__ : '0.0.0-dev';
 
+// ── Shared vocabulary ────────────────────────────────────────────────────────
 export type { Direction, LayoutMode, FitMode, Variant, TurnDirection } from './types.js';
 
+// ── The source seam ──────────────────────────────────────────────────────────
 export type {
   ReaderSource,
   Manifest,
+  ManifestMeta,
   ImageManifest,
   TextManifest,
   ImagePage,
   GetPageOpts,
   GetFileOpts,
+} from './source/types.js';
+
+// ── Annotations (per-book collections) ───────────────────────────────────────
+export type {
   HighlightRange,
   HighlightRecord,
   TextHighlightRecord,
@@ -25,7 +35,11 @@ export type {
   Bookmark,
 } from './source/types.js';
 
+// ── Position ─────────────────────────────────────────────────────────────────
 export type { Position } from './position/types.js';
+export { clampPagePosition, isPagePosition, isScrollPosition } from './position/position.js';
+
+// ── Engine contract (shared) ─────────────────────────────────────────────────
 export type {
   Locator,
   ReaderEngine,
@@ -33,82 +47,24 @@ export type {
   Chapter,
   ReaderProgress,
 } from './reader-engine.js';
-export { PaceEstimator, chapterProgress } from './progress.js';
+export { chapterProgress } from './progress.js';
+
+// ── Animation seam ───────────────────────────────────────────────────────────
 export { instantTransitions } from './transitions.js';
 export type { ReaderTransitions, TransitionContext } from './transitions.js';
-export { clampPagePosition, isPagePosition, isScrollPosition } from './position/position.js';
 
+// ── Settings & keymap ────────────────────────────────────────────────────────
 export type { ImageEngineSettings, ProgressBarSettings } from './settings/types.js';
 export { DEFAULT_IMAGE_SETTINGS } from './settings/types.js';
-
 export type { Keymap, ActionId } from './settings/keymap.js';
 export { DEFAULT_KEYMAP, resolveAction } from './settings/keymap.js';
 
-export type { ImageEngineEvents, ImageEngineEventName, PageLoadState } from './image/types.js';
+// ── Image engine ─────────────────────────────────────────────────────────────
+export { createImageEngine, physicalToLogical, isReverseDirection } from './image/create-image-engine.js';
 export type { ImageEngine, ImageEngineOptions, Unsubscribe } from './image/engine.js';
-export {
-  createImageEngine,
-  physicalToLogical,
-  isReverseDirection,
-} from './image/create-image-engine.js';
-export { buildSpreads, spreadIndexForPage, isNaturallyWide } from './image/spreads.js';
-export { zoneForPoint, resolveTap, swipeTurn, clampZoom } from './image/input.js';
-export type { TapZone, TapResult, TapToTurn } from './image/input.js';
-export type { Spread } from './image/spreads.js';
-export {
-  estimateLinearLayout,
-  estimateVerticalLayout,
-  visibleRange,
-  pageAtOffset,
-  scrollForPage,
-} from './image/continuous.js';
-export type { LinearLayout, ContinuousAxis } from './image/continuous.js';
-export { PageLoader } from './image/page-loader.js';
-export { PrefetchScheduler } from './image/prefetch.js';
-export type { PreloadSettings } from './image/prefetch.js';
-export { resolveSettings, resolveKeymap, mergeSettings, mergeKeymap } from './settings/merge.js';
+export type { ImageEngineEvents, ImageEngineEventName, PageLoadState } from './image/types.js';
 
-export { DemoSource } from './source/demo-source.js';
-export type { DemoSourceOptions } from './source/demo-source.js';
-export { CachedSource } from './source/cached-source.js';
-export type {
-  CachedSourceOptions,
-  DownloadState,
-  DownloadStatus,
-  DownloadOptions,
-} from './source/cached-source.js';
-export { MediaCache } from './offline/media-cache.js';
-export type { BookCacheMeta } from './offline/media-cache.js';
-export { LocalFileSource } from './source/local-file-source.js';
-export type { LocalFileSourceOptions } from './source/local-file-source.js';
-export {
-  KavitaSource,
-  KavitaAuthError,
-  KavitaDownloadForbiddenError,
-} from './source/kavita-source.js';
-export type { KavitaSourceOptions } from './source/kavita-source.js';
-
-export { OpdsSource } from './source/opds-source.js';
-export type { OpdsAuth, OpdsSourceOptions } from './source/opds-source.js';
-export { parseOpdsFeed, acquisitionLink, guessFilename } from './source/opds-parse.js';
-export type { OpdsFeed, OpdsEntry, OpdsLink } from './source/opds-parse.js';
-
-export { loadPdf, setPdfWorkerSrc } from './pdf/parse.js';
-export type { PdfDoc } from './pdf/parse.js';
-export { PdfImageSource } from './pdf/pdf-source.js';
-export type { PdfSourceOptions } from './pdf/pdf-source.js';
-export { createPdfEngine } from './pdf/create-pdf-engine.js';
-export type { CreatePdfEngineOptions, PdfEngineEvents } from './pdf/create-pdf-engine.js';
-
-export { parseEpub } from './text/epub/parse.js';
-export type {
-  EpubBook,
-  EpubMetadata,
-  EpubResource,
-  SpineItem,
-  TocEntry,
-} from './text/epub/types.js';
-export { resolvePath, resolveHref, dirOf, stripHash, fragmentOf } from './text/epub/path.js';
+// ── Text engine ──────────────────────────────────────────────────────────────
 export { createTextEngine } from './text/create-text-engine.js';
 export type { CreateTextEngineOptions } from './text/create-text-engine.js';
 export { DEFAULT_TEXT_SETTINGS } from './text/types.js';
@@ -121,64 +77,60 @@ export type {
   TtsSentence,
   TtsVoiceLike,
 } from './text/types.js';
-export {
-  locateOffset,
-  offsetOfPoint,
-  rangeForHighlight,
-  highlightRangeFromSelection,
-} from './text/highlight.js';
-export { segmentSentences, createTtsController } from './text/tts.js';
+export type { Rect } from './text/anchor.js';
+
+// ── PDF engine ───────────────────────────────────────────────────────────────
+export { createPdfEngine } from './pdf/create-pdf-engine.js';
+export type { CreatePdfEngineOptions, PdfEngineEvents } from './pdf/create-pdf-engine.js';
+export { loadPdf, setPdfWorkerSrc } from './pdf/parse.js';
+export type { PdfDoc } from './pdf/parse.js';
+export { PdfImageSource } from './pdf/pdf-source.js';
+export type { PdfSourceOptions } from './pdf/pdf-source.js';
+
+// ── EPUB parsing ─────────────────────────────────────────────────────────────
+export { parseEpub } from './text/epub/parse.js';
 export type {
-  SentenceSpan,
-  TtsSynthLike,
-  TtsUtteranceLike,
-  TtsController,
-  TtsControllerOptions,
-} from './text/tts.js';
-export { rewriteResources } from './text/rewrite.js';
-export {
-  buildBaseStylesheet,
-  computeTextLayout,
-  pageCountFor,
-  offsetForPage,
-} from './text/paginate.js';
-export type { TextLayout } from './text/paginate.js';
-export {
-  generateAnchor,
-  resolveAnchor,
-  blockElements,
-  pageForElement,
-  offsetForVisibleWord,
-  rangeAtOffset,
-} from './text/anchor.js';
-export type { Rect, RectOf, RangeRectOf } from './text/anchor.js';
-export {
-  serializeCfi,
-  parseCfi,
-  resolveCfiElement,
-  resolveCfiRange,
-  elementSteps,
-} from './text/cfi.js';
+  EpubBook,
+  EpubMetadata,
+  EpubResource,
+  SpineItem,
+  TocEntry,
+} from './text/epub/types.js';
+
+// ── Portable positions (epubcfi-shaped) ──────────────────────────────────────
+export { serializeCfi, parseCfi, resolveCfiElement, resolveCfiRange } from './text/cfi.js';
 export type { ParsedCfi } from './text/cfi.js';
+
+// ── Sources ──────────────────────────────────────────────────────────────────
+export { DemoSource } from './source/demo-source.js';
+export type { DemoSourceOptions } from './source/demo-source.js';
+export { CachedSource } from './source/cached-source.js';
+export type {
+  CachedSourceOptions,
+  DownloadState,
+  DownloadStatus,
+  DownloadOptions,
+} from './source/cached-source.js';
+export { LocalFileSource } from './source/local-file-source.js';
+export type { LocalFileSourceOptions } from './source/local-file-source.js';
+export {
+  KavitaSource,
+  KavitaAuthError,
+  KavitaDownloadForbiddenError,
+} from './source/kavita-source.js';
+export type { KavitaSourceOptions } from './source/kavita-source.js';
+export { OpdsSource } from './source/opds-source.js';
+export type { OpdsAuth, OpdsSourceOptions } from './source/opds-source.js';
+export { parseOpdsFeed, acquisitionLink, guessFilename } from './source/opds-parse.js';
+export type { OpdsFeed, OpdsEntry, OpdsLink } from './source/opds-parse.js';
+
+// ── Offline ──────────────────────────────────────────────────────────────────
+export { MediaCache } from './offline/media-cache.js';
+export type { BookCacheMeta } from './offline/media-cache.js';
 export { openKvStore } from './offline/idb.js';
 export type { KvStore } from './offline/idb.js';
 
-export {
-  buildSearchIndex,
-  querySearchIndex,
-} from './search/search-index.js';
-export type {
-  SearchSection,
-  SearchHit,
-  SearchIndex,
-  QueryOptions,
-} from './search/search-index.js';
+// ── In-book search ───────────────────────────────────────────────────────────
 export { SearchController } from './search/search-controller.js';
 export type { SearchControllerOptions } from './search/search-controller.js';
-export { parseImageManifestFile, naturalCompare } from './source/manifest-file.js';
-export type { ImageManifestFile, ParsedFixtureManifest } from './source/manifest-file.js';
-
-export { createStore } from './internal/store.js';
-export type { Store } from './internal/store.js';
-export { createEmitter } from './internal/emitter.js';
-export type { Emitter } from './internal/emitter.js';
+export type { SearchSection, SearchHit } from './search/search-index.js';

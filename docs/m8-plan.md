@@ -82,26 +82,37 @@ and `pnpm changeset` works. ✓
 
 ---
 
-## H1 — Freeze the public API · M
+## H1 — Freeze the public API · M · **DONE**
 
-- [ ] Audit `porejs`'s + `porejs-react`'s `index.ts` against **ADR 0001**.
-      Anything not meant to be public → unexport or move behind `/internal`.
-      Note what each export is *for*.
-- [ ] **API-surface guard**: a per-package snapshot test of the sorted export
-      names (or `@microsoft/api-extractor`) so an accidental export fails CI.
-- [ ] **ESM-only, on purpose** — document in `integration.md` (Node ≥ 20,
-      `"type": "module"`, no CJS).
-- [ ] **`docs/stability.md`** — what `v1.x` SemVer covers (documented exports,
-      `data-pore-*` hooks, event names, `Position` / `HighlightRecord` /
-      `Bookmark` / `ReaderSource` / `Manifest` shapes), what is
-      `@experimental`, the deprecation policy.
-- [ ] Assert `porejs-react/dist` ships **no `.css`**.
-- [ ] **Land the last additive shapes before the freeze** — notably `Manifest`
-      metadata for the document title (`title`, optional `subtitle` / `volume`,
-      and chapter `label` already exists). See H2's title bullet.
+- [x] Audited both `index.ts` against ADR 0001. Trimmed `porejs` from ~180
+      exports to **37 runtime + curated types**, grouped with section headers.
+      Moved the plumbing (spread/tap/virtualization math, anchor + pagination
+      internals, store/emitter, `PaceEstimator`, fixture-manifest parsing, TTS
+      controller internals, low-level search index, EPUB path helpers) to a new
+      **`porejs/internal`** entry (`src/internal/index.ts`, `"./internal"` in
+      `exports`). tsup builds it as a 3rd entry with `splitting: true` so shared
+      code is a chunk, not a duplicate (`internal.js` ≈ 1.4 KB). `VERSION` is
+      now injected from `package.json` via tsup `define`.
+- [x] **API-surface guard** — `src/public-api.test.ts` in both packages pins
+      the sorted runtime export list; `porejs`'s also asserts `porejs/internal`
+      stays disjoint. (Type-only exports aren't runtime-visible — reviewed by
+      hand per `stability.md`.)
+- [x] **`docs/stability.md`** — what `1.x` SemVer covers (runtime exports,
+      `ReaderSource`, `Position` round-trip, record/`Manifest` shapes,
+      `data-pore-*`, `reader:*` events, `<Reader>` props / hook shapes), what
+      isn't (`porejs/internal`, type shapes, CSS, `@experimental`, the demo),
+      ESM-only + pdfjs tree-shaking, deprecation policy.
+- [x] ESM-only documented in `integration.md`; `porejs-react` no-CSS asserted by
+      `scripts/verify-packages.mjs` (also: no `.map`/`.tsbuildinfo`/test files
+      in the tarball, README + LICENSE present, built `VERSION` matches). Wired
+      into `pnpm release` + a `verify:packages` script.
+- [x] **Additive `Manifest` shapes landed** — `ManifestMeta` (`subtitle?`,
+      `volume?: string | number`) mixed into `ImageManifest` + `TextManifest`,
+      exported. The `useReaderHistory` title composition is H2.
 
 **Done when:** the surface is deliberate, snapshotted, and `stability.md` says
-what a `1.0` consumer can rely on.
+what a `1.0` consumer can rely on. ✓ — 266 unit · 43 e2e green (search worker
+still loads under the chunked build).
 
 ---
 

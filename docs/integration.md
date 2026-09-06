@@ -7,8 +7,20 @@ How to embed the reader in your own app. Two layers:
 - **`porejs`** — framework-agnostic. Use directly only if you are not
   on React or want to drive the engine imperatively.
 
-Both are published from this monorepo (`workspace:*` internally). Peer deps:
-`react` / `react-dom` 19 for the React package.
+```bash
+npm i porejs porejs-react
+```
+
+Peer deps: `react` / `react-dom` ≥ 19 for the React package; `gsap` is an
+**optional** peer (only `gsapAdapter` needs it).
+
+> **Packaging:** **ESM only** — `"type": "module"`, Node ≥ 20, evergreen
+> browsers. There is no CommonJS build; `require('porejs')` won't work. `porejs`
+> hard-depends on `pdfjs-dist`, but it is only reached through `createPdfEngine`
+> / `loadPdf` / `PdfImageSource` — an app that never opens a PDF tree-shakes it
+> out. Lower-level building blocks (layout math, anchor internals, the
+> store/emitter) are a separate opt-in deep import, `porejs/internal`, and are
+> **not** covered by SemVer — see [`stability.md`](stability.md).
 
 > **Styling model:** `porejs-react` ships **no CSS**. Every component
 > renders semantic markup with `data-pore-*` hooks and (where interactive)

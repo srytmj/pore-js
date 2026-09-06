@@ -72,6 +72,28 @@ M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
 
+## 2026-09-06 — M8 H1: freeze the public API
+- **What:** trimmed `porejs`'s entry from ~180 exports to a curated 37 runtime +
+  grouped types; moved the plumbing (layout/tap/virtualization math, anchor +
+  pagination internals, `createStore`/`createEmitter`, `PaceEstimator`,
+  fixture-manifest parsing, TTS controller internals, low-level search index,
+  EPUB path helpers, `elementSteps`) to a new **`porejs/internal`** entry
+  (`src/internal/index.ts`; `"./internal"` in `exports`; tsup 3rd entry with
+  `splitting: true` → `internal.js` ≈ 1.4 KB via a shared chunk). `VERSION` now
+  injected from `package.json` (tsup `define` + `src/version.d.ts`).
+  `src/public-api.test.ts` in both packages pins the runtime export list (+
+  disjointness of `internal`). `docs/stability.md` written. ESM-only note in
+  `integration.md`. `scripts/verify-packages.mjs` (no CSS in porejs-react, no
+  `.map`/`.tsbuildinfo`/tests in tarballs, README+LICENSE, VERSION match) →
+  `pnpm verify:packages` / part of `pnpm release`. `ManifestMeta`
+  (`subtitle?` / `volume?`) added to both manifest types — the last additive
+  shape before the freeze.
+- **State:** committed. typecheck · lint · 266 unit · 43 e2e green — the search
+  worker still loads under the now-chunked core build.
+- **Notes:** type-only exports aren't caught by the runtime guard — review by
+  hand vs `stability.md`. `porejs` still hard-deps `pdfjs-dist` (H6 tree-shake).
+  The `useReaderHistory` doc-title composition is H2.
+
 ## 2026-09-06 — M8 H0: package identity + Changesets
 - **What:** renamed the npm packages — `@pore/reader-core` → **`porejs`**,
   `@pore/reader-react` → **`porejs-react`** (folder names unchanged; `apps/demo`

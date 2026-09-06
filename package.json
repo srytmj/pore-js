@@ -28,7 +28,8 @@
     "format:check": "prettier --check .",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "pnpm build && changeset publish",
+    "verify:packages": "node scripts/verify-packages.mjs",
+    "release": "pnpm build && node scripts/verify-packages.mjs && changeset publish",
     "clean": "pnpm -r exec rimraf dist .turbo node_modules/.cache && rimraf node_modules",
     "prepare": "husky"
   },

@@ -33,6 +33,22 @@ text, `pdf` → PDF, else image), mounts it imperatively into a host `<div>`,
 subscribes every `reader:*` event to React state, and exposes a `ReaderHandle`.
 React never renders inside the engine's DOM.
 
+### Entry points
+
+- **`porejs`** (`src/index.ts`) — the curated, SemVer-covered surface
+  (`docs/stability.md`). `src/public-api.test.ts` pins the runtime export list;
+  changing it is an API change + a changeset.
+- **`porejs/internal`** (`src/internal/index.ts`) — layout math, anchor /
+  pagination internals, the store/emitter, the low-level search index, TTS
+  controller internals. Re-exports from the same modules; tsup hoists the
+  shared code into a chunk so `internal.js` adds ~1 KB, not a duplicate bundle.
+  Not covered by SemVer.
+- **`dist/search-worker.js`** — its own tsup entry, loaded by the search
+  controller via `new Worker(new URL('./search-worker.js', import.meta.url),
+  { type: 'module' })`; it imports the shared search-index chunk as a sibling.
+- `VERSION` is injected from `package.json` by tsup `define`
+  (`__POREJS_VERSION__`).
+
 ---
 
 ## 2. The engine contract & event model
