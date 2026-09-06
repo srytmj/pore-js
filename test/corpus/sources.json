@@ -1,0 +1,37 @@
+{
+  "note": "Public-domain / openly-licensed real books for `pnpm test:corpus`. Not committed — fetched by scripts/fetch-corpus.mjs and pinned by sha256. Fill in `sha256` after the first fetch (the script prints it). Swap URLs freely; keep the licence public-domain / CC.",
+  "books": [
+    {
+      "id": "standard-ebons-frankenstein",
+      "kind": "epub",
+      "title": "Frankenstein (Standard Ebooks)",
+      "url": "https://standardebooks.org/ebooks/mary-shelley/frankenstein/downloads/mary-shelley_frankenstein.epub",
+      "sha256": null,
+      "why": "rich modern EPUB3 CSS, deep TOC, footnotes"
+    },
+    {
+      "id": "gutenberg-pride-and-prejudice",
+      "kind": "epub",
+      "title": "Pride and Prejudice (Project Gutenberg)",
+      "url": "https://www.gutenberg.org/ebooks/1342.epub3.images",
+      "sha256": null,
+      "why": "old-school Gutenberg markup, images"
+    },
+    {
+      "id": "gutenberg-alice-illustrated",
+      "kind": "epub",
+      "title": "Alice's Adventures in Wonderland (Gutenberg, illustrated)",
+      "url": "https://www.gutenberg.org/ebooks/11.epub3.images",
+      "sha256": null,
+      "why": "many inline images, short chapters"
+    },
+    {
+      "id": "gutenberg-us-constitution-pdf",
+      "kind": "pdf",
+      "title": "US Constitution (Gutenberg PDF)",
+      "url": "https://www.gutenberg.org/files/5/5-pdf.pdf",
+      "sha256": null,
+      "why": "a real text PDF with an outline"
+    }
+  ]
+}

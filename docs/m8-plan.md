@@ -206,21 +206,32 @@ the reader provably doesn't reach outside its own box. ✓
 
 ---
 
-## H3 — Real-world content corpus · M
+## H3 — Real-world content corpus · M · **SCAFFOLD DONE — corpus fetch pending owner**
 
-- [ ] **`scripts/fetch-corpus.mjs`** → `fixtures/corpus/` (gitignored,
-      SHA-256-verified), public-domain / openly-licensed only: a Standard
-      Ebooks EPUB3, a Project Gutenberg EPUB, a real fixed-layout EPUB, a
-      genuine RTL manga CBZ, a vertical-JP book, a multi-column/scanned PDF, a
-      text PDF with an outline, and one ≥ 800-page item.
-- [ ] **`pnpm test:corpus`** (Vitest, tagged, out of the default run): per
-      book — `getManifest` → paginate → anchor mid-book → re-resolve →
-      `serializeCfi`/`parseCfi`/`resolveCfiElement` round-trip → search →
-      assert nothing throws, positions are plausible.
-- [ ] Commit only the tiny items; CI fetches the rest (cached by hash).
-- [ ] A bug per real breakage; fix the cheap ones, defer the rest with a note.
+- [x] **`scripts/fetch-corpus.mjs`** — downloads the books in
+      `test/corpus/sources.json` into `test/corpus/files/` (gitignored) and
+      verifies each against a pinned `sha256` (prints the hash on first fetch).
+      `pnpm corpus:fetch`.
+- [x] **`test/corpus/corpus.test.ts`** (`pnpm test:corpus` → the `corpus`
+      vitest project; also runs in `pnpm test` but **skips cleanly** when
+      `files/` is empty — dynamic `import()` of the built `porejs`, no
+      hard dep on `dist/`). Per book: `parseEpub` / `loadPdf` don't throw on
+      the real structure · spine + TOC + metadata sane · every spine href
+      resolves · `serializeCfi`→`parseCfi`→`resolveCfiElement` round-trips on a
+      real spine doc · `SearchController` builds over the real text · PDF
+      pageCount / pageSize / outline. (Full pagination stays on the e2e suites
+      — jsdom can't run the iframe.)
+- [x] `test/corpus/README.md` + provenance; `sources.json` seeded with 4
+      public-domain sources (Standard Ebooks *Frankenstein*, Gutenberg *Pride
+      and Prejudice* + *Alice* illustrated, Gutenberg US-Constitution PDF).
+- [ ] **`pnpm corpus:fetch` + pin the hashes + run `pnpm test:corpus`** —
+      needs the owner's OK to download (~a few MB from standardebooks.org /
+      gutenberg.org), or drop files into `test/corpus/files/` by hand. Then:
+      widen `sources.json` (add an RTL CBZ, a vertical-JP book, a fixed-layout
+      EPUB, an ≥ 800-page item), pin hashes, wire `corpus:fetch` into CI (cached
+      by hash), file a bug per real breakage.
 
-**Done when:** `pnpm test:corpus` is green against a dozen real books.
+**Done when:** `pnpm test:corpus` is green against ~a dozen real books.
 
 ---
 

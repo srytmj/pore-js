@@ -31,6 +31,8 @@ export default tseslint.config(
         __dirname: 'readonly',
         console: 'readonly',
         URL: 'readonly',
+        fetch: 'readonly',
+        Buffer: 'readonly',
       },
     },
   },

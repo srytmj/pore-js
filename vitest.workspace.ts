@@ -18,4 +18,14 @@ export default defineWorkspace([
       environment: 'node',
     },
   },
+  {
+    // Real-book corpus — excluded from `pnpm test`, run via `pnpm test:corpus`.
+    // Needs `pnpm build` + `node scripts/fetch-corpus.mjs`; skips when empty.
+    test: {
+      name: 'corpus',
+      include: ['test/corpus/**/*.test.ts'],
+      environment: 'jsdom',
+      testTimeout: 30_000,
+    },
+  },
 ]);

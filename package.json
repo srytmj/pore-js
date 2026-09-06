@@ -24,6 +24,8 @@
     "example": "pnpm --filter @pore/example-host-app dev",
     "test": "vitest run",
     "test:watch": "vitest",
+    "corpus:fetch": "node scripts/fetch-corpus.mjs",
+    "test:corpus": "vitest run --project=corpus",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
