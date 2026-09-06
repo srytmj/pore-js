@@ -175,7 +175,14 @@ describe('CachedSource', () => {
     const src = new CachedSource(inner, { store, cache: false });
 
     const bms = [
-      { id: 'bm1', position: { type: 'page' as const, value: 3, total: 10 }, label: 'p.4', createdAt: 1 },
+      {
+        id: 'bm1',
+        position: { type: 'page' as const, value: 3, total: 10 },
+        page: 3,
+        percent: 0.3,
+        label: 'p.4',
+        createdAt: 1,
+      },
     ];
     await src.saveBookmarks('b', bms);
     expect(await store.get('pore:bookmarks:b')).toEqual(bms);

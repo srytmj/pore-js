@@ -103,6 +103,10 @@ export interface Bookmark {
   id: string;
   position: Position;
   cfi?: string;
+  /** 0-based book-level page at bookmark time — cheap "is this page bookmarked?" checks. */
+  page: number;
+  /** 0..1 through the book, for ordering the list. */
+  percent: number;
   label: string;
   /** Snapshot of the text at the mark, for the list. */
   text?: string;

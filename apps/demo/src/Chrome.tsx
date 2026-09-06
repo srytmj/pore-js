@@ -1,6 +1,7 @@
 import {
   FootnotePopover,
   HighlightsPanel,
+  BookmarksPanel,
   SettingsPanelBody,
   TableOfContents,
   useEndPage,
@@ -16,6 +17,7 @@ import {
   useReaderSettings,
   useReaderHighlights,
   useReaderSelection,
+  useBookmarks,
   useTts,
   useResumedFromPage,
   useChromeVisible,
@@ -29,6 +31,7 @@ import {
   Home, Library, Search, Link as LinkIcon, Highlighter, Volume2,
   Sun, Moon, Coffee, Settings, ArrowLeft, ArrowRight, Pin, PinOff,
   ChevronLeft, ChevronRight, Maximize, Minimize, Download,
+  Bookmark, BookmarkCheck,
   File, BookOpen, ArrowDownToLine, ArrowRightToLine,
   PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen,
 } from 'lucide-react';
@@ -96,8 +99,10 @@ export function Chrome({
   const [posNotice, setPosNotice] = useState<string | null>(null);
   const download = useDownload(bookId);
   const [highlightsOpen, setHighlightsOpen] = useState(false);
+  const [bookmarksOpen, setBookmarksOpen] = useState(false);
   const { selection, highlight } = useReaderSelection();
   const highlights = useReaderHighlights();
+  const bm = useBookmarks();
   const tts = useTts();
   const [ttsOpen, setTtsOpen] = useState(false);
   const [voices, setVoices] = useState<TtsVoiceLike[]>([]);
@@ -139,7 +144,21 @@ export function Chrome({
   const canAnnotate = isText || isPdf;
   const menuPos = menu.placement;
 
-  const overlayOpen = settingsOpen || searchOpen || endPage !== null || highlightsOpen || ttsOpen;
+  const overlayOpen =
+    settingsOpen || searchOpen || endPage !== null || highlightsOpen || bookmarksOpen || ttsOpen;
+
+  // `b` toggles a bookmark at the current page (unless typing in a field)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'b' || e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target as HTMLElement | null;
+      if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return;
+      if (!bm.supported) return;
+      bm.toggle();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [bm]);
   // Auto-hide when the user chose it, or always in fullscreen. Panels pin it open.
   const isAuto = menu.behaviour === 'auto-hide';
   const autoHiding = (isFullscreen || isAuto) && !overlayOpen;
@@ -330,6 +349,19 @@ export function Chrome({
         >
           <span className="icon"><LinkIcon size={18} /></span>
           <span>Copy Link</span>
+        </button>
+      )}
+      {bm.supported && (
+        <button
+          className={bookmarksOpen ? 'active' : ''}
+          onClick={() => setBookmarksOpen((v) => !v)}
+          aria-label="Bookmarks"
+          title="Bookmarks (b to toggle one here)"
+        >
+          <span className="icon">
+            {bm.isBookmarkedHere ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
+          </span>
+          <span>Bookmarks{bm.bookmarks.length > 0 ? ` (${bm.bookmarks.length})` : ''}</span>
         </button>
       )}
       {canAnnotate && (
@@ -653,6 +685,27 @@ export function Chrome({
             }
             onJump={() => setHighlightsOpen(false)}
           />
+        </div>
+      )}
+
+      {bm.supported && bookmarksOpen && (
+        <div className="highlights-panel" role="dialog" aria-label="Bookmarks">
+          <div className="highlights-panel__header">
+            <strong>Bookmarks</strong>
+            <div className="highlights-panel__head-actions">
+              <button
+                className="bm-add"
+                onClick={() => bm.toggle()}
+                aria-pressed={bm.isBookmarkedHere}
+              >
+                {bm.isBookmarkedHere ? 'Remove this page' : 'Bookmark this page'}
+              </button>
+              <button onClick={() => setBookmarksOpen(false)} aria-label="Close bookmarks">
+                ×
+              </button>
+            </div>
+          </div>
+          <BookmarksPanel className="highlights-panel__body" onJump={() => setBookmarksOpen(false)} />
         </div>
       )}
 

@@ -467,6 +467,32 @@ test.describe('Pore.js demo — M3', () => {
     await expect(page.locator('[data-pore-scrubber-label]')).toContainText('%');
   });
 
+  test('bookmark: add with "b", turn pages, jump back to it, survives reload', async ({ page }) => {
+    await page.goto('/?book=demo-book');
+    const frame = page.frameLocator('iframe.pore-text__frame');
+    await frame.locator('h1').waitFor();
+    const reader = page.locator('.pore-text');
+    const pct = async () =>
+      Number((await page.locator('.loc').textContent())!.match(/(\d+)%/)![1]);
+
+    for (let i = 0; i < 6; i++) await reader.press('ArrowRight');
+    const marked = await pct();
+    await reader.press('b'); // bookmark this page
+    await expect(page.getByRole('button', { name: 'Bookmarks' })).toContainText('1');
+
+    for (let i = 0; i < 6; i++) await reader.press('ArrowRight');
+    expect(await pct()).toBeGreaterThan(marked + 3);
+
+    await page.getByRole('button', { name: 'Bookmarks' }).click();
+    await page.locator('[data-pore-bm-jump]').first().click();
+    // back near the mark (± a page for anchor drift), not still far ahead
+    await expect.poll(pct).toBeLessThanOrEqual(marked + 2);
+
+    await page.waitForTimeout(800); // debounced save
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Bookmarks' })).toContainText('1');
+  });
+
   test('highlight persists across reload and click-to-jump works', async ({ page }) => {
     await page.goto('/?book=demo-book');
     const frame = page.frameLocator('iframe.pore-text__frame');

@@ -941,14 +941,19 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     let b: Element | null = el;
     while (b && !blocks.includes(b)) b = b.parentElement;
     const block = b ? blocks.indexOf(b) : -1;
-    if (block < 0) return;
-    pendingAnchor = {
-      type: 'anchor',
-      spine: spineIndex,
-      block,
-      offset: parsed.offset,
-      percent: 0,
-    };
+    if (block < 0 || !b) return;
+    // the CFI's offset is relative to `el`'s flattened text; make it relative to
+    // the block by adding the text that precedes `el` inside the block
+    let offset = parsed.offset;
+    if (b !== el) {
+      const walker = cdoc.createTreeWalker(b, NodeFilter.SHOW_TEXT);
+      let n: Node | null;
+      while ((n = walker.nextNode())) {
+        if (el.contains(n)) break;
+        offset += n.textContent?.length ?? 0;
+      }
+    }
+    pendingAnchor = { type: 'anchor', spine: spineIndex, block, offset, percent: 0 };
   };
 
   const resolvePendingAnchor = () => {

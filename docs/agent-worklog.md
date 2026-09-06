@@ -61,6 +61,16 @@ M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
 
+## 2026-09-06 — M7 L1: bookmarks
+- **What:** `useBookmarks()` (reader-react, over handle + source) —
+  add/remove/rename/goTo/toggle, `isBookmarkedHere`. Headless
+  `<BookmarksPanel>` (`data-pore-bm-*`). `ReaderCtx` gained `bookId` + `source`.
+  Demo: rail Bookmarks button (filled when the page is bookmarked), panel with
+  a page-toggle, `b` keybind. `goTo` uses the exact `position` (cfi kept for
+  export). `resolvePendingCfi` now translates the CFI's element-relative offset
+  to block-relative.
+- **State:** committed. 258 unit · 39 e2e · lint 0 — green.
+
 ## 2026-09-06 — M7 L0: goToCfi + bookmark persistence
 - **What:** `TextEngine.goToCfi(cfi)` (+ `ReaderHandle`) — the inverse of
   `getCfi()`: `parseCfi` → `pendingCfi` → `resolvePendingCfi` (in `renderSpine`

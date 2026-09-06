@@ -74,7 +74,18 @@ load/save bookmarks. ✓
 
 ---
 
-## L1 — Bookmarks · M
+## L1 — Bookmarks · M · **DONE**
+
+`useBookmarks()` in `reader-react` (over the handle + source): `add(label?)`
+snapshots `location.position` + `getCfi()` + page/percent, `goTo()` uses the
+exact `position` (cfi kept for export), `toggle()` adds/removes the one on the
+current page, `isBookmarkedHere`. Headless `<BookmarksPanel>` (`data-pore-bm-*`
+— jump / inline rename / remove). `ReaderCtx` gained `bookId` + `source`. Demo:
+a Bookmarks button in the rail (filled icon when the page is bookmarked), the
+panel with a "Bookmark this page" toggle, and a `b` keybind. e2e: add with `b`,
+turn away, jump back, survives reload.
+
+<details><summary>Original notes</summary>
 
 Manual, named bookmarks — distinct from the single auto-resume checkpoint.
 
@@ -95,6 +106,8 @@ Manual, named bookmarks — distinct from the single auto-resume checkpoint.
 
 **Done when:** you can drop a named bookmark, leave, and jump back to it after
 a reload.
+
+</details>
 
 ---
 

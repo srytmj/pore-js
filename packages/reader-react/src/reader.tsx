@@ -28,6 +28,8 @@ import {
   type TextEngineSettings,
   type TextSelection,
   type HighlightRecord,
+  type Bookmark,
+  type ReaderSource,
   type TtsState,
   type TtsVoiceLike,
   type TocEntry,
@@ -119,6 +121,8 @@ interface EngineLike {
 }
 
 interface ReaderCtx {
+  bookId: string;
+  source: ReaderSource;
   kind: ReaderKind | null;
   location: ReaderLocation | null;
   progress: ReaderProgress | null;
@@ -363,6 +367,8 @@ export function Reader({
 
   const ctx = useMemo<ReaderCtx>(
     () => ({
+      bookId,
+      source,
       kind,
       location,
       progress,
@@ -384,6 +390,8 @@ export function Reader({
       ttsState,
     }),
     [
+      bookId,
+      source,
       kind,
       location,
       progress,
@@ -573,6 +581,100 @@ export function useReaderSearch(opts?: { debounceMs?: number }): ReaderSearch {
 /** The book's saved highlights (empty on engines without one, e.g. image/PDF). */
 export function useReaderHighlights(): HighlightRecord[] {
   return useRuntime().highlights;
+}
+
+export interface UseBookmarks {
+  bookmarks: Bookmark[];
+  /** `true` when the current page already has a bookmark. */
+  isBookmarkedHere: boolean;
+  /** Whether the active source can persist bookmarks at all. */
+  supported: boolean;
+  add(label?: string): void;
+  remove(id: string): void;
+  rename(id: string, label: string): void;
+  goTo(bookmark: Bookmark): void;
+  /** Add a bookmark at the current page, or remove the one that's there. */
+  toggle(): void;
+}
+
+/**
+ * Named bookmarks — a per-book collection persisted through the source's
+ * optional `loadBookmarks` / `saveBookmarks`. Uses the handle's `getCfi()` /
+ * `goToCfi()` so a bookmark survives re-pagination on a reflowable book.
+ */
+export function useBookmarks(): UseBookmarks {
+  const { bookId, source, handle, location } = useRuntime();
+  const supported =
+    typeof source.loadBookmarks === 'function' && typeof source.saveBookmarks === 'function';
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+
+  useEffect(() => {
+    if (!supported) return;
+    let live = true;
+    void source.loadBookmarks?.(bookId).then((b) => {
+      if (live) setBookmarks(b);
+    });
+    return () => {
+      live = false;
+    };
+  }, [supported, source, bookId]);
+
+  const persist = useCallback(
+    (next: Bookmark[]) => {
+      const sorted = [...next].sort((a, b) => a.page - b.page || a.createdAt - b.createdAt);
+      setBookmarks(sorted);
+      void source.saveBookmarks?.(bookId, sorted).catch(() => {});
+    },
+    [source, bookId],
+  );
+
+  const here = bookmarks.find((b) => b.page === (location?.page ?? -1)) ?? null;
+
+  const add = useCallback(
+    (label?: string) => {
+      if (!supported || !location) return;
+      const cfi = handle.getCfi() ?? undefined;
+      const bm: Bookmark = {
+        id: `bm_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+        position: location.position,
+        ...(cfi ? { cfi } : {}),
+        page: location.page,
+        percent: location.percent,
+        label: label?.trim() || location.label,
+        createdAt: Date.now(),
+      };
+      persist([...bookmarks.filter((b) => b.page !== location.page), bm]);
+    },
+    [supported, location, handle, bookmarks, persist],
+  );
+
+  const remove = useCallback(
+    (id: string) => persist(bookmarks.filter((b) => b.id !== id)),
+    [bookmarks, persist],
+  );
+
+  const rename = useCallback(
+    (id: string, label: string) =>
+      persist(bookmarks.map((b) => (b.id === id ? { ...b, label } : b))),
+    [bookmarks, persist],
+  );
+
+  const goTo = useCallback(
+    (bm: Bookmark) => {
+      // `position` is exact for the current pagination; `cfi` (kept for export /
+      // cross-device) is the fallback if the position can't be honoured.
+      if (bm.position) handle.goto(bm.position);
+      else if (bm.cfi) handle.goToCfi(bm.cfi);
+    },
+    [handle],
+  );
+
+  const toggle = useCallback(() => {
+    if (here) remove(here.id);
+    else add();
+  }, [here, remove, add]);
+
+  return { bookmarks, isBookmarkedHere: !!here, supported, add, remove, rename, goTo, toggle };
 }
 
 export interface ReaderSelectionApi {

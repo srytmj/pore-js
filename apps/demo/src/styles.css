@@ -729,6 +729,46 @@
   .highlights-panel__body {
     @apply overflow-y-auto p-1;
   }
+  .highlights-panel__head-actions {
+    @apply flex items-center gap-1.5;
+  }
+  .bm-add {
+    @apply rounded-[var(--radius-control)] border border-line bg-canvas px-2 py-0.5 text-[0.72rem] font-medium text-fg hover:bg-fg/5;
+  }
+  .bm-add[aria-pressed='true'] {
+    @apply border-fg bg-fg text-canvas;
+  }
+
+  /* headless <BookmarksPanel> — data-pore-bm-* hooks */
+  [data-pore-bm-empty] {
+    @apply p-6 text-center text-[0.85rem] leading-relaxed text-muted;
+  }
+  [data-pore-bm-list] {
+    @apply m-0 flex list-none flex-col gap-0.5 p-0;
+  }
+  [data-pore-bm-item] {
+    @apply flex items-center gap-1 rounded-[var(--radius-control)] px-1.5 hover:bg-fg/[0.03];
+  }
+  [data-pore-bm-jump] {
+    @apply flex flex-1 items-baseline justify-between gap-2 border-0 bg-transparent px-1 py-2 text-left text-[0.85rem] text-fg;
+  }
+  [data-pore-bm-jump]:hover [data-pore-bm-label] {
+    @apply underline;
+  }
+  [data-pore-bm-pct] {
+    @apply shrink-0 text-[0.72rem] text-muted [font-variant-numeric:tabular-nums];
+  }
+  [data-pore-bm-rename] {
+    @apply flex-1 rounded-[var(--radius-control)] border border-focus bg-canvas px-1.5 py-1 text-[0.85rem] text-fg outline-none;
+  }
+  [data-pore-bm-rename-btn],
+  [data-pore-bm-remove] {
+    @apply h-6 w-6 shrink-0 rounded-full border-0 bg-transparent text-[0.9rem] leading-none text-muted hover:bg-fg/5 hover:text-fg;
+  }
+  [data-pore-bm-remove]:hover {
+    @apply text-danger;
+  }
+
   /* headless <HighlightsPanel> — data-pore-hl-* hooks */
   [data-pore-hl-empty] {
     @apply p-6 text-center text-[0.85rem] leading-relaxed text-muted;

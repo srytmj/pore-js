@@ -54,6 +54,7 @@ export {
   useResumedFromPage,
   useReaderHighlights,
   useReaderSelection,
+  useBookmarks,
   useTts,
 } from './reader.js';
 export type {
@@ -69,6 +70,7 @@ export type {
   EndPage,
   ReaderErrorInfo,
   UseReaderError,
+  UseBookmarks,
   ReaderSelectionApi,
   UseTts,
 } from './reader.js';
@@ -79,6 +81,8 @@ export { TableOfContents } from './table-of-contents.js';
 export type { TableOfContentsProps } from './table-of-contents.js';
 export { HighlightsPanel } from './highlights-panel.js';
 export type { HighlightsPanelProps } from './highlights-panel.js';
+export { BookmarksPanel } from './bookmarks-panel.js';
+export type { BookmarksPanelProps } from './bookmarks-panel.js';
 export { FootnotePopover } from './footnote-popover.js';
 export {
   Field,
