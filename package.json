@@ -28,6 +28,7 @@
     "test:corpus": "vitest run --project=corpus",
     "lint": "eslint .",
     "size": "size-limit",
+    "pack:local": "pnpm build && node scripts/pack-local.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "changeset": "changeset",

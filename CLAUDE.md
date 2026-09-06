@@ -64,6 +64,7 @@ API frozen (`docs/stability.md`), embed example (`examples/host-app/`),
 real-book corpus test, robustness fuzz, 3-browser e2e (2 Safari bugs fixed),
 `size-limit` budgets, security + a11y (`docs/accessibility.md`), Changesets →
 npm-provenance release pipeline (`docs/releasing.md`), demo Dockerfile
-(`docs/deploy.md`), `docs/getting-started.md`. **Remaining is owner-gated:**
-enable the release workflow, first `rc` publish, deploy the box, RC shake-out,
-then tag `v1.0.0`. See `docs/agent-worklog.md`.
+(`docs/deploy.md`), `docs/getting-started.md`. **npm publish postponed**
+(owner dogfooding first — use `pnpm pack:local`, `docs/releasing.md`);
+`release.yml` stays dormant. Remaining: homelab deploy, RC shake-out, then
+`v1.0.0`. See `docs/agent-worklog.md`.

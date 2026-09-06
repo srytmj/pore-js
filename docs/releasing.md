@@ -1,9 +1,33 @@
 # Releasing
 
 `porejs` and `porejs-react` are versioned together (Changesets `fixed`) and
-published to npm with **provenance**. `@pore/demo` is private.
+publish to npm with **provenance**. `@pore/demo` is private.
 
-## The flow
+> **npm publishing is postponed on purpose** (2026-09-07). The owner is
+> dogfooding the packages in their own projects first — a public package is a
+> commitment, and it's not yet clear the API shape is right for other people.
+> The pipeline below is wired and dormant; use **[Consuming it locally](#consuming-it-locally)**
+> in the meantime.
+
+## Consuming it locally
+
+`pnpm pack:local` builds both packages and writes `.tgz` files to `dist-pack/`
+(`workspace:*` deps rewritten to the real version, so they install standalone):
+
+```bash
+pnpm pack:local
+# then, in your other project:
+npm i /abs/path/to/pore-js/dist-pack/porejs-1.0.0-rc.1.tgz \
+      /abs/path/to/pore-js/dist-pack/porejs-react-1.0.0-rc.1.tgz
+```
+
+Re-run `pnpm pack:local` after changes and `npm i` again. (Or, if your project
+lives next to this repo, `pnpm add link:../pore-js/packages/reader-core` etc. —
+faster iteration, no re-pack, but no version pinning.)
+
+`dist-pack/` is gitignored.
+
+## The flow (when publishing resumes)
 
 1. **Every PR that changes a published package's behaviour** adds a changeset:
 

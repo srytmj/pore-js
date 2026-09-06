@@ -372,7 +372,9 @@ can do everything the demo offers. ✓ (SR pass pending)
   not `1.0`-blocking.
 
 **Done when:** merging a release PR publishes both packages with provenance —
-mechanically ready; **the owner enables it** (`docs/releasing.md`).
+mechanically ready. **npm publish is postponed** (2026-09-07): the owner is
+dogfooding first. Local consumption via `pnpm pack:local` →
+`docs/releasing.md`. Resume by enabling `RELEASE_ENABLED` + `NPM_TOKEN`.
 
 ---
 

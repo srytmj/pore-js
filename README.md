@@ -1,14 +1,16 @@
 # Pore.js
 
 [![CI](https://github.com/srytmj/pore-js/actions/workflows/ci.yml/badge.svg)](https://github.com/srytmj/pore-js/actions/workflows/ci.yml)
-[![npm — porejs](https://img.shields.io/npm/v/porejs?label=porejs)](https://www.npmjs.com/package/porejs)
-[![npm — porejs-react](https://img.shields.io/npm/v/porejs-react?label=porejs-react)](https://www.npmjs.com/package/porejs-react)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 Source-agnostic web reader engine for manga (image-based) and text (EPUB, PDF,
 CBZ). Custom rendering + pagination engine, not a wrapper. **Drop it into your
 own site** — you provide a content source and a mount point, `porejs` is the
 whole reader.
+
+> **Not on npm yet** — publishing is postponed while the owner dogfoods it.
+> Use it locally: `pnpm pack:local` →
+> [`docs/releasing.md`](docs/releasing.md#consuming-it-locally).
 
 **New here?** → [`docs/getting-started.md`](docs/getting-started.md).
 
@@ -120,8 +122,10 @@ frozen ([`docs/stability.md`](docs/stability.md)), a worked embed example
 robustness fuzzing, a **3-browser** e2e matrix (fixed 2 real Safari bugs),
 `size-limit` budgets, a security + a11y pass
 ([`docs/accessibility.md`](docs/accessibility.md)), a Changesets → npm
-provenance release pipeline, and a Docker image for the demo. Not yet: the
-`1.0.0` tag (after the RC shake-out) and the live deploy.
+provenance release pipeline (wired, **dormant**), and a Docker image for the
+demo. **npm publish is postponed** — owner is dogfooding first; consume it
+locally per [`docs/releasing.md`](docs/releasing.md#consuming-it-locally). Not
+yet: the live deploy and the `1.0.0` tag.
 
 <details><summary>Library &amp; portability (M7, <code>v0.10.0-library</code>)</summary>
 
@@ -229,10 +233,12 @@ M7: [`docs/m7-plan.md`](docs/m7-plan.md) — done (L0–L6, `v0.10.0-library`) �
 bookmarks, home shelf, annotations review, export / import, `?cfi=` deep
 links. `docs/portability-format.md` is the bundle schema.
 
-M8: [`docs/m8-plan.md`](docs/m8-plan.md) — **in progress** (target `v1.0.0`) —
-H0–H9 done (rename, API freeze, embed example, corpus, robustness,
-cross-browser, size budgets, security/a11y, release pipeline + demo image);
-H9 deploy + H10 `1.0.0` tag pending the RC shake-out and owner steps.
+M8: [`docs/m8-plan.md`](docs/m8-plan.md) — **code-complete** (target `v1.0.0`) —
+H0–H10 done (rename, API freeze, embed example, corpus, robustness,
+cross-browser, size budgets, security/a11y, release pipeline + demo image,
+getting-started). Remaining is owner-gated: npm publish (**postponed** —
+dogfooding first), the homelab deploy, then the `1.0.0` tag after an RC
+shake-out.
 
 Live status: [`docs/agent-worklog.md`](docs/agent-worklog.md).
 

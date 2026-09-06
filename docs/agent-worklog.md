@@ -54,14 +54,17 @@ publish + deploy milestone (no new reader features). Packages built at
 
 **What's left — owner-gated:**
 
-1. Enable the release workflow (repo var `RELEASE_ENABLED=true` + `NPM_TOKEN`
-   secret, or npm Trusted Publishing) → merge → first `1.0.0-rc.1` publish.
+1. **npm publish is postponed on purpose** (2026-09-07) — the owner is
+   dogfooding `porejs` / `porejs-react` in their own projects first before
+   committing to a public package. `release.yml` stays wired + dormant.
+   Meanwhile: `pnpm pack:local` → `dist-pack/*.tgz` → `npm i` in the consuming
+   project (`docs/releasing.md` → "Consuming it locally").
 2. Deploy the demo image to the homelab; wire `pore.suryatmaja.dev` + TLS.
-3. After an RC shake-out **and the manual NVDA/VoiceOver pass**, triage the
-   `known-issues.md` open items, then cut **`v1.0.0`** (a changeset `rc → 1.0.0`
-   + the tag). Optional: typedoc API ref, PWA manifest/icons.
+3. Once the owner is happy with the API in real use **and** the manual
+   NVDA/VoiceOver pass is done, triage `known-issues.md`, resume publishing
+   (enable `RELEASE_ENABLED` + `NPM_TOKEN`), and cut **`v1.0.0`**.
 
-Do **not** tag `v1.0.0` from a session — it needs the RC period + owner sign-off.
+Do **not** tag `v1.0.0` or enable publishing from a session.
 
 <details><summary>earlier "current focus" — M6 / M7 shipped</summary>
 
@@ -96,6 +99,20 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-07 — npm publish postponed; local-consumption path added
+- **What:** owner decided to hold off publishing `porejs` / `porejs-react` to
+  npm — wants to use them in their own projects first before a public package
+  becomes a commitment. Added `pnpm pack:local` (`scripts/pack-local.mjs`):
+  `pnpm build` + `pnpm pack` both packages into `dist-pack/*.tgz` with
+  `workspace:*` rewritten to the real version, so `npm i ./dist-pack/*.tgz`
+  works in an outside project. `docs/releasing.md` gets a "Consuming it
+  locally" section + a postponement banner; README badges trimmed (no npm
+  version badges for unpublished packages) + a "not on npm yet" note.
+- **State:** committed + pushed. `release.yml` unchanged — already dormant
+  (gated on `RELEASE_ENABLED`), nothing to undo.
+- **Notes:** packages stay at `1.0.0-rc.1` (fine for internal use). When the
+  owner is ready: enable `RELEASE_ENABLED` + `NPM_TOKEN`, merge, done.
 
 ## 2026-09-07 — M8 code-complete (H0–H10) — summary
 - **What:** one long session took M8 from "scoped" to code-complete. The
