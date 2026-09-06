@@ -1,9 +1,23 @@
-import { CachedSource, DemoSource, LocalFileSource, type ReaderSource } from '@pore/reader-core';
-import { Reader, ReaderAnnouncer, ReaderProvider, gsapAdapter } from '@pore/reader-react';
+import {
+  CachedSource,
+  DemoSource,
+  LocalFileSource,
+  type Position,
+  type ReaderSource,
+} from '@pore/reader-core';
+import {
+  Reader,
+  ReaderAnnouncer,
+  ReaderProvider,
+  gsapAdapter,
+  useReader,
+  useReaderLocation,
+} from '@pore/reader-react';
 import gsap from 'gsap';
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type MutableRefObject } from 'react';
 import { Chrome } from './Chrome.js';
 import { OpdsBrowser } from './OpdsBrowser.js';
+import { AnnotationsReview, type JumpTarget } from './AnnotationsReview.js';
 import { Landing, type SampleBook } from './Landing.js';
 import { useMenuBar } from './use-menu-bar.js';
 import { useFullscreen } from './use-fullscreen.js';
@@ -26,6 +40,24 @@ export function useAnimations() {
 }
 
 const defaultTransitions = gsapAdapter(gsap);
+
+/** Applies a one-shot jump (from the annotations review) once the engine is ready. */
+function PendingNav({
+  navRef,
+}: {
+  navRef: MutableRefObject<{ cfi?: string; position?: Position } | null>;
+}) {
+  const handle = useReader();
+  const location = useReaderLocation();
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav || !location) return;
+    navRef.current = null;
+    if (nav.cfi) handle.goToCfi(nav.cfi);
+    else if (nav.position) handle.goto(nav.position);
+  }, [location, handle, navRef]);
+  return null;
+}
 
 const BOOKS: SampleBook[] = [
   {
@@ -87,6 +119,8 @@ export function App() {
   const [animate, toggleAnimate] = useAnimations();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const library = useLibrary();
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const pendingNavRef = useRef<{ cfi?: string; position?: Position } | null>(null);
   // A docked bar takes real space — inset the reader so it isn't covered.
   const isDocked = menu.behaviour === 'always' && !isFullscreen;
   // one rail: menu + inline settings accordion. Width is constant whether or
@@ -126,6 +160,16 @@ export function App() {
     if (b) library.record({ id, title: b.label, glyph: b.glyph, kind: 'sample' });
   };
 
+  const onJump = (t: JumpTarget) => {
+    pendingNavRef.current = t.cfi
+      ? { cfi: t.cfi }
+      : t.position
+        ? { position: t.position }
+        : null;
+    setReviewOpen(false);
+    openSample(t.bookId);
+  };
+
   const goHome = () => {
     setNotice(null);
     setOpdsOpen(false);
@@ -155,14 +199,26 @@ export function App() {
       onDrop={onDrop}
     >
       {view.kind === 'landing' ? (
-        <Landing
-          books={BOOKS}
-          onFiles={openFiles}
-          onSample={openSample}
-          recent={library.entries}
-          onResume={(e) => (e.kind === 'sample' ? openSample(e.id) : undefined)}
-          onForget={library.remove}
-        />
+        <>
+          <Landing
+            books={BOOKS}
+            onFiles={openFiles}
+            onSample={openSample}
+            recent={library.entries}
+            onResume={(e) => (e.kind === 'sample' ? openSample(e.id) : undefined)}
+            onForget={library.remove}
+            {...(library.entries.some((e) => e.kind === 'sample')
+              ? { onReview: () => setReviewOpen(true) }
+              : {})}
+          />
+          <AnnotationsReview
+            open={reviewOpen}
+            onClose={() => setReviewOpen(false)}
+            entries={library.entries}
+            source={demoSource}
+            onJump={onJump}
+          />
+        </>
       ) : (
         <ReaderProvider source={source}>
           <Reader
@@ -177,6 +233,7 @@ export function App() {
             {...(sample?.settings ? { initialSettings: sample.settings } : {})}
           >
             <ReaderAnnouncer />
+            <PendingNav navRef={pendingNavRef} />
             <Chrome
               books={BOOKS.map((b) => ({ id: b.id, label: b.label }))}
               bookId={view.kind === 'sample' ? view.bookId : ''}

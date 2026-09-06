@@ -43,7 +43,7 @@ portability (a feature milestone): L0 engine groundwork (`goToCfi` +
 `<BookmarksPanel>`) → L2 library/home (a `useLibrary()` shelf) → L3 annotations
 review → L4 export/import (versioned JSON, `docs/portability-format.md`) → L5
 share-a-passage (`?cfi=` deep links) → L6 release. Open questions decided
-(see plan). **L0 · L1 · L2 done**; L3 next.
+(see plan). **L0 · L1 · L2 · L3 done**; L4 (export/import) next.
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -60,6 +60,20 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-06 — M7 L3: annotations review
+- **What:** `apps/demo/src/AnnotationsReview.tsx` — full-screen `role="dialog"`
+  overlay from a "My annotations" link in the "Continue reading" header. Groups
+  highlights + bookmarks by book (collapsible), colour swatch / quote / note,
+  `type="search"` filter over quote+note+label. Jump: `pendingNavRef` one-shot +
+  `<PendingNav>` (inside `<Reader>`, watches `useReaderLocation()`) calls
+  `handle.goToCfi` / `handle.goto` once the engine is ready. Reads
+  `source.loadHighlights` / `loadBookmarks` per library book — sample books only
+  (shared demo source).
+- **State:** committed. `docs/m7-plan.md` L3 done. 41 e2e · lint 0 · typecheck
+  clean.
+- **Notes:** files aren't listed (no reconstructable source without the file).
+  `<PendingNav>` is also the seam L5's `?cfi=` deep link will reuse.
 
 ## 2026-09-06 — M7 L2: library / home shelf
 - **What:** `apps/demo/src/use-library.ts` — `useLibrary()` over `openKvStore()`

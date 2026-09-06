@@ -88,6 +88,7 @@ export function Landing({
   recent = [],
   onResume,
   onForget,
+  onReview,
 }: {
   books: SampleBook[];
   onFiles: (files: FileList | File[]) => void;
@@ -95,6 +96,7 @@ export function Landing({
   recent?: LibraryEntry[];
   onResume?: (entry: LibraryEntry) => void;
   onForget?: (id: string) => void;
+  onReview?: () => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -111,9 +113,16 @@ export function Landing({
 
         {recent.length > 0 && (
           <section className="landing__section" aria-labelledby="landing-recent">
-            <h2 className="landing__h2" id="landing-recent">
-              Continue reading
-            </h2>
+            <div className="landing__section-head">
+              <h2 className="landing__h2" id="landing-recent">
+                Continue reading
+              </h2>
+              {onReview && (
+                <button type="button" className="landing__review-link" onClick={onReview}>
+                  My annotations
+                </button>
+              )}
+            </div>
             <ul className="landing__recent">
               {recent.map((e) => (
                 <li key={e.id} className="landing__recent-item">

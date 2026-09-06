@@ -65,6 +65,47 @@ test.describe('Pore.js demo — landing', () => {
     await expect(shelf.locator('.landing__recent-title').first()).toHaveText('Novel (EPUB)');
   });
 
+  test('annotations review: highlight in a sample, find it from the home screen, jump back', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await page.locator('.landing__samples').getByRole('button', { name: /Novel/ }).click();
+    const frame = page.frameLocator('iframe.pore-text__frame');
+    const h1 = frame.locator('h1');
+    await h1.waitFor();
+    await h1.evaluate((el) => {
+      const doc = el.ownerDocument!;
+      const range = doc.createRange();
+      range.selectNodeContents(el);
+      const sel = doc.getSelection()!;
+      sel.removeAllRanges();
+      sel.addRange(range);
+      doc.dispatchEvent(new Event('selectionchange'));
+    });
+    await page.locator('.selection-toolbar__swatch').first().click();
+    await expect(page.getByRole('button', { name: 'Highlights' })).toContainText('1');
+    await page.waitForTimeout(1000); // debounced save
+
+    await page.getByRole('button', { name: 'Back to start' }).click();
+    await page.getByRole('button', { name: 'My annotations' }).click();
+
+    const review = page.getByRole('dialog', { name: 'My annotations' });
+    await expect(review).toBeVisible();
+    await expect(review.locator('.review__group-title')).toHaveText('Novel (EPUB)');
+    await expect(review.locator('.review__row')).toHaveCount(1);
+
+    // filter: a non-matching needle empties it, clearing brings it back
+    await review.getByLabel('Filter annotations').fill('zzzznomatch');
+    await expect(review.locator('.review__row')).toHaveCount(0);
+    await review.getByLabel('Filter annotations').fill('');
+    await expect(review.locator('.review__row')).toHaveCount(1);
+
+    await review.locator('.review__jump').first().click();
+    await expect(review).toBeHidden();
+    await expect(page).toHaveURL(/[?&]book=demo-book/);
+    await expect(frame.locator('h1')).toContainText('The Beginning');
+  });
+
   test('landing page has no critical/serious axe violations', async ({ page }) => {
     await page.goto('/');
     await page.locator('.landing').waitFor();

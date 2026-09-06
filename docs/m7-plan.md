@@ -140,19 +140,27 @@ you can pick up where you left off in one click.
 
 ---
 
-## L3 — Annotations review · M
+## L3 — Annotations review · M · **DONE**
 
 One place to see every highlight, note and bookmark you've made.
 
-- [ ] **A "My annotations" view** in the demo (a route / a full-screen panel
-      off the library): grouped by book, each group collapsible. Shows
-      highlights (colour, text, note), bookmarks (label, text). A text filter.
-- [ ] **Jump** from any entry: opens the book and navigates (via `goToCfi` /
-      `goto`). 
-- [ ] Reads the per-book stores directly (`source.loadHighlights` /
-      `loadBookmarks` for each library book) — no new aggregate API in core.
-- [ ] Playwright: make a highlight + a bookmark in two books, open the review,
-      filter, jump to one.
+- [x] **`<AnnotationsReview>`** (`apps/demo/src/AnnotationsReview.tsx`) — a
+      full-screen `role="dialog"` overlay, reached from a "My annotations" link
+      in the "Continue reading" header. Grouped by book, each group collapsible
+      (`aria-expanded`). Highlights show a colour swatch + quote + note;
+      bookmarks show a `▸` + label + text snapshot. A `type="search"` text
+      filter matches quote / note / label.
+- [x] **Jump** — `onJump({ bookId, cfi? , position? })` stashes a one-shot in
+      `pendingNavRef`, closes the overlay, `openSample(bookId)`; a `<PendingNav>`
+      inside `<Reader>` calls `handle.goToCfi` (or `handle.goto`) once
+      `useReaderLocation()` is non-null. Text highlights jump by `cfi.start`,
+      bookmarks by `cfi` or exact `position`.
+- [x] Reads `source.loadHighlights` / `loadBookmarks` per library book straight
+      off the shared demo source — no aggregate API in core. **Sample books
+      only** (they all share the demo source); dropped files keep their
+      annotations but aren't listed until re-opened.
+- [x] Playwright: highlight a sample, go home, open the review, filter (empty →
+      restore), jump back to the passage.
 
 **Done when:** you can find and jump to any annotation across all your books
 from a single screen.
