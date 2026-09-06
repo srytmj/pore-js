@@ -266,7 +266,16 @@ focus and hover state.
 
 ---
 
-## D6 — Responsive / mobile · S
+## D6 — Responsive / mobile · S · **DONE**
+
+`@media (max-width: 640px)`: the rail **overlays** instead of docking (the
+reader host goes full-width, scrubber/lightbar span the screen), the rail gets
+a panel shadow and caps at `min(17rem, 86vw)`, and `useMenuBar` starts it
+**collapsed** on a narrow first load so the reading column isn't crushed. The
+resume toast moved to the top edge (it was overlapping the text at the bottom).
+Landing hero drops to `text-4xl`.
+
+<details><summary>Original checklist</summary>
 
 - [ ] Every surface at 375–430px: the bar (primary zone only + overflow;
       side-rail placements fall back to top on narrow), the settings panel
@@ -275,6 +284,8 @@ focus and hover state.
 - [ ] Touch targets, safe-area insets (already partly done in `.bar`).
 
 **Done when:** the demo is usable and looks intentional on a phone.
+
+</details>
 
 ---
 

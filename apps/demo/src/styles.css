@@ -187,6 +187,35 @@
     width: calc(100% - var(--rail-w, 13rem));
   }
 
+  /* --- mobile: the rail overlays instead of docking ---------------------- */
+  @media (max-width: 640px) {
+    .reader-host--left,
+    .reader-host--right {
+      margin: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    .shell--docked-left .scrubber-dock,
+    .shell--docked-left .pore-lightbar--bottom,
+    .shell--docked-right .scrubber-dock,
+    .shell--docked-right .pore-lightbar--bottom {
+      left: 0;
+      right: 0;
+      width: 100%;
+    }
+    .bar--left:not(.bar--collapsed),
+    .bar--right:not(.bar--collapsed) {
+      width: min(17rem, 86vw);
+      box-shadow: var(--shadow-panel);
+    }
+    .landing__title {
+      @apply text-4xl;
+    }
+    .landing {
+      @apply py-10;
+    }
+  }
+
   .bar__separator {
     @apply my-1 h-px w-full bg-line;
   }
@@ -615,9 +644,10 @@
   }
 
   .toast {
-    @apply fixed left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border border-line bg-fg px-3.5 py-2 text-[0.8rem] font-medium text-canvas shadow-[var(--shadow-popover)];
-    bottom: calc(4.25rem + env(safe-area-inset-bottom));
-    animation: pore-fade-in 0.2s ease-out;
+    @apply fixed left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full border border-line bg-fg px-3.5 py-2 text-[0.8rem] font-medium text-canvas shadow-[var(--shadow-popover)];
+    /* top, not over the text — clears the scrubber and the reading column */
+    top: calc(0.75rem + env(safe-area-inset-top));
+    animation: pore-rise 0.24s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .toast button {
     @apply rounded-[var(--radius-control)] border border-canvas/30 px-2 py-0.5 text-[0.75rem];

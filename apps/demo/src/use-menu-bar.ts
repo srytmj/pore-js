@@ -41,7 +41,9 @@ function load(): Stored {
   } catch {
     /* no / bad stored value */
   }
-  return { placement: 'right', behaviour: 'always', collapsed: false };
+  // on a phone the rail would eat most of the screen — start it collapsed
+  const narrow = typeof window !== 'undefined' && window.innerWidth < 640;
+  return { placement: 'right', behaviour: 'always', collapsed: narrow };
 }
 
 /** Persisted demo-shell setting for where the menu bar sits, how it hides, and whether it's collapsed. */
