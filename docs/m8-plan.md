@@ -351,44 +351,52 @@ can do everything the demo offers. ✓ (SR pass pending)
 
 ---
 
-## H8 — CI/CD + publish pipeline · S
+## H8 — CI/CD + publish pipeline · S · **DONE (dormant until owner enables)**
 
-- [ ] CI matrix: node 20 + 22; the `e2e` job runs chromium + firefox + webkit;
-      add the API-surface guard, `size-limit`, coverage upload.
-- [ ] **`release.yml`** — `changesets/action`: merge to `main` opens/updates a
-      "Version Packages" PR; merging *that* runs `pnpm -r publish --provenance
-      --access public` (publishes `porejs` + `porejs-react`), pushes tags, and
-      builds + pushes the demo image to GHCR (H9).
-- [ ] Playwright HTML report + traces as failure artifacts.
-- [ ] Doc: required status checks + branch protection for `main`.
+- [x] CI `check` is now a **node 20 + 22** matrix; `e2e` runs
+      chromium + firefox + webkit (H5); API-surface guard (H1) + `size-limit`
+      (H6) already in `check`; Playwright HTML report artifact on failure (H5).
+- [x] **`.github/workflows/release.yml`** — `changesets/action`: on merge to
+      `main` it opens/updates a "chore: version packages" PR; merging that runs
+      `pnpm release` (`build` → `verify-packages` → `changeset publish`).
+      Provenance via `publishConfig.provenance` + `id-token: write`. On a real
+      publish it also logs in to GHCR and builds + pushes the demo image.
+- [x] **`docs/releasing.md`** — the flow, the `rc → 1.0.0` step, the auth
+      one-time (`NPM_TOKEN` secret *or* npm Trusted Publishing), branch
+      protection recommendation.
+- [x] Job is **gated on repo variable `RELEASE_ENABLED=true`** — safe to merge,
+      does nothing until the owner flips it + adds the token.
+- [x] New CI `docker` job builds the demo image (no push) on every PR so the
+      Dockerfile can't rot.
+- **Skipped:** coverage upload — needs an external service (Codecov) token;
+  not `1.0`-blocking.
 
-**Done when:** merging a release PR publishes both packages with provenance,
-tags the repo, and pushes a fresh demo image — no manual steps.
+**Done when:** merging a release PR publishes both packages with provenance —
+mechanically ready; **the owner enables it** (`docs/releasing.md`).
 
 ---
 
-## H9 — Deploy the demo (homelab) · S · *needs the owner*
+## H9 — Deploy the demo (homelab) · S · **build side DONE; deploy is the owner's**
 
-- [ ] **`apps/demo/Dockerfile`** — multi-stage: install → `pnpm gen:fixtures`
-      → `pnpm --filter @pore/demo build` → copy `dist` into `nginx:alpine` /
-      `caddy`. Static config: SPA fallback to `index.html`, immutable
-      long-cache for hashed `/assets/*`, no-cache for `index.html` + `sw.js`,
-      correct `Content-Type` for `.webmanifest` and pdf.js `.wasm`.
-- [ ] **`docker-compose.yml`** stanza (or a `docker run` note) for the homelab
-      — one container, one port, `/` healthcheck.
-- [ ] Verify base-path / asset URLs at the deployed origin (Vite `base` if not
-      `/`).
-- [ ] **Installable PWA** — `manifest.webmanifest` + maskable icons +
-      `theme-color`. Lightweight: no offline-first goal; `sw.js` caches the app
-      shell for a fast repeat load + an update prompt.
-- [ ] **`release.yml` pushes the image to GHCR** on the `v*` tag; the homelab
-      pulls it (watchtower / webhook / manual — owner's call).
-- [ ] Owner points **`pore.suryatmaja.dev`** at the homelab (tunnel or
-      port-forward + reverse proxy) — DNS + proxy is the owner's.
-- [ ] `README.md`: screenshots + a short demo GIF + the live link.
+- [x] **`apps/demo/Dockerfile`** — multi-stage: `pnpm install` →
+      `gen:fixtures` → `pnpm build` → `pnpm --filter @pore/demo build` → `dist`
+      into `nginx:1.27-alpine` with `apps/demo/nginx.conf` (SPA fallback,
+      immutable `/assets/*`, no-cache `index.html` + `sw.js`, `wasm` /
+      `webmanifest` MIME). `.dockerignore` added. Built from the repo root.
+- [x] **`docs/deploy.md`** — the `docker run` one-liner, a `docker-compose.yml`
+      stanza for the homelab, and the owner one-time checklist.
+- [x] `release.yml` builds + pushes `ghcr.io/srytmj/porejs-demo:{latest,<sha>}`
+      on a real publish; CI `docker` job builds it (no push) on every PR.
+- [ ] **Installable PWA** — `manifest.webmanifest` + icons + `theme-color`.
+      *(deferred — the demo already has `sw.js`; the manifest + icons are a
+      small follow-up, tracked in `known-issues.md`, not `1.0`-blocking.)*
+- [ ] **Owner:** GHCR package public, reverse proxy + TLS for
+      `pore.suryatmaja.dev`, DNS / tunnel, `docker compose up`. Checklist in
+      `docs/deploy.md`.
+- [ ] `README.md` screenshots + demo GIF + live link — once it's up (H10).
 
-**Done when:** `docker compose up` on the homelab serves the demo at
-`https://pore.suryatmaja.dev`, and the image rebuilds on tag.
+**Done when:** the homelab serves the demo at `https://pore.suryatmaja.dev`
+from the CI-built image. **Blocked on the owner** for the box + DNS.
 
 ---
 

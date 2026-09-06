@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/.turbo
+**/coverage
+**/playwright-report
+**/test-results
+apps/demo/test-results
+test/corpus/files
+.git
+.github
+*.log

@@ -11,6 +11,12 @@ Severity: 🔴 broken feature · 🟠 degraded / edge case · 🟡 papercut / ni
 
 ## Open — fix if/when motivated
 
+### 🟡 PWA manifest + icons not done
+
+The demo has a service worker (`apps/demo/public/sw.js`) but no
+`manifest.webmanifest` / maskable icons / `theme-color`, so it's not "installable".
+Small follow-up for H9; the reader works fine without it. *(M8 H9)*
+
 ### 🟠 No manual screen-reader pass yet
 
 axe (2.0 + 2.1 A/AA), keyboard-traversal and `forced-colors` are automated and

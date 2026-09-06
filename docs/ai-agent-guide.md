@@ -42,6 +42,7 @@ but has zero knowledge of it otherwise.
 | `m0-plan.md` … `m8-plan.md` | per-milestone task breakdowns with retro-notes on what was actually built and why |
 | [`m8-plan.md`](m8-plan.md) | **the current milestone** — hardening, npm publish, demo deploy (→ `v1.0.0`) |
 | [`known-issues.md`](known-issues.md) | bug log — open / fixed / won't-fix; add to it when you hit or fix a bug |
+| [`releasing.md`](releasing.md) · [`deploy.md`](deploy.md) | Changesets → npm publish flow; the demo Docker image + homelab deploy |
 
 ---
 

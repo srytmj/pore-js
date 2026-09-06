@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Release pipeline & deploy (M8 H8–H9)
+
+- **`.github/workflows/release.yml`** — Changesets: a "version packages" PR on
+  merge to `main`, `changeset publish` with npm provenance when it merges, then
+  a GHCR push of the demo image. Dormant until repo var `RELEASE_ENABLED=true` +
+  `NPM_TOKEN` (see `docs/releasing.md`).
+- CI `check` now a **node 20 + 22** matrix; a `docker` job builds the demo image
+  on every PR.
+- **`apps/demo/Dockerfile`** + `nginx.conf` + `docs/deploy.md` — the demo as a
+  static nginx image for the homelab.
+
 ### Security & a11y (M8 H7)
 
 - **CSP recipe + EPUB trust model** documented (`docs/integration.md §0`) — no

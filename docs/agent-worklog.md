@@ -62,7 +62,7 @@ public surface frozen (`porejs` + opt-in `porejs/internal`, pinned by
 composition). **H3 done** — `pnpm test:corpus` green against 3 real Gutenberg
 EPUBs (no engine bug in parse/CFI/search); CI `corpus` job. Set can grow (CBZ /
 vertical-JP / fixed-layout / big PDF sources still wanted, not 1.0-blocking).
-**H4 done** — fixed a white-screen bug (Reader swallowed fatal load errors), 15 fuzz cases, error-card e2e. **H5 done** — 2 real Safari/WebKit bugs fixed (PDF canvas fallback, sandboxed-iframe events); e2e 3-browser matrix. **H6 done** — size-limit budgets (CI) + O(n²) perf guard rails. **H7 done** — CSP recipe + `docs/accessibility.md` + Esc-to-close + forced-colors fallback + WCAG 2.1 axe (manual NVDA/VoiceOver pass still owed for 1.0). **H8 (CI/CD + npm publish) next**, then H9 homelab deploy (needs owner), H10 tag `v1.0.0`.
+**H4 done** — fixed a white-screen bug (Reader swallowed fatal load errors), 15 fuzz cases, error-card e2e. **H5 done** — 2 real Safari/WebKit bugs fixed (PDF canvas fallback, sandboxed-iframe events); e2e 3-browser matrix. **H6 done** — size-limit budgets (CI) + O(n²) perf guard rails. **H7 done** — CSP recipe + `docs/accessibility.md` + Esc-to-close + forced-colors fallback + WCAG 2.1 axe (manual NVDA/VoiceOver pass still owed for 1.0). **H8 done** — `release.yml` (Changesets → `changeset publish` w/ provenance + GHCR image push), CI node 20+22 matrix + `docker` build job; gated on repo var `RELEASE_ENABLED` + `NPM_TOKEN` (`docs/releasing.md`). **H9 build side done** — `apps/demo/Dockerfile` + `nginx.conf` + `docs/deploy.md`; deploy itself is the owner's (box + DNS + reverse proxy). **H10 (docs + tag `v1.0.0`) next** — plus the owner steps for H8/H9.
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -79,6 +79,26 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-07 — M8 H8+H9 (build side): release pipeline + demo image
+- **What:** `.github/workflows/release.yml` — `changesets/action`: a
+  "version packages" PR on merge to `main`, then `pnpm release` (`build` →
+  `verify-packages` → `changeset publish`) when it merges; npm provenance via
+  `publishConfig.provenance` + `id-token: write`; on a real publish it logs in
+  to GHCR and pushes `porejs-demo:{latest,<sha>}`. **Gated on repo var
+  `RELEASE_ENABLED` + `NPM_TOKEN`** — dormant, safe to merge. CI `check` is now
+  a **node 20 + 22** matrix; new `docker` job builds the demo image (no push)
+  every PR. **`apps/demo/Dockerfile`** (multi-stage → `nginx:1.27-alpine`) +
+  `apps/demo/nginx.conf` (SPA fallback, cache headers, wasm/webmanifest MIME) +
+  `.dockerignore`. Docs: `docs/releasing.md` (flow, auth one-time, branch
+  protection), `docs/deploy.md` (docker-compose stanza + owner checklist).
+- **State:** committed + pushed. 293 unit · lint · typecheck. Workflow YAML
+  eyeballed (no docker locally to test the image build — the CI `docker` job
+  will).
+- **Notes:** **owner steps remain** — enable `RELEASE_ENABLED`, add `NPM_TOKEN`
+  (or npm Trusted Publishing), make the GHCR package public, wire
+  `pore.suryatmaja.dev` + reverse proxy. PWA manifest/icons deferred
+  (`known-issues.md`). **H10 next: docs polish + tag `v1.0.0`.**
 
 ## 2026-09-07 — M8 H7: security recipe + a11y hardening
 - **What:** iframe-security half was H5 — H7 adds the **CSP recipe + EPUB trust
