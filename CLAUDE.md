@@ -58,11 +58,12 @@ collapsible menu rail with an inline settings accordion, new landing
 (`v0.10.0-library`) — bookmarks (`useBookmarks`, `<BookmarksPanel>`, optional
 `ReaderSource.loadBookmarks?`/`saveBookmarks?`, `goToCfi`), library shelf,
 annotations review, versioned export/import (`docs/portability-format.md`),
-`?cfi=` deep links (`docs/m7-plan.md`). **M8 scoped, not started**
-(`docs/m8-plan.md`, target `v1.0.0`) — H0 rename packages to `porejs` /
-`porejs-react` + Changesets, H1 freeze the API, H2 make it embeddable in a
-host app (`examples/host-app/`, isolation audit, doc-title composition), H3–H7
-hardening (real-content corpus, robustness, cross-browser, perf,
-security/a11y), H8 CI + `npm publish --provenance`, H9 homelab deploy
-(Dockerfile), H10 docs + tag `v1.0.0`. See `docs/agent-worklog.md` for live
-status.
+`?cfi=` deep links (`docs/m7-plan.md`). **M8 code-complete** (`docs/m8-plan.md`,
+target `v1.0.0`) — packages renamed `porejs` / `porejs-react` (`1.0.0-rc.1`),
+API frozen (`docs/stability.md`), embed example (`examples/host-app/`),
+real-book corpus test, robustness fuzz, 3-browser e2e (2 Safari bugs fixed),
+`size-limit` budgets, security + a11y (`docs/accessibility.md`), Changesets →
+npm-provenance release pipeline (`docs/releasing.md`), demo Dockerfile
+(`docs/deploy.md`), `docs/getting-started.md`. **Remaining is owner-gated:**
+enable the release workflow, first `rc` publish, deploy the box, RC shake-out,
+then tag `v1.0.0`. See `docs/agent-worklog.md`.

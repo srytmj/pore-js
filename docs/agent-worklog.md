@@ -62,7 +62,7 @@ public surface frozen (`porejs` + opt-in `porejs/internal`, pinned by
 composition). **H3 done** — `pnpm test:corpus` green against 3 real Gutenberg
 EPUBs (no engine bug in parse/CFI/search); CI `corpus` job. Set can grow (CBZ /
 vertical-JP / fixed-layout / big PDF sources still wanted, not 1.0-blocking).
-**H4 done** — fixed a white-screen bug (Reader swallowed fatal load errors), 15 fuzz cases, error-card e2e. **H5 done** — 2 real Safari/WebKit bugs fixed (PDF canvas fallback, sandboxed-iframe events); e2e 3-browser matrix. **H6 done** — size-limit budgets (CI) + O(n²) perf guard rails. **H7 done** — CSP recipe + `docs/accessibility.md` + Esc-to-close + forced-colors fallback + WCAG 2.1 axe (manual NVDA/VoiceOver pass still owed for 1.0). **H8 done** — `release.yml` (Changesets → `changeset publish` w/ provenance + GHCR image push), CI node 20+22 matrix + `docker` build job; gated on repo var `RELEASE_ENABLED` + `NPM_TOKEN` (`docs/releasing.md`). **H9 build side done** — `apps/demo/Dockerfile` + `nginx.conf` + `docs/deploy.md`; deploy itself is the owner's (box + DNS + reverse proxy). **H10 (docs + tag `v1.0.0`) next** — plus the owner steps for H8/H9.
+**H4 done** — fixed a white-screen bug (Reader swallowed fatal load errors), 15 fuzz cases, error-card e2e. **H5 done** — 2 real Safari/WebKit bugs fixed (PDF canvas fallback, sandboxed-iframe events); e2e 3-browser matrix. **H6 done** — size-limit budgets (CI) + O(n²) perf guard rails. **H7 done** — CSP recipe + `docs/accessibility.md` + Esc-to-close + forced-colors fallback + WCAG 2.1 axe (manual NVDA/VoiceOver pass still owed for 1.0). **H8 done** — `release.yml` (Changesets → `changeset publish` w/ provenance + GHCR image push), CI node 20+22 matrix + `docker` build job; gated on repo var `RELEASE_ENABLED` + `NPM_TOKEN` (`docs/releasing.md`). **H9 build side done** — `apps/demo/Dockerfile` + `nginx.conf` + `docs/deploy.md`; deploy itself is the owner's (box + DNS + reverse proxy). **H10 docs done** — `docs/getting-started.md`, README badges + status/milestones rewrite, docs index. **What's left: the owner steps** (enable release, `NPM_TOKEN`, deploy the box) → first `1.0.0-rc.1` publish → RC shake-out + manual SR pass → cut `v1.0.0` (typedoc API ref deferred). **M8 is effectively code-complete.**
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -79,6 +79,19 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-07 — M8 H10 (docs): getting-started, badges, README rewrite
+- **What:** `docs/getting-started.md` (add `<Reader>` to a fresh React app,
+  5 steps, cross-links `examples/host-app`). README: CI + npm×2 + license
+  badges, `## Status` rewritten for M8/`1.0.0-rc.1`, milestone history folded
+  into `<details>`, docs index expanded (getting-started / stability /
+  accessibility / releasing / deploy). m8-plan H10 checked off bar the tag.
+- **State:** committed + pushed. **M8 code-complete.** Remaining is
+  owner-gated: enable the release workflow + `NPM_TOKEN`, first `1.0.0-rc.1`
+  publish, deploy the homelab box, then after an RC shake-out + the manual
+  screen-reader pass, cut `v1.0.0` (+ optional typedoc API ref).
+- **Notes:** don't tag `v1.0.0` from a session — it needs the RC period and
+  owner sign-off. `known-issues.md` has the open items to triage first.
 
 ## 2026-09-07 — M8 H8+H9 (build side): release pipeline + demo image
 - **What:** `.github/workflows/release.yml` — `changesets/action`: a

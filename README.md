@@ -1,7 +1,16 @@
 # Pore.js
 
+[![CI](https://github.com/srytmj/pore-js/actions/workflows/ci.yml/badge.svg)](https://github.com/srytmj/pore-js/actions/workflows/ci.yml)
+[![npm — porejs](https://img.shields.io/npm/v/porejs?label=porejs)](https://www.npmjs.com/package/porejs)
+[![npm — porejs-react](https://img.shields.io/npm/v/porejs-react?label=porejs-react)](https://www.npmjs.com/package/porejs-react)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 Source-agnostic web reader engine for manga (image-based) and text (EPUB, PDF,
-CBZ). Custom rendering + pagination engine, not a wrapper.
+CBZ). Custom rendering + pagination engine, not a wrapper. **Drop it into your
+own site** — you provide a content source and a mount point, `porejs` is the
+whole reader.
+
+**New here?** → [`docs/getting-started.md`](docs/getting-started.md).
 
 > ### 🤖 If you are an AI agent
 >
@@ -14,14 +23,14 @@ CBZ). Custom rendering + pagination engine, not a wrapper.
 > [`docs/agent-worklog.md`](docs/agent-worklog.md) (what recent sessions did —
 > and where you append your own entry).
 
-**Docs:** [`docs/ai-agent-guide.md`](docs/ai-agent-guide.md) ·
-[`docs/architecture.md`](docs/architecture.md) ·
-[`docs/integration.md`](docs/integration.md) ·
-[`docs/reader-engine-design.md`](docs/reader-engine-design.md) (RFC) ·
-[`docs/image-engine-spec.md`](docs/image-engine-spec.md) ·
-[`docs/m8-plan.md`](docs/m8-plan.md) (current milestone) ·
-[`docs/known-issues.md`](docs/known-issues.md) (bug log) ·
-[`CHANGELOG.md`](CHANGELOG.md)
+**Docs:** [`getting-started`](docs/getting-started.md) ·
+[`integration`](docs/integration.md) · [`architecture`](docs/architecture.md) ·
+[`stability`](docs/stability.md) · [`accessibility`](docs/accessibility.md) ·
+[`releasing`](docs/releasing.md) · [`deploy`](docs/deploy.md) ·
+[`ai-agent-guide`](docs/ai-agent-guide.md) ·
+[`reader-engine-design`](docs/reader-engine-design.md) (RFC) ·
+[`m8-plan`](docs/m8-plan.md) (current milestone) ·
+[`known-issues`](docs/known-issues.md) · [`CHANGELOG`](CHANGELOG.md)
 
 ## Workspace
 
@@ -101,7 +110,20 @@ const source = new CachedSource(new DemoSource()); // swap DemoSource for your o
 - **Position** (`loadProgress` / `saveProgress`) is a small opaque JSON value —
   store it verbatim; it round-trips across devices and viewport sizes.
 
-## Status — library & portability (`v0.10.0-library`)
+## Status — hardening for `1.0` (M8, `1.0.0-rc.1`)
+
+**M8 — [`docs/m8-plan.md`](docs/m8-plan.md).** The engines have been
+feature-complete since M7 (`v0.10.0-library`); M8 is making it dependable and
+publishable: packages renamed to **`porejs` / `porejs-react`**, the public API
+frozen ([`docs/stability.md`](docs/stability.md)), a worked embed example
+([`examples/host-app/`](examples/host-app)), a real-book corpus test,
+robustness fuzzing, a **3-browser** e2e matrix (fixed 2 real Safari bugs),
+`size-limit` budgets, a security + a11y pass
+([`docs/accessibility.md`](docs/accessibility.md)), a Changesets → npm
+provenance release pipeline, and a Docker image for the demo. Not yet: the
+`1.0.0` tag (after the RC shake-out) and the live deploy.
+
+<details><summary>Library &amp; portability (M7, <code>v0.10.0-library</code>)</summary>
 
 **Library & portability (M7):** bookmarks (`useBookmarks` + headless
 `<BookmarksPanel>`, over new optional `ReaderSource.loadBookmarks?` /
@@ -109,6 +131,10 @@ const source = new CachedSource(new DemoSource()); // swap DemoSource for your o
 on the demo home, a full-screen annotations review, versioned export / import
 (`docs/portability-format.md`), and `?book=&cfi=` deep links that navigate +
 pulse. All additive. See `docs/m7-plan.md`.
+
+</details>
+
+<details><summary>Earlier milestones (M0–M6)</summary>
 
 **Editorial UI redesign (M6):** the demo has a quiet, reading-first identity —
 warm paper palette, bundled Hanken Grotesk + Literata, no decorative accent
@@ -182,6 +208,10 @@ navigation, footnote popovers.
 See `docs/m0-plan.md` … `docs/m3-plan.md` for the task breakdowns, and
 [`CHANGELOG.md`](CHANGELOG.md).
 
+</details>
+
+## Milestones
+
 UI foundation: [`docs/ui-foundation-plan.md`](docs/ui-foundation-plan.md) — done
 (U1–U6, plus the scrubber / loading-skeleton+error / PDF-search /
 RTL-horizontal / end-page follow-ups all landed on `main`).
@@ -199,10 +229,10 @@ M7: [`docs/m7-plan.md`](docs/m7-plan.md) — done (L0–L6, `v0.10.0-library`) �
 bookmarks, home shelf, annotations review, export / import, `?cfi=` deep
 links. `docs/portability-format.md` is the bundle schema.
 
-M8: [`docs/m8-plan.md`](docs/m8-plan.md) — **scoped, not started** (H0–H10,
-target `v1.0.0`) — rename to `porejs` / `porejs-react`, freeze the API, make it
-embeddable in a host app, hardening (real-content corpus, robustness,
-cross-browser, perf, security/a11y), npm publish, homelab deploy.
+M8: [`docs/m8-plan.md`](docs/m8-plan.md) — **in progress** (target `v1.0.0`) —
+H0–H9 done (rename, API freeze, embed example, corpus, robustness,
+cross-browser, size budgets, security/a11y, release pipeline + demo image);
+H9 deploy + H10 `1.0.0` tag pending the RC shake-out and owner steps.
 
 Live status: [`docs/agent-worklog.md`](docs/agent-worklog.md).
 

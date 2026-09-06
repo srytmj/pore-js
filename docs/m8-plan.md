@@ -400,24 +400,23 @@ from the CI-built image. **Blocked on the owner** for the box + DNS.
 
 ---
 
-## H10 — Docs & `v1.0.0` · S
+## H10 — Docs & `v1.0.0` · S · **docs DONE; the `1.0.0` tag waits for the RC**
 
-- [ ] Per-package `README.md` with a real 10-line quickstart — for
-      `porejs-react` the quickstart **is the embed story** (implement
-      `ReaderSource`, mount `<Reader>`).
-- [ ] **`docs/getting-started.md`** — add `<Reader>` to a fresh Vite/Next app;
-      the manga-library host is the running example (cross-link
-      `examples/host-app`).
-- [ ] API reference: typedoc into `docs/api/` (or a hosted link).
-- [ ] README badges: CI, npm version (`porejs`, `porejs-react`), bundle size,
-      license.
-- [ ] `CHANGELOG.md` `## v1.0.0`; Changesets `1.0.0-rc.* → 1.0.0`; tag
-      **`v1.0.0`**.
-- [ ] Flip "current milestone" pointers: `CLAUDE.md`, `README.md`,
-      `docs/ai-agent-guide.md`, `docs/agent-worklog.md`.
+- [x] Per-package `README.md` quickstarts (H0) — `porejs-react`'s **is** the
+      embed story.
+- [x] **`docs/getting-started.md`** — `<Reader>` in a fresh React app, step by
+      step, cross-links `examples/host-app`.
+- [x] README badges (CI, npm ×2, license); README `## Status` + `## Milestones`
+      rewritten for M8; the docs index updated everywhere.
+- [ ] API reference (typedoc `docs/api/`) — deferred; `.d.ts` +
+      `integration.md` + `stability.md` cover the RC. Follow-up.
+- [ ] **`CHANGELOG.md` `## v1.0.0`; Changesets `rc → 1.0.0`; tag `v1.0.0`** —
+      **not yet.** Do this after: the owner has done a first `1.0.0-rc.1`
+      publish, the RC has had a shake-out, and the manual SR pass +
+      `known-issues.md` open items are triaged.
 
-**Done when:** `npm i porejs-react`, follow getting-started, and a working
-reader is on screen inside a host app — and `v1.0.0` is tagged and published.
+**Done when:** `npm i porejs-react`, follow getting-started, get a working
+reader — ✓ (mechanically). `v1.0.0` tagged + published — **pending the RC**.
 
 ---
 
