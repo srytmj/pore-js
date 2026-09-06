@@ -30,39 +30,56 @@ lives in a chat transcript but not in git history.
 
 ## Current focus
 
+**M8 — code-complete, `docs/m8-plan.md`, target `v1.0.0`.** A hardening +
+publish + deploy milestone (no new reader features). Packages built at
+`1.0.0-rc.1`. All H0–H10 done from the code side:
+
+| task | one-liner |
+|---|---|
+| H0 | renamed → **`porejs`** / **`porejs-react`** (`pore` was taken); keywords/repo/provenance metadata; per-package README+LICENSE; **Changesets**; `1.0.0-rc.1` |
+| H1 | public API frozen — audited exports, `public-api.test.ts` snapshot guard, `porejs/internal` subpath, **`docs/stability.md`**, ESM-only |
+| H2 | **`examples/host-app/`** (fake manga library over its own `ReaderSource`); isolation audit clean; `useReaderHistory` `document.title` composition |
+| H3 | **`pnpm test:corpus`** — 3 real Gutenberg EPUBs, no parse/CFI/search bug; CI `corpus` job (set can grow: CBZ / vertical-JP / big PDF) |
+| H4 | **fixed a white-screen bug** (`<Reader>` swallowed a fatal `getManifest`/`mount` rejection); 15-case fuzz table; error-card e2e |
+| H5 | **2 real Safari/WebKit bugs fixed** — PDF `OffscreenCanvas` → `<canvas>`/PNG fallback; sandboxed-iframe events dead in WebKit → `allow-scripts` + strict in-frame CSP + `rewrite.ts` hardening. e2e now a 3-browser matrix |
+| H6 | **`size-limit`** in CI (text 18 kB / image 12 kB / all engines 30 kB / react 2 kB, pdf.js split out); `perf.test.ts` O(n²) guard rails |
+| H7 | CSP recipe + EPUB trust model (`integration.md §0`); **`docs/accessibility.md`**; `Esc` closes panels + restores focus; `forced-colors` fallback; axe → WCAG 2.1 |
+| H8 | **`release.yml`** — Changesets → `changeset publish` w/ npm provenance → GHCR demo image; CI `check` = node 20+22; PR `docker` build job. **`docs/releasing.md`** |
+| H9 | **`apps/demo/Dockerfile`** + `nginx.conf` + **`docs/deploy.md`** (compose stanza + owner checklist) |
+| H10 | **`docs/getting-started.md`**; README badges + Status/Milestones rewrite; docs index |
+
+**All green:** 293 unit · size 4/4 · chromium 46/46 · webkit 44/44 (2 TTS skips)
+· host-app e2e 3/3 · lint · typecheck · `verify-packages`. Firefox on CI only
+(won't launch on the Windows box). Bug log: `docs/known-issues.md`.
+
+**What's left — owner-gated:**
+
+1. Enable the release workflow (repo var `RELEASE_ENABLED=true` + `NPM_TOKEN`
+   secret, or npm Trusted Publishing) → merge → first `1.0.0-rc.1` publish.
+2. Deploy the demo image to the homelab; wire `pore.suryatmaja.dev` + TLS.
+3. After an RC shake-out **and the manual NVDA/VoiceOver pass**, triage the
+   `known-issues.md` open items, then cut **`v1.0.0`** (a changeset `rc → 1.0.0`
+   + the tag). Optional: typedoc API ref, PWA manifest/icons.
+
+Do **not** tag `v1.0.0` from a session — it needs the RC period + owner sign-off.
+
+<details><summary>earlier "current focus" — M6 / M7 shipped</summary>
+
+**M7 shipped — `v0.10.0-library`.** Library & portability (a feature milestone):
+L0 `goToCfi` + bookmark source methods → L1 `useBookmarks` + `<BookmarksPanel>`
+→ L2 `useLibrary()` home shelf → L3 annotations review → L4 export/import
+(`docs/portability-format.md`) → L5 `?cfi=` deep links → L6 release. Tagged
+`v0.10.0-library`. Post-M7: trimmed the reader rail (removed Prev/Next,
+Download, Fullscreen — user request; nav is keyboard/tap/swipe now).
+
 **M6 shipped — `v0.9.0-editorial`.** Editorial redesign of the demo, D0–D7:
-warm accent-less palette + self-hosted Hanken Grotesk / Literata (D0); one
-collapsible menu rail with an inline settings accordion (D1, a new headless
-`Accordion` primitive); panel restyle onto tokens (D2); new editorial landing
-(D3); reader font menu wired to the bundled faces via `<Reader fontFaceCss>`
-(D4); one focus ring + global reduced-motion (D5); mobile rail overlay (D6);
-dark-axe test + tag (D7). 38 e2e · 256 unit · lint 0 · all green.
-`docs/design-language.md` is the token reference.
+warm accent-less palette + self-hosted Hanken Grotesk / Literata; one
+collapsible menu rail with an inline settings accordion (headless `Accordion`
+primitive); token restyle; editorial landing; reader font menu via
+`<Reader fontFaceCss>`; one focus ring + global reduced-motion; mobile rail
+overlay. `docs/design-language.md` is the token reference.
 
-**M7 shipped — `v0.10.0-library`.** Library &
-portability (a feature milestone): L0 engine groundwork (`goToCfi` +
-`loadBookmarks`/`saveBookmarks`) → L1 bookmarks (`useBookmarks` +
-`<BookmarksPanel>`) → L2 library/home (a `useLibrary()` shelf) → L3 annotations
-review → L4 export/import (versioned JSON, `docs/portability-format.md`) → L5
-share-a-passage (`?cfi=` deep links) → L6 release. Open questions decided
-(see plan). All L0–L6 done, tagged `v0.10.0-library`. Post-M7: trimmed the
-reader rail (removed Prev/Next, Download, Fullscreen buttons — user request).
-
-**M8 in progress — `docs/m8-plan.md`, target `v1.0.0`.** Hardening + embed +
-publish + deploy (not a feature milestone): H0 rename + Changesets → H1 freeze
-the API → **H2 embeddable in a host app** (`examples/host-app/`, isolation
-audit, `document.title` composition) → H3 real-content corpus → H4
-robustness/fuzz → H5 cross-browser + e2e de-flake → H6 perf/size budgets → H7
-security + a11y → H8 CI/CD + npm publish → H9 homelab deploy (Dockerfile, needs
-owner: DNS/proxy) → H10 docs + `v1.0.0`. All 6 open questions decided (see plan
-§Decisions). **H0 · H1 · H2 done** — `porejs` / `porejs-react` at `1.0.0-rc.1`;
-public surface frozen (`porejs` + opt-in `porejs/internal`, pinned by
-`public-api.test.ts`, `docs/stability.md`); embed proven by `examples/host-app/`
-(isolation audit clean, `useReaderManifest`, `useReaderHistory` title
-composition). **H3 done** — `pnpm test:corpus` green against 3 real Gutenberg
-EPUBs (no engine bug in parse/CFI/search); CI `corpus` job. Set can grow (CBZ /
-vertical-JP / fixed-layout / big PDF sources still wanted, not 1.0-blocking).
-**H4 done** — fixed a white-screen bug (Reader swallowed fatal load errors), 15 fuzz cases, error-card e2e. **H5 done** — 2 real Safari/WebKit bugs fixed (PDF canvas fallback, sandboxed-iframe events); e2e 3-browser matrix. **H6 done** — size-limit budgets (CI) + O(n²) perf guard rails. **H7 done** — CSP recipe + `docs/accessibility.md` + Esc-to-close + forced-colors fallback + WCAG 2.1 axe (manual NVDA/VoiceOver pass still owed for 1.0). **H8 done** — `release.yml` (Changesets → `changeset publish` w/ provenance + GHCR image push), CI node 20+22 matrix + `docker` build job; gated on repo var `RELEASE_ENABLED` + `NPM_TOKEN` (`docs/releasing.md`). **H9 build side done** — `apps/demo/Dockerfile` + `nginx.conf` + `docs/deploy.md`; deploy itself is the owner's (box + DNS + reverse proxy). **H10 docs done** — `docs/getting-started.md`, README badges + status/milestones rewrite, docs index. **What's left: the owner steps** (enable release, `NPM_TOKEN`, deploy the box) → first `1.0.0-rc.1` publish → RC shake-out + manual SR pass → cut `v1.0.0` (typedoc API ref deferred). **M8 is effectively code-complete.**
+</details>
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -79,6 +96,32 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-07 — M8 code-complete (H0–H10) — summary
+- **What:** one long session took M8 from "scoped" to code-complete. The
+  engines were already feature-done (M7); M8 made the project **dependable,
+  embeddable and publishable**. Full task table + green numbers in *Current
+  focus* above; per-task detail in the entries below (H0 → H10, newest last).
+  Headline results:
+  - packages renamed **`porejs` / `porejs-react`** at `1.0.0-rc.1`; public API
+    audited + snapshot-guarded + documented (`docs/stability.md`).
+  - **3 real bugs fixed:** a white-screen on any corrupt book (H4), and two
+    Safari-only breakages — PDF rendering and text selection/highlighting (H5).
+  - **`examples/host-app/`** proves the drop-in embed use case end to end.
+  - real-book corpus test, 15-case fuzz table, 3-browser e2e matrix,
+    `size-limit` budgets + perf guard rails, a security + a11y pass, a
+    Changesets → npm-provenance release pipeline, a demo Docker image, and a
+    from-scratch getting-started guide.
+  - new docs: `stability.md`, `accessibility.md`, `releasing.md`, `deploy.md`,
+    `getting-started.md`, `known-issues.md` (a running bug log).
+- **Why:** the owner wants `1.0` + the reader usable inside other people's
+  sites (a manga library, etc.).
+- **State:** everything committed + pushed to `main`. **No tag** — `v1.0.0`
+  waits for the RC shake-out and owner sign-off.
+- **Notes for the next agent:** M8 is not "shipped" until the owner enables the
+  release workflow, publishes `rc.1`, deploys the homelab box, and the RC has
+  had real use + a manual screen-reader pass. Then triage `known-issues.md` and
+  cut `v1.0.0`. Don't do the tag yourself.
 
 ## 2026-09-07 — M8 H10 (docs): getting-started, badges, README rewrite
 - **What:** `docs/getting-started.md` (add `<Reader>` to a fresh React app,
