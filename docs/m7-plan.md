@@ -18,8 +18,20 @@ annotations view, and export/import live in `apps/demo` (a demo-level
 `useLibrary()` over IndexedDB); `reader-core` gains no "list every book" API it
 couldn't fulfil for a non-caching source.
 
-Sequential, one commit per task. **Not started** — this doc is the scope for
-discussion before L0 begins.
+Sequential, one commit per task.
+
+**Open questions — decided (2026-09-06):**
+1. Bookmarks → a **`reader-react` layer** (`useBookmarks` over `getCfi` /
+   `goToCfi` / the source). `reader-core` gets `goToCfi` (L0) and nothing else.
+2. Library → a **demo-level `useLibrary()`** over its own IndexedDB store.
+3. Re-openable local files → **simple**: downloaded (cached) books re-open from
+   the shelf; other dropped files are history and prompt for the file again.
+   File System Access API is a later progressive enhancement.
+4. Export → **per-book + whole-library** JSON. No plain-CFI-list text export.
+5. Deep-linked passage → **navigate + a ~2s transient pulse** on the target
+   range (reuses the highlight renderer look, not persisted).
+6. Annotations review → a **full-screen overlay from the library header**. No
+   router.
 
 ---
 
@@ -41,26 +53,24 @@ reorder. `L3` needs L1 + the existing highlights. `L4` needs L1 + a schema.
 
 ---
 
-## L0 — Engine groundwork: `goToCfi` + bookmark persistence · S
+## L0 — Engine groundwork: `goToCfi` + bookmark persistence · S · **DONE**
 
-Additive, small. Unblocks L1 and L5.
-
-- [ ] **`goToCfi(cfi: string)` on `TextEngine`** (and `ReaderHandle`,
-      no-op on image/PDF): parse the CFI, render the target spine item if
-      needed, resolve the element (`resolveCfiElement` from `text/cfi.ts`), turn
-      it into a `Position` and `goto` it. `getCfi()` already does the reverse.
-- [ ] **`Bookmark` type in `reader-core`** (`source/types.ts`):
-      `{ id; position: Position; cfi?: string; label: string; text?: string;
-      createdAt: number }`. Not a `Position`, not a `HighlightRecord` — its own
-      per-book collection.
-- [ ] **Optional `ReaderSource.loadBookmarks?` / `saveBookmarks?`** mirroring
-      `loadHighlights` / `saveHighlights`. `CachedSource` implements both
-      (local-first, same pattern).
-- [ ] Vitest: `goToCfi` round-trips `getCfi()` against a fake document; the
-      `Bookmark` shape persists through a mock source.
+- [x] **`goToCfi(cfi)`** on `TextEngine` + `ReaderHandle` (`EngineLike` too),
+      no-op on image/PDF. `parseCfi` → a `pendingCfi`; `resolvePendingCfi()`
+      (called in `renderSpine`'s finish + synchronously when the target is the
+      current spine) resolves the element via `resolveCfiElement`, walks up to
+      the nearest block, and hands a `pendingAnchor` to the normal anchor path.
+- [x] **`Bookmark` type** in `source/types.ts` (`{ id, position, cfi?, label,
+      text?, createdAt }`), exported from both packages.
+- [x] **Optional `ReaderSource.loadBookmarks?` / `saveBookmarks?`**;
+      `CachedSource` implements both local-first (mirrors the highlights
+      pattern, `#bmKey`).
+- [x] Vitest: `goToCfi` never throws (bad string / shaped string); bookmark
+      round-trip through `CachedSource` + graceful degradation. cfi.test.ts
+      already covers `serialize → parse → resolveCfiElement`.
 
 **Done when:** `handle.goToCfi(handle.getCfi())` is a no-op, and a source can
-load/save bookmarks.
+load/save bookmarks. ✓
 
 ---
 

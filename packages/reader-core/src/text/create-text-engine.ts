@@ -16,7 +16,7 @@ import {
   type RectOf,
   type RangeRectOf,
 } from './anchor.js';
-import { serializeCfi } from './cfi.js';
+import { parseCfi, resolveCfiElement, serializeCfi, type ParsedCfi } from './cfi.js';
 import { highlightRangeFromSelection, rangeForHighlight } from './highlight.js';
 import type { HighlightRange, HighlightRecord } from '../source/types.js';
 import {
@@ -106,6 +106,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   let spinePages: (number | undefined)[] = [];
   let destroyed = false;
   let pendingAnchor: Extract<Position, { type: 'anchor' }> | null = null;
+  let pendingCfi: ParsedCfi | null = null;
   let objectUrls: string[] = [];
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   let resizeObserver: ResizeObserver | null = null;
@@ -923,6 +924,33 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     });
   };
 
+  /**
+   * Turn a pending `epubcfi(...)` target for the current spine into a
+   * `pendingAnchor` (block ordinal + offset), which the normal anchor path then
+   * resolves to a page. The CFI addresses an element by element-sibling steps;
+   * we walk up to the nearest block so `resolveAnchor` has something to measure.
+   */
+  const resolvePendingCfi = () => {
+    const cdoc = frame.contentDocument;
+    if (!cdoc || !pendingCfi || pendingCfi.spineIndex !== spineIndex) return;
+    const parsed = pendingCfi;
+    pendingCfi = null;
+    const el = resolveCfiElement(cdoc, parsed.steps);
+    if (!el) return;
+    const blocks = blockElements(cdoc);
+    let b: Element | null = el;
+    while (b && !blocks.includes(b)) b = b.parentElement;
+    const block = b ? blocks.indexOf(b) : -1;
+    if (block < 0) return;
+    pendingAnchor = {
+      type: 'anchor',
+      spine: spineIndex,
+      block,
+      offset: parsed.offset,
+      percent: 0,
+    };
+  };
+
   const resolvePendingAnchor = () => {
     const cdoc = frame.contentDocument;
     if (!cdoc || !pendingAnchor || pendingAnchor.spine !== spineIndex) return;
@@ -973,6 +1001,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
         injectStyle();
         measure();
         page = atLastPage ? Math.max(0, spinePageCount - 1) : 0;
+        resolvePendingCfi();
         resolvePendingAnchor();
         renderView();
         applyHighlights();
@@ -1189,6 +1218,25 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     else void renderSpine(spineIndex + 1, false);
   }
 
+  /** Navigate to a portable `epubcfi(...)` — the inverse of {@link getCfi}. */
+  function goToCfi(cfi: string): void {
+    if (!book) return;
+    const parsed = parseCfi(cfi);
+    if (!parsed) return;
+    tts.stop();
+    const idx = Math.min(Math.max(parsed.spineIndex, 0), book.spine.length - 1);
+    pendingCfi = { ...parsed, spineIndex: idx };
+    if (idx === spineIndex) {
+      transitions.cancel();
+      resolvePendingCfi();
+      resolvePendingAnchor();
+      renderView();
+      emitLocation();
+    } else {
+      void renderSpine(idx);
+    }
+  }
+
   function goto(target: number | Position): void {
     if (!book) return;
     tts.stop();
@@ -1351,6 +1399,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     search: runSearch,
     gotoHit,
     getCfi,
+    goToCfi,
     addHighlight,
     removeHighlight,
     updateHighlight,

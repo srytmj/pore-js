@@ -117,6 +117,8 @@ export interface TextEngine {
   gotoHit(hit: SearchHit): void;
   /** Portable `epubcfi(...)` for the current position, or `null` before the spine has rendered. */
   getCfi(): string | null;
+  /** Navigate to a portable `epubcfi(...)` (from {@link getCfi} or another reader). */
+  goToCfi(cfi: string): void;
   /**
    * Highlight the current selection (see `reader:selection`). Returns `null`
    * when there's no live selection or it can't be resolved to a range.

@@ -61,6 +61,19 @@ M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
 
+## 2026-09-06 — M7 L0: goToCfi + bookmark persistence
+- **What:** `TextEngine.goToCfi(cfi)` (+ `ReaderHandle`) — the inverse of
+  `getCfi()`: `parseCfi` → `pendingCfi` → `resolvePendingCfi` (in `renderSpine`
+  finish, or sync when the target spine is current) resolves the element, walks
+  to the nearest block, feeds the normal `pendingAnchor` path. `Bookmark` type
+  + optional `ReaderSource.loadBookmarks?`/`saveBookmarks?`; `CachedSource`
+  implements them local-first (`#bmKey`). Both exported.
+- **Open questions decided** (in the plan): bookmarks = a reader-react layer;
+  library = demo-level `useLibrary()` over IDB; local files = simple
+  (cached re-openable, else history); export = per-book + all; deep-link =
+  navigate + 2s pulse; review = full-screen overlay.
+- **State:** committed. 258 unit (+2) · 38 e2e · typecheck · lint 0 — green.
+
 ## 2026-09-06 — M7 scoped: library & portability
 - **What:** `docs/m7-plan.md` — a feature milestone. L0 (`goToCfi`, bookmark
   source methods) → L1 bookmarks → L2 library/home shelf → L3 annotations

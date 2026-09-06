@@ -1,5 +1,12 @@
 import type { Position } from '../position/types.js';
-import type { GetFileOpts, GetPageOpts, HighlightRecord, Manifest, ReaderSource } from './types.js';
+import type {
+  Bookmark,
+  GetFileOpts,
+  GetPageOpts,
+  HighlightRecord,
+  Manifest,
+  ReaderSource,
+} from './types.js';
 import { openKvStore, type KvStore } from '../offline/idb.js';
 import { MediaCache } from '../offline/media-cache.js';
 
@@ -189,6 +196,26 @@ export class CachedSource implements ReaderSource {
     }
   }
 
+  /** Bookmarks — same local-first pattern as highlights. */
+  async loadBookmarks(bookId: string): Promise<Bookmark[]> {
+    const local = await this.#store.get<Bookmark[]>(this.#bmKey(bookId));
+    if (local) return local;
+    try {
+      return (await this.#inner.loadBookmarks?.(bookId)) ?? [];
+    } catch {
+      return [];
+    }
+  }
+
+  async saveBookmarks(bookId: string, bookmarks: Bookmark[]): Promise<void> {
+    await this.#store.set(this.#bmKey(bookId), bookmarks);
+    try {
+      await this.#inner.saveBookmarks?.(bookId, bookmarks);
+    } catch {
+      // best-effort mirror
+    }
+  }
+
   /** Push any queued offline writes to the wrapped source. */
   async flush(): Promise<void> {
     if (this.#flushing || this.#queue.length === 0) return;
@@ -229,6 +256,10 @@ export class CachedSource implements ReaderSource {
 
   #hlKey(bookId: string): string {
     return `${this.#ns}:highlights:${bookId}`;
+  }
+
+  #bmKey(bookId: string): string {
+    return `${this.#ns}:bookmarks:${bookId}`;
   }
 
   #manifestKey(bookId: string): string {

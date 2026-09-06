@@ -94,6 +94,22 @@ export interface RectHighlightRecord extends HighlightBase {
 export type HighlightRecord = TextHighlightRecord | RectHighlightRecord;
 
 /**
+ * A named place in a book the reader can jump back to — distinct from the
+ * single auto-resume checkpoint. Its own per-book collection. `cfi` (when the
+ * engine can produce one) is the portable anchor; `position` is the fast
+ * in-engine one.
+ */
+export interface Bookmark {
+  id: string;
+  position: Position;
+  cfi?: string;
+  label: string;
+  /** Snapshot of the text at the mark, for the list. */
+  text?: string;
+  createdAt: number;
+}
+
+/**
  * The seam between the reader and its data. Everything above this is
  * source-blind. See docs/reader-engine-design.md §4.
  */
@@ -106,4 +122,7 @@ export interface ReaderSource {
   /** Optional — sources that don't implement it simply can't persist highlights. */
   loadHighlights?(bookId: string): Promise<HighlightRecord[]>;
   saveHighlights?(bookId: string, highlights: HighlightRecord[]): Promise<void>;
+  /** Optional — sources that don't implement it can't persist bookmarks. */
+  loadBookmarks?(bookId: string): Promise<Bookmark[]>;
+  saveBookmarks?(bookId: string, bookmarks: Bookmark[]): Promise<void>;
 }

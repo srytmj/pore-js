@@ -205,6 +205,17 @@ describe('createTextEngine', () => {
     engine.destroy();
   });
 
+  it('goToCfi is a safe no-op for a bad string and never throws for a shaped one', async () => {
+    const container = document.createElement('div');
+    const engine = createTextEngine({ container, source: source(), bookId: 'b' });
+    expect(() => engine.goToCfi('not a cfi')).not.toThrow();
+    await engine.mount();
+    expect(() => engine.goToCfi('not a cfi')).not.toThrow();
+    // a well-shaped CFI for the first spine item — resolves or drifts, never throws
+    expect(() => engine.goToCfi('epubcfi(/6/2[ch01]!/4/2:0)')).not.toThrow();
+    engine.destroy();
+  });
+
   it('addHighlight returns null with no live selection; listHighlights/removeHighlight never throw', async () => {
     const container = document.createElement('div');
     const engine = createTextEngine({ container, source: source(), bookId: 'b' });

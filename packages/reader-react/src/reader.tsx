@@ -73,6 +73,8 @@ export interface ReaderHandle {
   gotoHit(hit: SearchHit): void;
   /** Portable `epubcfi(...)` for the current position — `null` on engines without one (image/PDF). */
   getCfi(): string | null;
+  /** Navigate to a portable `epubcfi(...)` — a no-op on engines without one (image/PDF). */
+  goToCfi(cfi: string): void;
   /** Highlight the current text selection — `null` on engines without one (image/PDF), or if there's no live selection. */
   addHighlight(opts?: { color?: string; note?: string }): HighlightRecord | null;
   removeHighlight(id: string): void;
@@ -100,6 +102,7 @@ interface EngineLike {
   search?(query: string): Promise<SearchHit[]>;
   gotoHit?(hit: SearchHit): void;
   getCfi?(): string | null;
+  goToCfi?(cfi: string): void;
   addHighlight?(opts?: { color?: string; note?: string }): HighlightRecord | null;
   removeHighlight?(id: string): void;
   updateHighlight?(id: string, patch: { color?: string; note?: string }): HighlightRecord | null;
@@ -335,6 +338,7 @@ export function Reader({
       search: (q) => engineRef.current?.search?.(q) ?? Promise.resolve([]),
       gotoHit: (hit) => engineRef.current?.gotoHit?.(hit),
       getCfi: () => engineRef.current?.getCfi?.() ?? null,
+      goToCfi: (cfi) => engineRef.current?.goToCfi?.(cfi),
       addHighlight: (opts) => engineRef.current?.addHighlight?.(opts) ?? null,
       removeHighlight: (id) => engineRef.current?.removeHighlight?.(id),
       updateHighlight: (id, patch) => engineRef.current?.updateHighlight?.(id, patch) ?? null,

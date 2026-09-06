@@ -168,6 +168,26 @@ describe('CachedSource', () => {
     await expect(src.saveHighlights('b', [])).resolves.toBeUndefined();
   });
 
+  it('bookmarks: local-first save/load, mirrors to the inner source, degrades gracefully', async () => {
+    const saveBookmarks = vi.fn(async () => {});
+    const inner = innerSource({ saveBookmarks });
+    const store = memStore();
+    const src = new CachedSource(inner, { store, cache: false });
+
+    const bms = [
+      { id: 'bm1', position: { type: 'page' as const, value: 3, total: 10 }, label: 'p.4', createdAt: 1 },
+    ];
+    await src.saveBookmarks('b', bms);
+    expect(await store.get('pore:bookmarks:b')).toEqual(bms);
+    expect(saveBookmarks).toHaveBeenCalledWith('b', bms);
+    expect(await src.loadBookmarks('b')).toEqual(bms);
+
+    // a source with neither method still works
+    const bare = new CachedSource(innerSource(), { store: memStore(), cache: false });
+    expect(await bare.loadBookmarks('b')).toEqual([]);
+    await expect(bare.saveBookmarks('b', [])).resolves.toBeUndefined();
+  });
+
   it('passes manifest/page/file straight through', async () => {
     const inner = innerSource();
     const src = new CachedSource(inner, { store: memStore(), cache: false });

@@ -22,6 +22,7 @@ export type {
   TextHighlightRecord,
   RectHighlightRecord,
   NormRect,
+  Bookmark,
 } from './source/types.js';
 
 export type { Position } from './position/types.js';

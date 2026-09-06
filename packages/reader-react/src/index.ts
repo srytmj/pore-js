@@ -25,6 +25,7 @@ export type {
   TextHighlightRecord,
   RectHighlightRecord,
   NormRect,
+  Bookmark,
   HighlightRange,
   TtsState,
   TtsSentence,
