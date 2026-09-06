@@ -155,6 +155,28 @@ export function Chrome({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [bm]);
+
+  // Escape closes the top-most open panel and returns focus to the rail button
+  // that opened it (the panels are plain divs, not Radix dialogs).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      const close: [boolean, () => void, string][] = [
+        [ttsOpen, () => setTtsOpen(false), 'Text to speech'],
+        [bookmarksOpen, () => setBookmarksOpen(false), 'Bookmarks'],
+        [highlightsOpen, () => setHighlightsOpen(false), 'Highlights'],
+        [searchOpen, () => setSearchOpen(false), 'Search in book'],
+        [settingsOpen, onToggleSettings, 'Reader settings'],
+      ];
+      const hit = close.find(([open]) => open);
+      if (!hit) return;
+      hit[1]();
+      (document.querySelector(`.bar button[aria-label="${hit[2]}"]`) as HTMLElement | null)?.focus();
+      e.stopPropagation();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [ttsOpen, bookmarksOpen, highlightsOpen, searchOpen, settingsOpen, onToggleSettings]);
   // Auto-hide when the user chose it, or always in fullscreen. Panels pin it open.
   const isAuto = menu.behaviour === 'auto-hide';
   const autoHiding = (isFullscreen || isAuto) && !overlayOpen;

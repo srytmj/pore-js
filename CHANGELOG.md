@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Security & a11y (M8 H7)
+
+- **CSP recipe + EPUB trust model** documented (`docs/integration.md §0`) — no
+  author JS runs, the reading frame can't navigate your page or hit the network.
+- **`docs/accessibility.md`** — keyboard map, ARIA/announcer story, automated
+  coverage, the manual gap.
+- Demo: **`Esc` closes the open panel and restores focus**; a
+  `@media (forced-colors: active)` fallback (system colours under Windows High
+  Contrast); axe checks now cover WCAG 2.1 A/AA too.
+
 ### Size budgets (M8 H6)
 
 - `size-limit` budgets in CI: `porejs` text engine + sources **18 kB** brotli,

@@ -57,6 +57,32 @@ A complete worked integration — a fake library site with its own source, its
 own progress storage, and its own tab-title — is in
 [`examples/host-app/`](../examples/host-app) (`pnpm example`).
 
+### Security — the EPUB trust model
+
+EPUB/XHTML chapters are **untrusted publisher content**. The text engine renders
+each into an `<iframe srcdoc>` and, before it does, `rewriteResources`:
+
+- drops every `<script>`, inline `on*` handler, `javascript:` URL, and
+  `<iframe>` / `<object>` / `<embed>` / `<meta http-equiv>`;
+- injects a strict frame CSP —
+  `default-src 'none'; script-src 'none'; object-src 'none'; frame-src 'none';
+  base-uri 'none'; form-action 'none'` (images/fonts/styles limited to
+  `blob:`/`data:`; author styles are inline or blob-URL'd);
+- the frame's `sandbox` is `allow-same-origin allow-scripts` — `allow-scripts`
+  **only** because WebKit/Safari delivers no input events without it; the CSP is
+  what blocks scripts. No `allow-top-navigation`, `allow-forms`,
+  `allow-popups`, `allow-modals`, `allow-downloads`.
+
+**Net:** no author JavaScript runs, the frame can't navigate your page, and it
+can't reach the network. Publisher CSS *does* apply by default (turn it off with
+the `publisherStyles` setting).
+
+**For your own page**, a matching top-level CSP is fine — `porejs` needs
+`img-src blob: data:` (image books), `worker-src 'self'` (the in-book search
+worker chunk, unless you pass your own `workerFactory` / disable it),
+`child-src blob:` (the reading `<iframe srcdoc>`), and `connect-src` to wherever
+your `ReaderSource` fetches. It uses no `eval` and no inline `<script>`.
+
 ---
 
 ## 1. Minimal React integration

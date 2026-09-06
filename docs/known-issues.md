@@ -11,6 +11,21 @@ Severity: 🔴 broken feature · 🟠 degraded / edge case · 🟡 papercut / ni
 
 ## Open — fix if/when motivated
 
+### 🟠 No manual screen-reader pass yet
+
+axe (2.0 + 2.1 A/AA), keyboard-traversal and `forced-colors` are automated and
+green. A real **NVDA + VoiceOver** walk-through (open → read → TOC → highlight →
+bookmark → settings → search → home) is still owed for `v1.0`. See
+`docs/accessibility.md`. *(M8 H7)*
+
+### 🟡 e2e flake: WebKit selection / reduced-motion under full parallel load
+
+`highlight persists…` and `reduced motion: page turns apply instantly`
+occasionally fail first-try on WebKit when both browsers run in parallel; pass on
+retry (CI has `retries: 2`). The synthetic-selection tests now wait for
+`.selection-toolbar` (10 s) which helped but didn't fully kill it. A real
+mouse-drag selection helper would be firmer. *(M8 H5/H7)*
+
 ### 🟡 No engine-level performance scenario harness
 
 `size-limit` gates bundle size and `perf.test.ts` guards the pure hot-paths

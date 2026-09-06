@@ -321,21 +321,33 @@ error card.
 
 ---
 
-## H7 — Security & a11y hardening · M
+## H7 — Security & a11y hardening · M · **DONE (bar the manual SR pass)**
 
-- [ ] **Security review** of the text-engine iframe: `sandbox` has no
-      `allow-scripts`, `rewrite.ts` covers every external ref, no author JS or
-      top-navigation possible. A **CSP recipe** for host apps in
-      `integration.md`. Document the EPUB-HTML trust model (publisher CSS on by
-      default; scripts never run).
-- [ ] **`docs/accessibility.md`**: a full keyboard-only walkthrough (open →
-      read → TOC → highlight → bookmark → settings → search → home), an NVDA +
-      VoiceOver pass (findings, not "ran axe"), `prefers-reduced-motion` and
-      `forced-colors` audits.
-- [ ] Broaden axe past the smoke checks; fix real violations.
+- [x] **Iframe security** — mostly landed in H5: `script-src 'none'` CSP +
+      `rewrite.ts` stripping `<script>` / `on*` / `javascript:` /
+      `<iframe|object|embed>` / `<meta http-equiv>`; sandbox with no
+      `allow-top-navigation` / `allow-forms` / `allow-popups` / `allow-modals` /
+      `allow-downloads`. H7 adds the **CSP recipe + EPUB trust model** to
+      `integration.md §0` (what the frame blocks, what a host's own top-level
+      CSP needs: `img-src blob: data:`, `worker-src 'self'`, `child-src blob:`).
+- [x] **`docs/accessibility.md`** — the keyboard map, the ARIA / announcer
+      story, what's automated, and the honest gap.
+- [x] **Keyboard-traversal e2e** — rail controls all focusable, `Enter` opens a
+      panel, **`Esc` closes the top panel and restores focus** (new handler in
+      `Chrome.tsx` — the demo panels are plain divs, not Radix dialogs), the
+      reading surface turns pages from the keyboard.
+- [x] **`forced-colors` (Windows High Contrast)** — a `@media (forced-colors:
+      active)` block (system-colour borders, `Highlight` focus ring + active
+      states; the text engine already drops to flow mode); e2e emulates it and
+      re-runs axe (minus `color-contrast`, a false positive there).
+- [x] **Broadened axe** — `expectAxeClean` helper now runs `wcag2a/aa` **+
+      `wcag21a/aa`**; no new violations.
+- [ ] **NVDA + VoiceOver manual pass** — still owed for `1.0`. Tracked in
+      `docs/known-issues.md` + `accessibility.md`. The automated coverage is a
+      floor, not a substitute.
 
 **Done when:** the iframe threat model is documented and a keyboard-only user
-can do everything the demo offers.
+can do everything the demo offers. ✓ (SR pass pending)
 
 ---
 

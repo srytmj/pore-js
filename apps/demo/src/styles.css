@@ -63,6 +63,39 @@
     border-radius: 4px;
   }
 
+  /* Windows High Contrast / forced-colors: our tokens are ignored, so lean on
+     the system keywords — keep every control outlined, the focus ring on a
+     system colour, and active/selected states legible. */
+  @media (forced-colors: active) {
+    .bar,
+    .bar__settings-inline,
+    .highlights-panel,
+    .review__panel,
+    .tts-bar,
+    .selection-toolbar,
+    .landing__drop,
+    .landing__samples button,
+    .landing__recent-open {
+      border: 1px solid CanvasText !important;
+    }
+    :where(button, a, select, input, [tabindex], summary):focus-visible {
+      outline: 2px solid Highlight !important;
+      outline-offset: 2px;
+    }
+    .bar button.active,
+    .bar button[aria-pressed='true'],
+    [data-pore-accordion-summary][data-state='open'],
+    [aria-selected='true'] {
+      outline: 1px solid Highlight !important;
+      outline-offset: -3px;
+    }
+    .landing__recent-fill,
+    .pore-lightbar__fill,
+    .progress--value {
+      background: Highlight !important;
+    }
+  }
+
   /* honour the OS "reduce motion" setting across every animation/transition */
   @media (prefers-reduced-motion: reduce) {
     *,

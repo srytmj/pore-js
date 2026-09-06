@@ -39,6 +39,19 @@ async function turn(page: Page, dir: 'forward' | 'back' = 'forward', opts: { rtl
     .catch(go);
 }
 
+/** axe on the demo chrome (never the publisher iframe); fail on serious+. */
+async function expectAxeClean(page: Page) {
+  const results = await new AxeBuilder({ page })
+    .exclude('iframe.pore-text__frame')
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .disableRules(['region']) // demo shell layout, not the library
+    .analyze();
+  const serious = results.violations.filter(
+    (v) => v.impact === 'critical' || v.impact === 'serious',
+  );
+  expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+}
+
 async function openSettingsSection(page: Page, section: string) {
   const trigger = page.getByRole('button', { name: 'Reader settings' });
   if ((await trigger.getAttribute('aria-expanded')) !== 'true') await trigger.click();
@@ -115,6 +128,7 @@ test.describe('Pore.js demo — landing', () => {
       sel.addRange(range);
       doc.dispatchEvent(new Event('selectionchange'));
     });
+    await expect(page.locator('.selection-toolbar')).toBeVisible({ timeout: 10_000 });
     await page.locator('.selection-toolbar__swatch').first().click();
     await expect(page.getByRole('button', { name: 'Highlights' })).toContainText('1');
     await page.waitForTimeout(1000); // debounced save
@@ -156,6 +170,7 @@ test.describe('Pore.js demo — landing', () => {
       sel.addRange(range);
       doc.dispatchEvent(new Event('selectionchange'));
     });
+    await expect(page.locator('.selection-toolbar')).toBeVisible({ timeout: 10_000 });
     await page.locator('.selection-toolbar__swatch').first().click();
     await expect(page.getByRole('button', { name: 'Highlights' })).toContainText('1');
     await page.waitForTimeout(1000);
@@ -241,6 +256,7 @@ test.describe('Pore.js demo — landing', () => {
       s.addRange(r);
       doc.dispatchEvent(new Event('selectionchange'));
     });
+    await expect(page.locator('.selection-toolbar')).toBeVisible({ timeout: 10_000 });
     await page.locator('.selection-toolbar__swatch').first().click();
     await page.waitForTimeout(1000);
     await page.getByRole('button', { name: 'Back to start' }).click();
@@ -620,17 +636,7 @@ test.describe('Pore.js demo — M3', () => {
   test('reader has no critical axe violations (keyboard + ARIA)', async ({ page }) => {
     await page.goto('/?book=demo-book');
     await page.locator('iframe.pore-text__frame').waitFor();
-    const results = await new AxeBuilder({ page })
-      // the book renders in a `sandbox` iframe with no `allow-scripts`, so axe
-      // can't inject into it — and its markup is the publisher's, not ours
-      .exclude('iframe.pore-text__frame')
-      .withTags(['wcag2a', 'wcag2aa'])
-      .disableRules(['region']) // demo shell, not the library
-      .analyze();
-    const serious = results.violations.filter(
-      (v) => v.impact === 'critical' || v.impact === 'serious',
-    );
-    expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+    await expectAxeClean(page);
   });
 
   test('dark theme: the chrome is still axe clean (contrast on the dark palette)', async ({
@@ -644,6 +650,61 @@ test.describe('Pore.js demo — M3', () => {
       .exclude('iframe.pore-text__frame')
       .withTags(['wcag2a', 'wcag2aa'])
       .disableRules(['region'])
+      .analyze();
+    const serious = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    );
+    expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+  });
+
+  test('keyboard: chrome is fully traversable, Esc closes a panel and restores focus', async ({
+    page,
+  }) => {
+    await page.goto('/?book=demo-book');
+    await page.locator('iframe.pore-text__frame').waitFor();
+
+    // every rail control is a real, focusable button/control
+    for (const name of ['Back to start', 'Search in book', 'Highlights', 'Reader settings']) {
+      await page.getByRole('button', { name }).focus();
+      await expect(page.getByRole('button', { name })).toBeFocused();
+    }
+
+    // open Highlights from the keyboard, Esc closes it and focus comes back
+    const hl = page.getByRole('button', { name: 'Highlights' });
+    await hl.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog', { name: 'Highlights' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Highlights' })).toBeHidden();
+    await expect(hl).toBeFocused();
+
+    // the reading surface takes focus and turns pages from the keyboard
+    await page.locator('.pore-text').focus();
+    const loc = page.locator('.loc');
+    const before = await loc.textContent();
+    await page.keyboard.press('ArrowRight');
+    await expect(loc).not.toHaveText(before!.trim());
+  });
+
+  test('forced-colors (Windows High Contrast): chrome stays outlined and axe clean', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ forcedColors: 'active' });
+    await page.goto('/?book=demo-book');
+    await page.locator('iframe.pore-text__frame').waitFor();
+    await page.getByRole('button', { name: 'Reader settings' }).click();
+    await expect(page.locator('.bar__settings-inline')).toBeVisible();
+    // the rail has a system-colour border under forced-colors
+    const border = await page
+      .locator('.bar')
+      .evaluate((el) => getComputedStyle(el).borderTopWidth);
+    expect(border).not.toBe('0px');
+    // color-contrast is a false positive under forced-colors — the OS replaces
+    // every colour, which axe (reading declared CSS) can't see.
+    const results = await new AxeBuilder({ page })
+      .exclude('iframe.pore-text__frame')
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .disableRules(['region', 'color-contrast'])
       .analyze();
     const serious = results.violations.filter(
       (v) => v.impact === 'critical' || v.impact === 'serious',
@@ -741,6 +802,7 @@ test.describe('Pore.js demo — M3', () => {
       sel.addRange(range);
       doc.dispatchEvent(new Event('selectionchange'));
     });
+    await expect(page.locator('.selection-toolbar')).toBeVisible({ timeout: 10_000 });
     const swatch = page.locator('.selection-toolbar__swatch').first();
     await expect(swatch).toBeVisible();
     await swatch.click();
@@ -768,6 +830,7 @@ test.describe('Pore.js demo — M3', () => {
       sel.addRange(range);
       doc.dispatchEvent(new Event('selectionchange'));
     });
+    await expect(page.locator('.selection-toolbar')).toBeVisible({ timeout: 10_000 });
     // the ✎ action highlights and opens the panel
     await page.getByRole('button', { name: 'Highlight and add a note' }).click();
     const note = page.locator('[data-pore-hl-note]').first();
@@ -868,6 +931,7 @@ test.describe('Pore.js demo — M3', () => {
       sel.addRange(range);
       doc.dispatchEvent(new Event('selectionchange'));
     });
+    await expect(page.locator('.selection-toolbar')).toBeVisible({ timeout: 10_000 });
     await page.getByRole('button', { name: 'Highlight and add a note' }).click();
     // the note textarea is keyboard-reachable and editable
     const note = page.locator('[data-pore-hl-note]').first();
