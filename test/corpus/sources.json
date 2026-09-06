@@ -1,37 +1,29 @@
 {
-  "note": "Public-domain / openly-licensed real books for `pnpm test:corpus`. Not committed — fetched by scripts/fetch-corpus.mjs and pinned by sha256. Fill in `sha256` after the first fetch (the script prints it). Swap URLs freely; keep the licence public-domain / CC.",
+  "note": "Public-domain real books for `pnpm test:corpus`. Not committed — fetched by scripts/fetch-corpus.mjs and pinned by sha256. Swap URLs freely; keep the licence public-domain / CC. TODO: add a real messy PDF, an RTL manga CBZ, a vertical-JP book, a fixed-layout EPUB, and an 800+ page item.",
   "books": [
     {
-      "id": "standard-ebons-frankenstein",
+      "id": "gutenberg-frankenstein",
       "kind": "epub",
-      "title": "Frankenstein (Standard Ebooks)",
-      "url": "https://standardebooks.org/ebooks/mary-shelley/frankenstein/downloads/mary-shelley_frankenstein.epub",
-      "sha256": null,
-      "why": "rich modern EPUB3 CSS, deep TOC, footnotes"
-    },
-    {
-      "id": "gutenberg-pride-and-prejudice",
-      "kind": "epub",
-      "title": "Pride and Prejudice (Project Gutenberg)",
-      "url": "https://www.gutenberg.org/ebooks/1342.epub3.images",
-      "sha256": null,
-      "why": "old-school Gutenberg markup, images"
+      "title": "Frankenstein (Project Gutenberg #84, illustrated)",
+      "url": "https://www.gutenberg.org/ebooks/84.epub3.images",
+      "sha256": "2c29669a2cc1a726d6264178a2e8e86529208fd61ef92ca627b1612b2d98b2bd",
+      "why": "EPUB3 with inline illustrations, chaptered, real 19c prose"
     },
     {
       "id": "gutenberg-alice-illustrated",
       "kind": "epub",
-      "title": "Alice's Adventures in Wonderland (Gutenberg, illustrated)",
+      "title": "Alice's Adventures in Wonderland (Gutenberg #11, illustrated)",
       "url": "https://www.gutenberg.org/ebooks/11.epub3.images",
-      "sha256": null,
-      "why": "many inline images, short chapters"
+      "sha256": "12cbc3610260503383ad7ecf800beb0d885a6011e15900b2bf61cecfc571d6c8",
+      "why": "many inline images, short chapters, small file"
     },
     {
-      "id": "gutenberg-us-constitution-pdf",
-      "kind": "pdf",
-      "title": "US Constitution (Gutenberg PDF)",
-      "url": "https://www.gutenberg.org/files/5/5-pdf.pdf",
-      "sha256": null,
-      "why": "a real text PDF with an outline"
+      "id": "gutenberg-pride-and-prejudice",
+      "kind": "epub",
+      "title": "Pride and Prejudice (Project Gutenberg #1342, no images)",
+      "url": "https://www.gutenberg.org/ebooks/1342.epub.noimages",
+      "sha256": "c25cf3d9ad4d41147ecc6947debcf981a961fd6b69a4219d9892af50b934c8bb",
+      "why": "long plain-text novel, deep chapter list"
     }
   ]
 }

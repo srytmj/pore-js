@@ -57,9 +57,10 @@ owner: DNS/proxy) → H10 docs + `v1.0.0`. All 6 open questions decided (see pla
 public surface frozen (`porejs` + opt-in `porejs/internal`, pinned by
 `public-api.test.ts`, `docs/stability.md`); embed proven by `examples/host-app/`
 (isolation audit clean, `useReaderManifest`, `useReaderHistory` title
-composition). **H3 scaffold done** — `pnpm test:corpus` harness + fetch script,
-**blocked on the owner** to approve the corpus download (~a few MB of
-public-domain books). **H4 (robustness/fuzz) is the next unblocked task.**
+composition). **H3 done** — `pnpm test:corpus` green against 3 real Gutenberg
+EPUBs (no engine bug in parse/CFI/search); CI `corpus` job. Set can grow (CBZ /
+vertical-JP / fixed-layout / big PDF sources still wanted, not 1.0-blocking).
+**H4 (robustness / failure modes) next.**
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -77,24 +78,24 @@ M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
 
-## 2026-09-07 — M8 H3: real-content corpus (scaffold; fetch pending owner)
-- **What:** `scripts/fetch-corpus.mjs` (downloads `test/corpus/sources.json`
-  entries → `test/corpus/files/`, gitignored, sha256-pinned) +
-  `test/corpus/corpus.test.ts` — a `corpus` vitest project that also runs in
-  `pnpm test` but **skips cleanly** when the files aren't downloaded (dynamic
-  `import()` of built `porejs`, so no `dist/` hard-dep). Per book: parse
-  (`parseEpub`/`loadPdf`) doesn't throw on real structure, spine/TOC/metadata
-  sane, every spine href resolves, CFI round-trip on a real spine doc,
-  `SearchController` builds over the real text, PDF pageCount/pageSize/outline.
-  `test:corpus` / `corpus:fetch` scripts; `sources.json` seeded with 4
-  public-domain books; `test/corpus/README.md` provenance. eslint config: node
-  `fetch`/`Buffer` globals for `scripts/`.
-- **State:** committed. `pnpm test` = 266 pass + 1 skipped (corpus). typecheck
-  · lint clean.
-- **Blocked on owner:** running `pnpm corpus:fetch` = downloading ~a few MB from
-  standardebooks.org / gutenberg.org — needs the owner's OK (or drop files in
-  `test/corpus/files/` by hand). Then pin hashes, widen the set (RTL CBZ,
-  vertical-JP, fixed-layout, an 800+ pager), wire into CI.
+## 2026-09-07 — M8 H3: real-content corpus (done — baseline of 3)
+- **What:** `scripts/fetch-corpus.mjs` + `test/corpus/corpus.test.ts` (the
+  `corpus` vitest project — also in `pnpm test`, skips clean when not
+  downloaded, dynamic `import()` of built `porejs`). Owner approved the
+  download; pinned **3 real Gutenberg EPUBs** (Frankenstein #84 illustrated,
+  Alice #11 illustrated, Pride & Prejudice #1342 long/no-images). Per book:
+  `parseEpub` doesn't throw, spine/TOC/metadata sane, **every spine href
+  resolves**, `serializeCfi`→`parseCfi`→`resolveCfiElement` round-trips on a
+  real spine doc, `SearchController` builds over the real text. **9 tests
+  green — no engine bug found** in the parse/CFI/search layer against real
+  content. CI `corpus` job (cached on `sources.json` hash). `verify-packages`
+  added to CI `check`.
+- **State:** committed + pushed. `pnpm test` 275 (266 + 9 corpus locally) ·
+  lint · typecheck clean.
+- **Notes:** Standard Ebooks gates its direct `.epub` URL (returns an
+  interstitial) — used Gutenberg instead. No reliable Gutenberg PDF URL — the
+  "messy PDF" + RTL CBZ + vertical-JP + fixed-layout + 800-pager corpus
+  entries still want sources; not `1.0`-blocking (see plan H3).
 
 ## 2026-09-06 — M8 H2: embeddable in a host app
 - **What:** `examples/host-app/` ("Inkwell") — a standalone Vite app proving the

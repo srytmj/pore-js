@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
+import type * as PorejsApi from '../../packages/reader-core/dist/index.js';
 
 /**
  * Runs the engines' parsing + CFI + search layers against the **real** books in
@@ -21,8 +22,6 @@ const sources: { books: { id: string; kind: string; title: string }[] } = JSON.p
 const filePath = (id: string, kind: string) =>
   join(filesDir, `${id}.${kind === 'pdf' ? 'pdf' : 'epub'}`);
 const present = sources.books.filter((b) => existsSync(filePath(b.id, b.kind)));
-
-import type * as PorejsApi from '../../packages/reader-core/dist/index.js';
 
 let api: typeof PorejsApi;
 
@@ -48,17 +47,24 @@ describe.skipIf(present.length === 0)('real-book corpus', () => {
 
         it('round-trips a CFI against a real spine document', () => {
           const epub = api.parseEpub(bytes());
-          const first = epub.resource(epub.spine[0]!.href)!;
+          // pick a spine item that has real body content
+          const item =
+            epub.spine.find((s) => {
+              const r = epub.resource(s.href);
+              return r && new TextDecoder().decode(r.bytes).includes('</p>');
+            }) ?? epub.spine[0]!;
+          const idx = epub.spine.indexOf(item);
           const doc = new DOMParser().parseFromString(
-            new TextDecoder().decode(first.bytes),
+            new TextDecoder().decode(epub.resource(item.href)!.bytes),
             'application/xhtml+xml',
           );
-          const el =
-            doc.body?.querySelector('p, h1, h2, div, span') ?? doc.body?.firstElementChild;
-          expect(el, 'a resolvable element in the first spine doc').toBeTruthy();
-          const cfi = api.serializeCfi(0, el as Element, 0);
+          const el = doc.body?.querySelector('p, h1, h2, div, span') ?? doc.body?.firstElementChild;
+          expect(el, 'a resolvable element in the spine doc').toBeTruthy();
+
+          const cfi = api.serializeCfi(doc, idx, item.idref, el as Element, 0);
           const parsed = api.parseCfi(cfi);
-          expect(parsed).not.toBeNull();
+          expect(parsed, cfi).not.toBeNull();
+          expect(parsed!.spineIndex).toBe(idx);
           expect(api.resolveCfiElement(doc, parsed!.steps)).toBe(el);
         });
 

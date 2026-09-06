@@ -206,32 +206,31 @@ the reader provably doesn't reach outside its own box. ✓
 
 ---
 
-## H3 — Real-world content corpus · M · **SCAFFOLD DONE — corpus fetch pending owner**
+## H3 — Real-world content corpus · M · **DONE (baseline — set can grow)**
 
-- [x] **`scripts/fetch-corpus.mjs`** — downloads the books in
-      `test/corpus/sources.json` into `test/corpus/files/` (gitignored) and
-      verifies each against a pinned `sha256` (prints the hash on first fetch).
-      `pnpm corpus:fetch`.
-- [x] **`test/corpus/corpus.test.ts`** (`pnpm test:corpus` → the `corpus`
-      vitest project; also runs in `pnpm test` but **skips cleanly** when
-      `files/` is empty — dynamic `import()` of the built `porejs`, no
-      hard dep on `dist/`). Per book: `parseEpub` / `loadPdf` don't throw on
-      the real structure · spine + TOC + metadata sane · every spine href
-      resolves · `serializeCfi`→`parseCfi`→`resolveCfiElement` round-trips on a
-      real spine doc · `SearchController` builds over the real text · PDF
-      pageCount / pageSize / outline. (Full pagination stays on the e2e suites
-      — jsdom can't run the iframe.)
-- [x] `test/corpus/README.md` + provenance; `sources.json` seeded with 4
-      public-domain sources (Standard Ebooks *Frankenstein*, Gutenberg *Pride
-      and Prejudice* + *Alice* illustrated, Gutenberg US-Constitution PDF).
-- [ ] **`pnpm corpus:fetch` + pin the hashes + run `pnpm test:corpus`** —
-      needs the owner's OK to download (~a few MB from standardebooks.org /
-      gutenberg.org), or drop files into `test/corpus/files/` by hand. Then:
-      widen `sources.json` (add an RTL CBZ, a vertical-JP book, a fixed-layout
-      EPUB, an ≥ 800-page item), pin hashes, wire `corpus:fetch` into CI (cached
-      by hash), file a bug per real breakage.
+- [x] **`scripts/fetch-corpus.mjs`** (`pnpm corpus:fetch`) — downloads the books
+      in `test/corpus/sources.json` into `test/corpus/files/` (gitignored),
+      sha256-verified (prints the hash on first fetch to pin).
+- [x] **`test/corpus/corpus.test.ts`** — the `corpus` vitest project
+      (`pnpm test:corpus`; also in `pnpm test`, **skips cleanly** when `files/`
+      is empty — dynamic `import()` of built `porejs`, no `dist/` hard dep).
+      Per book: `parseEpub` / `loadPdf` don't throw on the real structure ·
+      spine + TOC + metadata sane · **every spine href resolves** ·
+      `serializeCfi`→`parseCfi`→`resolveCfiElement` round-trips on a real spine
+      doc · `SearchController` builds over the real text. (Full pagination stays
+      on the e2e suites — jsdom can't run the iframe.)
+- [x] **3 real books pinned** (owner approved the download): Gutenberg
+      *Frankenstein* #84 (illustrated EPUB3), *Alice* #11 (illustrated),
+      *Pride and Prejudice* #1342 (long, no-images). **9 tests green — no
+      engine bug in the parse/CFI/search layer against real content.**
+- [x] `test/corpus/README.md` + provenance; **CI `corpus` job** fetches
+      (cached on `sources.json` hash) + runs `pnpm test:corpus`.
+- [ ] *Grow the set later:* an RTL manga CBZ, a vertical-JP book, a real
+      fixed-layout EPUB, an ≥ 800-page item, a messy/scanned PDF (Gutenberg
+      has no reliable PDF URL — needs another source). Not blocking `1.0`.
 
-**Done when:** `pnpm test:corpus` is green against ~a dozen real books.
+**Done when:** `pnpm test:corpus` is green against real books. ✓ (baseline of 3;
+widen as sources are found)
 
 ---
 
