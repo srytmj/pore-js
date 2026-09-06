@@ -1,0 +1,28 @@
+[
+  {
+    "name": "porejs — text engine + sources (no PDF)",
+    "path": "packages/reader-core/dist/index.js",
+    "import": "{ createTextEngine, CachedSource, DemoSource, LocalFileSource }",
+    "limit": "24 kB"
+  },
+  {
+    "name": "porejs — image engine + sources",
+    "path": "packages/reader-core/dist/index.js",
+    "import": "{ createImageEngine, LocalFileSource, CachedSource }",
+    "limit": "16 kB"
+  },
+  {
+    "name": "porejs — all engines + sources (pdf.js code-split out)",
+    "path": "packages/reader-core/dist/index.js",
+    "import": "{ createTextEngine, createImageEngine, createPdfEngine, DemoSource, CachedSource, LocalFileSource, OpdsSource, KavitaSource }",
+    "ignore": ["pdfjs-dist", "pdfjs-dist/legacy/build/pdf.mjs"],
+    "limit": "40 kB"
+  },
+  {
+    "name": "porejs-react — <Reader> + core hooks (react + porejs external)",
+    "path": "packages/reader-react/dist/index.js",
+    "import": "{ ReaderProvider, Reader, useReader, useReaderLocation, useReaderSettings, useReaderProgress }",
+    "ignore": ["react", "react-dom", "react/jsx-runtime", "porejs"],
+    "limit": "8 kB"
+  }
+]

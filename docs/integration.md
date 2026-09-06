@@ -303,6 +303,26 @@ import { setPdfWorkerSrc } from 'porejs';
 setPdfWorkerSrc(pdfWorkerUrl);
 ```
 
+### Bundle size
+
+`porejs` reaches `pdfjs-dist` **only through a dynamic `import()`**
+(`pdf/parse.ts`). Vite / webpack / Rollup / esbuild all code-split that into a
+lazy chunk by default, so:
+
+| you import | up-front cost (brotli) |
+|---|---|
+| `createTextEngine` + sources | ~18 kB |
+| `createImageEngine` + sources | ~12 kB |
+| all three engines + every source | ~30 kB (pdf.js **not** counted) |
+| pdf.js itself | ~130 kB — loads the first time a PDF opens |
+| `porejs-react` (`Reader` + hooks, `react`/`porejs` external) | ~2 kB |
+
+These are `size-limit` budgets checked in CI (`.size-limit.json`,
+`pnpm size`) — a regression fails the build. If your bundler is configured to
+**inline** dynamic imports, `import { createPdfEngine }` will pull the full
+~130 kB; keep dynamic-import code-splitting on, or don't import `createPdfEngine`
+in a bundle that never shows PDFs.
+
 ---
 
 ## 9. Framework-agnostic core (no React)

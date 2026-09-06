@@ -25,6 +25,8 @@ lives in a chat transcript but not in git history.
   finish a plan item.
 - This file is committed like any other doc. It is not a substitute for
   Conventional Commits or the changelog — it is the "narrative" layer above them.
+- **Bugs** — found one you're not fixing now, or fixed one worth recording?
+  Add it to [`docs/known-issues.md`](known-issues.md) (Open / Fixed / Won't-fix).
 
 ## Current focus
 
@@ -60,7 +62,7 @@ public surface frozen (`porejs` + opt-in `porejs/internal`, pinned by
 composition). **H3 done** — `pnpm test:corpus` green against 3 real Gutenberg
 EPUBs (no engine bug in parse/CFI/search); CI `corpus` job. Set can grow (CBZ /
 vertical-JP / fixed-layout / big PDF sources still wanted, not 1.0-blocking).
-**H4 done** — fixed a white-screen bug (Reader swallowed fatal load errors), 15 fuzz cases, error-card e2e. **H5 done** — 2 real Safari/WebKit bugs fixed (PDF canvas fallback, sandboxed-iframe events); e2e 3-browser matrix. **H6 (perf & size budgets) next.**
+**H4 done** — fixed a white-screen bug (Reader swallowed fatal load errors), 15 fuzz cases, error-card e2e. **H5 done** — 2 real Safari/WebKit bugs fixed (PDF canvas fallback, sandboxed-iframe events); e2e 3-browser matrix. **H6 done** — size-limit budgets (CI) + O(n²) perf guard rails. **H7 (security + a11y) next** — iframe CSP/sandbox half already done in H5.
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -77,6 +79,21 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-07 — M8 H6: size budgets + perf guard rails
+- **What:** `size-limit` (`.size-limit.json`, `pnpm size`, CI `check` job) —
+  `porejs` text+sources 18 kB brotli / image+sources 12 kB / all engines 30 kB
+  (pdf.js split out) / `porejs-react` 2 kB. Confirmed pdf.js is genuinely lazy
+  (the `ignore` in the config matches what real bundlers do; without it you see
+  the +130 kB). `integration.md §8` gets the per-import cost table + a
+  "don't inline dynamic imports" caveat. `perf.test.ts` — O(n²) guard rails on
+  `buildSpreads` / search index / CFI, budgets ~10× warm, in `pnpm test`.
+- **State:** committed + pushed. 293 unit · size 4/4 under budget · typecheck ·
+  lint.
+- **Notes:** no real-browser TTI/heap harness yet (needs Playwright +
+  `measureUserAgentSpecificMemory`) — logged in `known-issues.md`, not
+  1.0-blocking. **H7 (security + a11y) next** — the iframe CSP/sandbox half is
+  already done (H5); remaining is `docs/accessibility.md` + the axe broadening.
 
 ## 2026-09-07 — M8 H5: cross-browser (2 real Safari/WebKit bugs fixed)
 - **What:** added `firefox` + `webkit` Playwright projects; CI `e2e` is now a

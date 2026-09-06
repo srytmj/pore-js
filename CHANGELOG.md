@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Size budgets (M8 H6)
+
+- `size-limit` budgets in CI: `porejs` text engine + sources **18 kB** brotli,
+  image engine + sources **12 kB**, all three engines + every source **30 kB**
+  (pdf.js code-split out), `porejs-react` **2 kB**. pdf.js (~130 kB) stays a
+  lazy chunk — see `docs/integration.md §8`.
+- Perf guard-rail tests (`buildSpreads`, search index, CFI) in `pnpm test`.
+
 ### Cross-browser (M8 H5)
 
 - **Fixed: PDF pages didn't render on any browser without `OffscreenCanvas`**

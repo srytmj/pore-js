@@ -20,6 +20,7 @@ CBZ). Custom rendering + pagination engine, not a wrapper.
 [`docs/reader-engine-design.md`](docs/reader-engine-design.md) (RFC) ·
 [`docs/image-engine-spec.md`](docs/image-engine-spec.md) ·
 [`docs/m8-plan.md`](docs/m8-plan.md) (current milestone) ·
+[`docs/known-issues.md`](docs/known-issues.md) (bug log) ·
 [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Workspace

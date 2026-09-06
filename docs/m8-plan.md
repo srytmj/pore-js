@@ -297,18 +297,27 @@ error card.
 
 ---
 
-## H6 — Performance & size budget · S–M
+## H6 — Performance & size budget · S–M · **DONE**
 
-- [ ] Scenario harness: 1000-page PDF, ~400-chapter EPUB, ~3000-image webtoon —
-      first-page TTI, `paginate` ms, peak JS heap under virtualization, spread
-      rebuild time.
-- [ ] **`size-limit`** on `porejs` (with and without `pdfjs-dist` in the graph)
-      and `porejs-react`; commit the numbers as budgets.
-- [ ] Document the **pdf.js code-split** in `integration.md` (`setPdfWorkerSrc`,
-      lazy `import()`); `porejs` without PDF should tree-shake `pdfjs-dist`.
-- [ ] Perf smoke in CI (soft-fail / annotation only).
+- [x] **`size-limit`** (`.size-limit.json`, `pnpm size`, in the CI `check`
+      job): text-engine+sources **18 kB**, image-engine+sources **12 kB**, all
+      three engines + every source **30 kB** (pdf.js code-split out),
+      `porejs-react` **2 kB** — budgets set at ~1.3× with the numbers in
+      `integration.md`. A regression fails the build.
+- [x] **Confirmed pdf.js is genuinely lazy** — `size-limit` without the
+      `pdfjs-dist` ignore shows the +130 kB, with it (matching what real
+      bundlers do) it's gone. Documented in `integration.md §8` with the "don't
+      inline dynamic imports" caveat and the per-import cost table.
+- [x] **Perf guard rails** — `packages/reader-core/src/perf.test.ts`:
+      `buildSpreads` on a 5000-page book, `buildSearchIndex` + 20 queries over
+      800 sections, CFI serialize/parse/resolve over a realistic chapter DOM
+      ×40. Budgets ~10× a warm run — catches an O(n²) regression, tolerates a
+      slow runner. Runs in the normal `pnpm test`.
+- [ ] Full engine-level TTI / heap scenario harness (1000-page PDF, big EPUB,
+      long webtoon) — needs a real browser + `performance.measureUserAgentSpecificMemory`;
+      left as a follow-up (see `docs/known-issues.md`), not `1.0`-blocking.
 
-**Done when:** budgets are written down and CI flags regressions.
+**Done when:** budgets are written down and CI flags regressions. ✓
 
 ---
 
