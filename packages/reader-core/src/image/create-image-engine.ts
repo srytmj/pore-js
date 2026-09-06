@@ -112,6 +112,16 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     transitions.scrollTo(root, axis() === 'x' ? 'scrollLeft' : 'scrollTop', v, prefersReducedMotion());
   };
   const viewportMain = (): number => (axis() === 'x' ? root.clientWidth : root.clientHeight) || 1;
+  /**
+   * Effective content width for the vertical continuous strip (webtoon): the
+   * window width, capped by `maxWidth` when the reader has set one. Pages are
+   * centred at this width so the strip can be read at a comfortable size on a
+   * wide screen. Used for both layout estimation and the mounted `<img>` width.
+   */
+  const stripWidth = (): number => {
+    const w = root.clientWidth || 800;
+    return settings.maxWidth && settings.maxWidth > 0 ? Math.min(w, settings.maxWidth) : w;
+  };
   const slotForPage = (page: number): number => {
     const s = slotToPage.indexOf(page);
     return s === -1 ? 0 : s;
@@ -349,7 +359,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       const m = measured.get(p);
       if (m !== undefined) slotMeasured.set(s, m);
     });
-    const cross = axis() === 'x' ? root.clientHeight || 1000 : root.clientWidth || 800;
+    const cross = axis() === 'x' ? root.clientHeight || 1000 : stripWidth();
     clayout = estimateLinearLayout(slotPages, {
       axis: axis(),
       crossSize: cross,
@@ -375,6 +385,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
         mountedImgs.delete(p);
       }
     }
+    const sw = stripWidth();
     for (let s = first; s <= last; s++) {
       const p = slotToPage[s]!;
       let img = mountedImgs.get(p);
@@ -384,12 +395,18 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
         img.alt = altFor(p);
         img.style.cssText = horiz
           ? 'position:absolute;top:0;height:100%;width:auto;'
-          : 'position:absolute;left:0;width:100%;height:auto;';
+          : 'position:absolute;left:50%;height:auto;';
         const el = img;
         img.addEventListener('load', () => measurePage(p, s, el), { once: true });
         viewport.appendChild(img);
         mountedImgs.set(p, img);
         loadInto(img, p);
+      }
+      if (!horiz) {
+        // centre the strip and constrain its width (webtoon size control)
+        img.style.width = `${sw}px`;
+        img.style.maxWidth = '100%';
+        img.style.transform = 'translateX(-50%)';
       }
       img.style[horiz ? 'left' : 'top'] = `${clayout.offsets[s]}px`;
     }
@@ -398,7 +415,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   const measurePage = (page: number, slot: number, img: HTMLImageElement) => {
     if (destroyed || !img.naturalWidth) return;
     const horiz = axis() === 'x';
-    const cross = horiz ? root.clientHeight || 1000 : root.clientWidth || 800;
+    const cross = horiz ? root.clientHeight || 1000 : stripWidth();
     const size = horiz
       ? (img.naturalWidth / img.naturalHeight) * cross
       : (img.naturalHeight / img.naturalWidth) * cross;
@@ -702,7 +719,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   async function toggleFullscreen(): Promise<void> {
     try {
       if (doc.fullscreenElement) await doc.exitFullscreen();
-      else await root.requestFullscreen?.();
+      else await doc.documentElement.requestFullscreen?.();
     } catch {
       /* user gesture / permission — ignore */
     }
@@ -772,6 +789,14 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       settings.layout !== prev.layout ||
       settings.direction !== prev.direction ||
       settings.spreadOffset !== prev.spreadOffset;
+    // a width/height cap change rescales every page in the continuous strip —
+    // drop the measured cache so the layout re-estimates at the new size
+    if (
+      isContinuous() &&
+      (settings.maxWidth !== prev.maxWidth || settings.maxHeight !== prev.maxHeight)
+    ) {
+      measured.clear();
+    }
     if (structural) {
       measured.clear();
       mountedImgs.clear();
