@@ -35,9 +35,15 @@ collapsible menu rail with an inline settings accordion (D1, a new headless
 (D3); reader font menu wired to the bundled faces via `<Reader fontFaceCss>`
 (D4); one focus ring + global reduced-motion (D5); mobile rail overlay (D6);
 dark-axe test + tag (D7). 38 e2e · 256 unit · lint 0 · all green.
-`docs/design-language.md` is the token reference. Next milestone not scoped —
-a "Library & portability" feature milestone (bookmarks / shelf / export / CFI
-deep-links) is the strongest M7 candidate.
+`docs/design-language.md` is the token reference.
+
+**M7 scoped — `docs/m7-plan.md`, target `v0.10.0-library`.** Library &
+portability (a feature milestone): L0 engine groundwork (`goToCfi` +
+`loadBookmarks`/`saveBookmarks`) → L1 bookmarks (`useBookmarks` +
+`<BookmarksPanel>`) → L2 library/home (a `useLibrary()` shelf) → L3 annotations
+review → L4 export/import (versioned JSON, `docs/portability-format.md`) → L5
+share-a-passage (`?cfi=` deep links) → L6 release. 6 open questions in the plan.
+Not started.
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -54,6 +60,20 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-06 — M7 scoped: library & portability
+- **What:** `docs/m7-plan.md` — a feature milestone. L0 (`goToCfi`, bookmark
+  source methods) → L1 bookmarks → L2 library/home shelf → L3 annotations
+  review → L4 export/import (versioned JSON) → L5 `?cfi=` deep links → L6
+  release. Target `v0.10.0-library`.
+- **Why:** the demo works but isn't sticky — no library, no bookmarks, no way
+  to move annotations. Also finally makes the M4 CFI work visible.
+- **State:** committed. Not started — 6 open questions (bookmarks layer,
+  library storage, re-openable local files, export scope, deep-link pulse,
+  where the review lives).
+- **Notes:** additive only — new *optional* `ReaderSource` methods, one engine
+  method (`goToCfi`), demo-level `useLibrary()`. `reader-core` gets no
+  "list every book" API.
 
 ## 2026-09-06 — M6 D2–D7 + release `v0.9.0-editorial`
 - **D2** — highlights panel / note editor / swatches restyled; toast, `.notice`,

@@ -54,5 +54,7 @@ fixed-layout EPUB, `OpdsSource`, TTS (`docs/m4-plan.md`). **M5 done**
 (fixed-layout spreads) deferred. **M6 done** (`v0.9.0-editorial`) — editorial
 UI redesign of the demo: warm accent-less palette, bundled fonts, one
 collapsible menu rail with an inline settings accordion, new landing
-(`docs/m6-plan.md`, `docs/design-language.md`). Next milestone not yet scoped.
-See `docs/agent-worklog.md` for live status.
+(`docs/m6-plan.md`, `docs/design-language.md`). **M7 scoped, not started**
+(`docs/m7-plan.md`, target `v0.10.0-library`) — library shelf, bookmarks,
+annotations review, export/import, `?cfi=` deep links. See
+`docs/agent-worklog.md` for live status.
