@@ -29,6 +29,7 @@ import {
   type TextSelection,
   type HighlightRecord,
   type Bookmark,
+  type Manifest,
   type ReaderSource,
   type TtsState,
   type TtsVoiceLike,
@@ -124,6 +125,7 @@ interface ReaderCtx {
   bookId: string;
   source: ReaderSource;
   kind: ReaderKind | null;
+  manifest: Manifest | null;
   location: ReaderLocation | null;
   progress: ReaderProgress | null;
   settings: AnySettings;
@@ -202,6 +204,7 @@ export function Reader({
   );
 
   const [kind, setKind] = useState<ReaderKind | null>(null);
+  const [manifest, setManifest] = useState<Manifest | null>(null);
   const [location, setLocation] = useState<ReaderLocation | null>(null);
   const [progress, setProgress] = useState<ReaderProgress | null>(null);
   const [settings, setSettings] = useState<AnySettings>(() => ({
@@ -230,6 +233,7 @@ export function Reader({
     void (async () => {
       const manifest = await source.getManifest(bookId);
       if (disposed) return;
+      setManifest(manifest);
       const isText = manifest.type === 'epub';
       const isPdf = manifest.type === 'pdf';
       // pdf uses the image settings shape (it's the image engine underneath)
@@ -329,6 +333,7 @@ export function Reader({
       for (const off of offs) off();
       engineRef.current?.destroy();
       engineRef.current = null;
+      setManifest(null);
       setSelection(null);
       setTtsState(null);
     };
@@ -370,6 +375,7 @@ export function Reader({
       bookId,
       source,
       kind,
+      manifest,
       location,
       progress,
       settings,
@@ -393,6 +399,7 @@ export function Reader({
       bookId,
       source,
       kind,
+      manifest,
       location,
       progress,
       settings,
@@ -430,6 +437,11 @@ function useRuntime(): ReaderCtx {
 
 export function useReaderKind(): ReaderKind | null {
   return useRuntime().kind;
+}
+
+/** The current book's manifest (title, type, page/spine metadata) — `null` until loaded. */
+export function useReaderManifest(): Manifest | null {
+  return useRuntime().manifest;
 }
 
 export function useReaderLocation(): ReaderLocation | null {

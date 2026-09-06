@@ -35,3 +35,4 @@ jobs:
       - run: pnpm gen:fixtures
       - run: pnpm --filter @pore/demo exec playwright install --with-deps chromium
       - run: pnpm --filter @pore/demo e2e
+      - run: pnpm --filter @pore/example-host-app e2e

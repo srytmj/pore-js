@@ -14,6 +14,7 @@ const PUBLIC = [
   'Reader',
   'useReader',
   'useReaderKind',
+  'useReaderManifest',
   'useReaderLocation',
   'useReaderProgress',
   'useReaderSearch',

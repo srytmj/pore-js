@@ -29,6 +29,36 @@ Peer deps: `react` / `react-dom` ≥ 19 for the React package; `gsap` is an
 
 ---
 
+## 0. Embedding in an existing site
+
+The common case: you already have a manga / comics / book library — a catalog,
+a content API, auth, routing. You want a reader without building one.
+
+**What you provide:**
+
+1. **A `ReaderSource`** — one object mapping your book ids to a manifest, page
+   bytes, and reading position (§2). ~40 lines over your existing API.
+2. **A mount point** — a sized `<div>` (`<Reader className>`).
+3. **A stylesheet** — the components are headless; you style the `data-pore-*`
+   markup (the styling note above).
+
+**What stays yours:** authentication, the content API, app routing (which book
+is open, deep links), where reading progress / highlights are stored (your
+`ReaderSource` decides), and the page layout *around* the reader.
+
+`porejs` keeps to its box — engine input listeners are scoped to its own
+focused element (it won't eat your keyboard shortcuts), it declares no global
+singletons (two `<Reader>`s on a page are independent), and it writes nothing to
+the URL unless you call `useReaderHistory` (§4). `porejs-react`'s own
+per-viewer settings go to `localStorage` under `pore:settings:*` — pass
+`persistSettings={false}` or your own store to opt out.
+
+A complete worked integration — a fake library site with its own source, its
+own progress storage, and its own tab-title — is in
+[`examples/host-app/`](../examples/host-app) (`pnpm example`).
+
+---
+
 ## 1. Minimal React integration
 
 ```tsx
@@ -178,6 +208,7 @@ never plays).
 |---|---|
 | `useReader()` | the `ReaderHandle` |
 | `useReaderKind()` | `'text' \| 'image'` (PDF reports `'image'`) |
+| `useReaderManifest()` | the book's `Manifest` (`title`, `subtitle?`, `volume?`, type, …) — `null` until loaded |
 | `useReaderLocation()` | `ReaderLocation` — page, total, percent, label, chapter |
 | `useReaderProgress()` | `{ page, total, percent, … }` |
 | `useReaderChapters()` | `Chapter[]` |
@@ -195,8 +226,26 @@ never plays).
 | `useReaderError()` | last engine error |
 | `useResumedFromPage()` | page number if the session was resumed (for a toast) |
 | `useChromeVisible()` | engine's own chrome-visibility signal (tap-to-toggle) |
-| `useReaderHistory(opts?)` | reflects position into the URL + `document.title` |
+| `useReaderHistory(opts?)` | reflects position into `document.title` (and the URL in `mode: 'url-and-title'`) — see below |
 | `useDownload()` | `{ status, progress, download, remove }` (needs a `CachedSource`) |
+
+### `useReaderHistory` — the tab title
+
+By default it sets `document.title` to `Work · Vol N · Chapter` — the `Vol N`
+part appears only when the manifest carries `volume`, the chapter part only when
+the book has chapters, otherwise it falls back to `Work · 42%`. A dropped local
+file's manifest title is already its file name, so that reads `my-comic · 42%`.
+
+```tsx
+useReaderHistory({
+  mode: 'title', // or 'url-and-title' (back/forward turns pages), or 'none'
+  formatTitle: ({ manifest, chapterLabel, percent }) =>
+    manifest ? `${manifest.title} — ${chapterLabel ?? `${Math.round(percent * 100)}%`}` : '',
+});
+```
+
+Return `''` from `formatTitle` to leave `document.title` alone — the right move
+when your app framework owns the title.
 
 ---
 

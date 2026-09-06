@@ -26,10 +26,12 @@ CBZ). Custom rendering + pagination engine, not a wrapper.
 
 ```
 packages/
-  reader-core     TypeScript, framework-agnostic — sources, image engine, position, settings
-  reader-react    React 19 bindings — <Reader>, hooks
+  reader-core     porejs — framework-agnostic engine (sources, image/text/PDF, position, search)
+  reader-react    porejs-react — React 19 bindings: <Reader>, hooks, headless components
 apps/
-  demo            Vite app, generated fixtures — the public demo
+  demo            @pore/demo — the public demo (Vite, generated fixtures)
+examples/
+  host-app        embedding porejs in a third-party site (a fake manga library)
 fixtures/         provenance notes; image fixtures are generated
 ```
 

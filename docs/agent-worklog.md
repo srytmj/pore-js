@@ -46,15 +46,18 @@ share-a-passage (`?cfi=` deep links) → L6 release. Open questions decided
 (see plan). All L0–L6 done, tagged `v0.10.0-library`. Post-M7: trimmed the
 reader rail (removed Prev/Next, Download, Fullscreen buttons — user request).
 
-**M8 scoped, not started — `docs/m8-plan.md`, target `v1.0.0`.** Hardening +
-embed + publish + deploy (not a feature milestone): H0 rename to `porejs` /
-`porejs-react` + Changesets → H1 freeze the API (ESM-only) → **H2 embeddable in
-a host app** (`examples/host-app/`, isolation audit, `document.title`
-composition) → H3 real-content corpus → H4 robustness/fuzz → H5 cross-browser +
-e2e de-flake → H6 perf/size budgets → H7 security + a11y → H8 CI/CD + npm
-publish → H9 homelab deploy (Dockerfile, needs owner: DNS/proxy) → H10 docs +
-`v1.0.0`. All 6 open questions decided (see plan §Decisions). **H0 done**
-(renamed to `porejs` / `porejs-react`, `1.0.0-rc.1`, Changesets); H1 next.
+**M8 in progress — `docs/m8-plan.md`, target `v1.0.0`.** Hardening + embed +
+publish + deploy (not a feature milestone): H0 rename + Changesets → H1 freeze
+the API → **H2 embeddable in a host app** (`examples/host-app/`, isolation
+audit, `document.title` composition) → H3 real-content corpus → H4
+robustness/fuzz → H5 cross-browser + e2e de-flake → H6 perf/size budgets → H7
+security + a11y → H8 CI/CD + npm publish → H9 homelab deploy (Dockerfile, needs
+owner: DNS/proxy) → H10 docs + `v1.0.0`. All 6 open questions decided (see plan
+§Decisions). **H0 · H1 · H2 done** — `porejs` / `porejs-react` at `1.0.0-rc.1`;
+public surface frozen (`porejs` + opt-in `porejs/internal`, pinned by
+`public-api.test.ts`, `docs/stability.md`); embed proven by `examples/host-app/`
+(isolation audit clean, `useReaderManifest`, `useReaderHistory` title
+composition). **H3 (real-content corpus) next.**
 
 <details><summary>earlier "current focus" — M6 scoping</summary>
 
@@ -71,6 +74,29 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-06 — M8 H2: embeddable in a host app
+- **What:** `examples/host-app/` ("Inkwell") — a standalone Vite app proving the
+  embed: a fake manga library whose `LibrarySource` fully implements
+  `ReaderSource` (maps its own catalog → `ImageManifest` with `volume`,
+  generates SVG pages, stores progress in `localStorage` under `inkwell:*`).
+  Own stylesheet, own Playwright suite (3 specs), in the workspace
+  (`examples/*`), wired into CI, `pnpm example`. **Isolation audit: the engines
+  were already clean** — no `window`/`document` listeners in `porejs` (all on
+  the engine's `root` / iframe `cdoc`; `visibilitychange` is a passive
+  doc-level read removed on destroy), no problem singletons.
+  `porejs-react`'s settings→`localStorage` is namespaced (`pore:settings:*`) +
+  overridable; `useReaderHistory` is opt-in. Added **`useReaderManifest()`**
+  (hook, `Manifest | null`; `<Reader>` keeps the manifest in context) and
+  rewrote **`useReaderHistory`** to compose the doc title (`Work · Vol N ·
+  Chapter`, or `· N%`, or the file name) with a `formatTitle?(ctx)` override
+  (old `title` template `@deprecated`). `integration.md` §0 "Embedding in an
+  existing site".
+- **State:** committed. typecheck (root + example) · lint · 266 unit · 43 demo
+  e2e · 3 example e2e green.
+- **Notes:** the example's build pulls `pdfjs-dist` (535 KB) even though it's
+  images-only — `reader.tsx` statically imports `createPdfEngine`. Dynamic-import
+  it → H6 (tree-shaking).
 
 ## 2026-09-06 — M8 H1: freeze the public API
 - **What:** trimmed `porejs`'s entry from ~180 exports to a curated 37 runtime +

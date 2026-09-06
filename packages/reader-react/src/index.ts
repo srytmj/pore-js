@@ -39,6 +39,7 @@ export {
   Reader,
   useReader,
   useReaderKind,
+  useReaderManifest,
   useReaderLocation,
   useReaderProgress,
   useReaderSearch,
@@ -95,7 +96,7 @@ export {
 export type { TabDef } from './primitives.js';
 
 export { useReaderHistory } from './history.js';
-export type { HistoryMode, UseReaderHistoryOptions } from './history.js';
+export type { HistoryMode, UseReaderHistoryOptions, ReaderTitleContext } from './history.js';
 
 export { useDownload } from './use-download.js';
 export type { UseDownload } from './use-download.js';

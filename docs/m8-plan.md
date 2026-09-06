@@ -116,6 +116,44 @@ still loads under the chunked build).
 
 ---
 
+## H2 — Embeddable in a host app · M · **DONE**
+
+- [x] **`examples/host-app/`** ("Inkwell") — a standalone Vite app: a fake manga
+      library grid → clicking a volume mounts `<Reader>`. Its `LibrarySource`
+      *fully* implements `ReaderSource` over the example's own catalog
+      (`getManifest` maps the host record → `ImageManifest` with `volume` /
+      `subtitle`; `getPage` returns generated SVG; `loadProgress` /
+      `saveProgress` use `localStorage` under the host's **own** `inkwell:*`
+      namespace). Own tiny stylesheet for the `data-pore-*` bits. Its own
+      Playwright suite (3 specs) + config; wired into CI. In the pnpm workspace
+      (`examples/*` added); `pnpm example` / `pnpm typecheck` cover it.
+- [x] **Isolation audit — the engines were already clean.** No `window` /
+      `document` listeners in `porejs` (all on the engine's own `root` / the
+      iframe's `cdoc` / element `load`); `visibilitychange` is the one
+      doc-level listener (passive read, removed on `destroy`). No mutable
+      module-level singletons (pdf.js module memo + the in-worker index are
+      correct). `porejs-react`: `useReaderHistory` (opt-in) touches
+      `document.title` / `window.history`; `createSettingsPersistence` writes
+      `localStorage` under `pore:settings:*` and is overridable
+      (`persistSettings`). The example's e2e proves two books don't share
+      state and no `porejs` stylesheet is injected.
+- [x] **`useReaderManifest()`** added (new hook — `Manifest | null`); `<Reader>`
+      now keeps the manifest in context. `ManifestMeta` (`subtitle?` /
+      `volume?`) landed in H1.
+- [x] **Document title** — `useReaderHistory` composes `Work · Vol N · Chapter`
+      (or `Work · N%`, or the file name) from the manifest + resolved chapter
+      label, with a `formatTitle?(ctx)` override (return `''` to leave the
+      title to the host). Old `title` template kept + `@deprecated`.
+- [x] **`integration.md`** — new §0 "Embedding in an existing site" (what you
+      provide / what stays yours / the isolation guarantees), a `useReaderHistory`
+      title section, `useReaderManifest` in the hooks table.
+- [x] Playwright (`examples/host-app/e2e/embed.spec.ts`): open a volume, read
+      via tap-zones, progress round-trips through the host source under its own
+      namespace, reload → library → re-open resumes; a 2nd book starts fresh;
+      no CSS shipped.
+
+<details><summary>original scope</summary>
+
 ## H2 — Embeddable in a host app · M
 
 The point of the library: a manga/comics/book site provides **a content source
@@ -162,7 +200,9 @@ highlights, bookmarks, search, TTS — without building any of it.
       coexists.
 
 **Done when:** `examples/host-app` is a believable third-party integration and
-the reader provably doesn't reach outside its own box.
+the reader provably doesn't reach outside its own box. ✓
+
+</details>
 
 ---
 
