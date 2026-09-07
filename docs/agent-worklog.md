@@ -128,7 +128,7 @@ M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 - **Why:** owner: "bikin untuk mobile friendly" — chose engine hardening +
   (their idea) a bottom-centre fluid up-arrow to open the menu; idle-fade;
   double-tap-to-tap-point zoom.
-- **State:** committed `<hash>`, pushed. Changeset `mobile-gestures.md` (minor
+- **State:** committed `0d33c8c`, pushed. Changeset `mobile-gestures.md` (minor
   ×2). `docs/m8-plan.md` H12, `stability.md`, `known-issues.md`,
   `getting-started.md` §Mobile updated.
 - **Notes:** the double-tap zoom fought two things during dev — (1) a stale
