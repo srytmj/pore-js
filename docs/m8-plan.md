@@ -456,6 +456,37 @@ next-chapter + flaky pages without touching `ReaderSource`. ✓
 
 ---
 
+## H12 — Mobile gestures & chrome handle (added 2026-09-07) · M · **DONE**
+
+The engines weren't touch-friendly and there was no on-screen way to reach the
+menu without a keyboard. Engine-level (scope A) — no demo redesign.
+
+- [x] **Text swipe-to-turn** — horizontal pointer swipe inside the reading
+      iframe turns the page (touch only; mouse drag stays selection). Vertical
+      stays native scroll via `touch-action: pan-y` in flow mode.
+- [x] **`touch-action`** set deliberately on both engine roots and the text
+      `body` (pan-x / pan-y / manipulation by mode) so the browser owns scroll
+      and kills the 300 ms tap delay.
+- [x] **Double-tap zoom** (image, touch only) — toggles fit ↔ 2× at the tap
+      point; `doubleTapZoom: false` opts out. Mouse keeps `onDblClick`.
+- [x] **Chrome handle** — `createChromeHandle()` renders a faint bottom-centre
+      chevron `button[data-pore-chrome-handle]` (idle-fade 0.28 → 0.6,
+      `env(safe-area-inset-bottom)`), toggles chrome on tap. New
+      `chromeGesture` setting: `'handle'` (default) · `'tap-center'` ·
+      `'long-press'` · `'handle+long-press'` · `'none'`. `ChromeGesture`
+      exported from `porejs`.
+- [x] Docs: `getting-started.md` §Mobile (swipe/pinch/double-tap, the handle,
+      `100dvh` + `viewport-fit=cover`); `stability.md` covers the settings
+      shape + `ChromeGesture`.
+- [x] Tests: image/text engine unit tests for the handle + swipe; a
+      `@mobile` Playwright project (Pixel 7) exercising handle + double-tap +
+      swipe. 279 unit · 94 e2e (chromium+webkit+mobile) · size 4/4.
+
+**Done when:** a phone user can swipe pages, pinch/double-tap images, and open
+the menu with one thumb — no demo CSS changes required. ✓
+
+---
+
 ## Cut from M8 / still deferred
 
 - **F3b — fixed-layout two-page spreads.** Engine reshape; its own milestone.

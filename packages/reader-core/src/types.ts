@@ -18,3 +18,18 @@ export type Variant = 'orig' | 'w800' | 'w1600' | 'webp';
 
 /** Logical turn direction, resolved from physical input via {@link Direction}. */
 export type TurnDirection = 'forward' | 'back';
+
+/**
+ * How the reader surface asks to toggle the host chrome (`reader:chrometoggle`).
+ * - `handle`  — a small idle-fading affordance at the bottom-centre (default)
+ * - `tap-center` — a tap in the middle third of the surface
+ * - `long-press` — a ~450ms press that doesn't move
+ * - `handle+long-press` — both
+ * - `none` — the engine never asks; the host drives it
+ */
+export type ChromeGesture =
+  | 'handle'
+  | 'tap-center'
+  | 'long-press'
+  | 'handle+long-press'
+  | 'none';

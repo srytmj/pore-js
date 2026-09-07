@@ -1,4 +1,5 @@
 import type { Position } from '../position/types.js';
+import type { ChromeGesture } from '../types.js';
 import type { TocEntry, EpubMetadata } from './epub/types.js';
 import type { PageLoadState } from '../image/types.js';
 import type { Chapter, Locator, ReaderProgress } from '../reader-engine.js';
@@ -49,6 +50,8 @@ export interface TextEngineSettings {
    * - `auto`: `flow` when the OS reports forced colors (high-contrast), else `paged`
    */
   flowMode: 'paged' | 'flow' | 'auto';
+  /** How a tap / press asks to toggle the host chrome. Default `handle`. */
+  chromeGesture: ChromeGesture;
 }
 
 export const DEFAULT_TEXT_SETTINGS: TextEngineSettings = {
@@ -65,6 +68,7 @@ export const DEFAULT_TEXT_SETTINGS: TextEngineSettings = {
   endBehavior: 'continuous',
   verticalText: 'auto',
   flowMode: 'paged',
+  chromeGesture: 'handle',
 };
 
 export interface TextEngineEvents {

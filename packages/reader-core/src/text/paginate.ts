@@ -140,6 +140,7 @@ html, body { margin:0; height:100%; overflow:hidden; }
 body {
   display:flex; justify-content:center;
   box-sizing:border-box;
+  touch-action:${t.flow ? 'pan-y' : 'manipulation'};
   padding:${layout.marginV}px 0;
   ${t.background ? `background:${t.background};` : ''}
   font-size:${t.fontSizePct}%;

@@ -10,6 +10,7 @@ import { createEmitter } from '../internal/emitter.js';
 import type { Chapter } from '../reader-engine.js';
 import { PaceEstimator, chapterProgress } from '../progress.js';
 import { instantTransitions } from '../transitions.js';
+import { createChromeHandle } from '../chrome-handle.js';
 import type { ImageEngine, ImageEngineOptions } from './engine.js';
 import type { ImageEngineEvents } from './types.js';
 import {
@@ -232,6 +233,14 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     root.style.setProperty('--pore-page-gap', `${settings.pageGap}px`);
     root.style.overflowY = isContinuous() && axis() === 'y' ? 'auto' : 'hidden';
     root.style.overflowX = isContinuous() && axis() === 'x' ? 'auto' : 'hidden';
+    // let the browser own the scroll axis; the engine owns the other axis
+    // (swipe-to-turn) and pinch. `manipulation` also kills the 300ms tap delay.
+    root.style.touchAction =
+      isContinuous() && axis() === 'x'
+        ? 'pan-x'
+        : isContinuous()
+          ? 'pan-y'
+          : 'manipulation';
     root.style.background =
       settings.background === 'white' ? '#fff' : settings.background === 'black' ? '#000' : '';
     dimEl.style.opacity = settings.dim ? '0.12' : '0';
@@ -679,17 +688,54 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
 
   const toggleChrome = () => {
     chromeVisible = !chromeVisible;
+    handle.setChromeOpen(chromeVisible);
     emitter.emit('reader:chrometoggle', { visible: chromeVisible });
   };
+
+  const handle = createChromeHandle({ root, doc, onToggle: toggleChrome });
+  const syncHandle = () => {
+    const g = settings.chromeGesture;
+    handle.setActive(g === 'handle' || g === 'handle+long-press');
+  };
+  const wantsLongPress = () =>
+    settings.chromeGesture === 'long-press' || settings.chromeGesture === 'handle+long-press';
+  const wantsCenterTap = () => settings.chromeGesture === 'tap-center';
+
+  let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  const clearLongPress = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+  };
+  let lastTap = { t: 0, x: 0, y: 0 };
+  // a touch double-tap also emits a synthetic dblclick; suppress onDblClick then
+  let touchDblTapAt = 0;
 
   const onPointerDown = (ev: PointerEvent) => {
     pointer = { x: ev.clientX, y: ev.clientY, t: Date.now(), id: ev.pointerId };
     cancelAutoAdvance();
     pauseAutoscroll();
+    handle.wake();
+    clearLongPress();
+    if (wantsLongPress() && zoom === 1 && ev.pointerType !== 'mouse') {
+      longPressTimer = setTimeout(() => {
+        longPressTimer = null;
+        pointer = null; // consume — pointerup won't also turn
+        try {
+          navigator.vibrate?.(10);
+        } catch {
+          /* not supported */
+        }
+        toggleChrome();
+      }, 450);
+    }
   };
 
   const onPointerMove = (ev: PointerEvent) => {
-    if (!pointer || ev.pointerId !== pointer.id || zoom === 1) return;
+    if (!pointer || ev.pointerId !== pointer.id) return;
+    if (Math.hypot(ev.clientX - pointer.x, ev.clientY - pointer.y) > TAP_SLOP) clearLongPress();
+    if (zoom === 1) return;
     panX += ev.clientX - pointer.x;
     panY += ev.clientY - pointer.y;
     pointer = { ...pointer, x: ev.clientX, y: ev.clientY };
@@ -697,6 +743,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   };
 
   const onPointerUp = (ev: PointerEvent) => {
+    clearLongPress();
     if (!pointer || ev.pointerId !== pointer.id) return;
     // a tap on a failed-page tile is a retry, not a page turn
     if ((ev.target as HTMLElement | null)?.closest?.('img[data-pore-page-error]')) {
@@ -707,15 +754,55 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     const dy = ev.clientY - pointer.y;
     const dt = Date.now() - pointer.t;
     pointer = null;
-    if (zoom > 1) return; // panning, not a tap/swipe
+    const isTouch = ev.pointerType !== 'mouse';
+    if (zoom > 1) {
+      // when zoomed, a quick near-stationary tap can still be a double-tap to reset
+      const now = Date.now();
+      if (
+        isTouch &&
+        settings.doubleTapZoom &&
+        !isContinuous() &&
+        Math.hypot(dx, dy) <= TAP_SLOP &&
+        dt <= TAP_MS &&
+        now - lastTap.t < 300 &&
+        Math.hypot(ev.clientX - lastTap.x, ev.clientY - lastTap.y) < 40
+      ) {
+        lastTap = { t: 0, x: 0, y: 0 };
+        touchDblTapAt = now;
+        setZoom(1);
+        return;
+      }
+      if (Math.hypot(dx, dy) <= TAP_SLOP && dt <= TAP_MS) {
+        lastTap = { t: now, x: ev.clientX, y: ev.clientY };
+      }
+      return; // otherwise: panning, not a tap/swipe
+    }
 
     const dist = Math.hypot(dx, dy);
     if (dist <= TAP_SLOP && dt <= TAP_MS) {
+      const now = Date.now();
+      // double-tap → zoom to that point (toggle fit ↔ 2×); touch only (mouse
+      // double-click zoom is handled by onDblClick)
+      if (
+        isTouch &&
+        settings.doubleTapZoom &&
+        !isContinuous() &&
+        now - lastTap.t < 300 &&
+        Math.hypot(ev.clientX - lastTap.x, ev.clientY - lastTap.y) < 40
+      ) {
+        lastTap = { t: 0, x: 0, y: 0 };
+        touchDblTapAt = now;
+        const rect = root.getBoundingClientRect();
+        setZoom(zoom > 1 ? 1 : 2, (ev.clientX - rect.left) / rect.width, (ev.clientY - rect.top) / rect.height);
+        return;
+      }
+      lastTap = { t: now, x: ev.clientX, y: ev.clientY };
       const rect = root.getBoundingClientRect();
       const zone = zoneForPoint(ev.clientX - rect.left, rect.width);
       const result = resolveTap(zone, settings.tapToTurn, settings.direction);
-      if (result === 'toggle-chrome') toggleChrome();
-      else if (result) turn(result);
+      if (result === 'toggle-chrome') {
+        if (wantsCenterTap()) toggleChrome();
+      } else if (result) turn(result);
       return;
     }
     // swipe: only horizontal swipes turn pages (vertical = native scroll)
@@ -723,6 +810,11 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       const t = swipeTurn(dx, settings.direction);
       if (t) turn(t);
     }
+  };
+
+  const onContextMenu = (ev: Event) => {
+    // long-press on an image would otherwise pop the "save image" menu
+    if (wantsLongPress()) ev.preventDefault();
   };
 
   const onWheel = (ev: WheelEvent) => {
@@ -745,6 +837,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
   };
 
   const onDblClick = () => {
+    if (Date.now() - touchDblTapAt < 500) return; // handled by the touch double-tap
     if (settings.doubleClickFullscreen) void toggleFullscreen();
     else setZoom(zoom > 1 ? 1 : 2);
   };
@@ -852,6 +945,7 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
       autoPagedTimer = null;
       startPagedAutoAdvance();
     }
+    if (settings.chromeGesture !== prev.chromeGesture) syncHandle();
     emitter.emit('reader:settingschange', { settings, keymap });
   }
 
@@ -913,10 +1007,15 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     root.addEventListener('keydown', onKeyDown);
     root.addEventListener('scroll', onScroll, { passive: true });
     root.addEventListener('click', onRetryClick);
+    root.addEventListener('contextmenu', onContextMenu);
     root.addEventListener('pointerdown', onPointerDown);
     root.addEventListener('pointermove', onPointerMove);
     root.addEventListener('pointerup', onPointerUp);
-    root.addEventListener('pointercancel', () => (pointer = null));
+    root.addEventListener('pointercancel', () => {
+      pointer = null;
+      clearLongPress();
+    });
+    syncHandle();
     root.addEventListener('wheel', onWheel, { passive: false });
     root.addEventListener('dblclick', onDblClick);
     doc.addEventListener('visibilitychange', onVisibility);
@@ -945,9 +1044,12 @@ export function createImageEngine(options: ImageEngineOptions): ImageEngine {
     if (autoPagedTimer) clearInterval(autoPagedTimer);
     if (autoResumeTimer) clearTimeout(autoResumeTimer);
     if (advanceTimer) clearTimeout(advanceTimer);
+    clearLongPress();
+    handle.destroy();
     root.removeEventListener('keydown', onKeyDown);
     root.removeEventListener('scroll', onScroll);
     root.removeEventListener('click', onRetryClick);
+    root.removeEventListener('contextmenu', onContextMenu);
     root.removeEventListener('pointerdown', onPointerDown);
     root.removeEventListener('pointermove', onPointerMove);
     root.removeEventListener('pointerup', onPointerUp);

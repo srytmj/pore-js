@@ -173,9 +173,14 @@ describe('createImageEngine (paged-single)', () => {
     engine.destroy();
   });
 
-  it('a center tap toggles chrome', async () => {
+  it('a center tap toggles chrome when chromeGesture is tap-center', async () => {
     const container = document.createElement('div');
-    const engine = createImageEngine({ container, source: source(4), bookId: 'b' });
+    const engine = createImageEngine({
+      container,
+      source: source(4),
+      bookId: 'b',
+      settings: { chromeGesture: 'tap-center' },
+    });
     const chrome = collect(engine, 'reader:chrometoggle');
     await engine.mount();
     const el = container.querySelector('.pore-image')!;
@@ -187,6 +192,23 @@ describe('createImageEngine (paged-single)', () => {
       new PointerEvent('pointerup', { clientX: 5, clientY: 5, pointerId: 1, bubbles: true }),
     );
     expect(chrome.at(-1)?.visible).toBe(false); // headerVisible defaults true → toggled off
+    engine.destroy();
+  });
+
+  it('renders a chrome handle by default; clicking it toggles chrome', async () => {
+    const container = document.createElement('div');
+    const engine = createImageEngine({ container, source: source(4), bookId: 'b' });
+    const chrome = collect(engine, 'reader:chrometoggle');
+    await engine.mount();
+    const el = container.querySelector('.pore-image')!;
+    // default gesture is 'handle' → a plain center tap does nothing
+    el.dispatchEvent(new PointerEvent('pointerdown', { clientX: 5, clientY: 5, pointerId: 1, bubbles: true }));
+    el.dispatchEvent(new PointerEvent('pointerup', { clientX: 5, clientY: 5, pointerId: 1, bubbles: true }));
+    expect(chrome).toHaveLength(0);
+    const handle = container.querySelector('[data-pore-chrome-handle]') as HTMLElement;
+    expect(handle).toBeTruthy();
+    handle.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(chrome.at(-1)?.visible).toBe(false);
     engine.destroy();
   });
 

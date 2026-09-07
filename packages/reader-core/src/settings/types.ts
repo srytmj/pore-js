@@ -7,7 +7,7 @@
  *   global only          → behavior, keymap, filters
  */
 
-import type { Direction, FitMode, LayoutMode } from '../types.js';
+import type { ChromeGesture, Direction, FitMode, LayoutMode } from '../types.js';
 
 export type { FitMode, LayoutMode };
 
@@ -45,6 +45,10 @@ export interface ImageEngineSettings {
   // behavior
   tapToTurn: 'directional' | 'always-forward' | 'never';
   scrollToTurn: 'off' | 'wheel' | 'keys' | 'both';
+  /** How a tap / press asks to toggle the host chrome. Default `handle`. */
+  chromeGesture: ChromeGesture;
+  /** Double-tap an image to zoom to that point (toggles fit ↔ 2×). */
+  doubleTapZoom: boolean;
   doubleClickFullscreen: boolean;
   nextChapterAfterLastPage: 'off' | 'instant' | 3 | 5 | 10;
   historyMode: 'none' | 'title' | 'url-and-title';
@@ -95,6 +99,8 @@ export const DEFAULT_IMAGE_SETTINGS: ImageEngineSettings = {
 
   tapToTurn: 'directional',
   scrollToTurn: 'off',
+  chromeGesture: 'handle',
+  doubleTapZoom: true,
   doubleClickFullscreen: false,
   nextChapterAfterLastPage: 'instant',
   historyMode: 'title',

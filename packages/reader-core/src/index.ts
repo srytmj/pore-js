@@ -11,7 +11,14 @@ export const VERSION: string =
   typeof __POREJS_VERSION__ === 'string' ? __POREJS_VERSION__ : '0.0.0-dev';
 
 // ── Shared vocabulary ────────────────────────────────────────────────────────
-export type { Direction, LayoutMode, FitMode, Variant, TurnDirection } from './types.js';
+export type {
+  Direction,
+  LayoutMode,
+  FitMode,
+  Variant,
+  TurnDirection,
+  ChromeGesture,
+} from './types.js';
 
 // ── The source seam ──────────────────────────────────────────────────────────
 export type {

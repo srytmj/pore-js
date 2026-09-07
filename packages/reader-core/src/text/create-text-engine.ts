@@ -31,6 +31,7 @@ import {
 import { SearchController } from '../search/search-controller.js';
 import type { SearchHit, SearchSection } from '../search/search-index.js';
 import { instantTransitions, type ReaderTransitions } from '../transitions.js';
+import { createChromeHandle } from '../chrome-handle.js';
 import {
   buildBaseStylesheet,
   buildFixedLayoutStylesheet,
@@ -118,7 +119,8 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   const root = doc.createElement('div');
   root.className = 'pore-text';
   root.tabIndex = 0;
-  root.style.cssText = 'position:relative;width:100%;height:100%;outline:none;overflow:hidden;';
+  root.style.cssText =
+    'position:relative;width:100%;height:100%;outline:none;overflow:hidden;touch-action:manipulation;';
   const frame = doc.createElement('iframe');
   frame.className = 'pore-text__frame';
   // `allow-scripts` is here only so WebKit/Safari delivers pointer & selection
@@ -1056,7 +1058,67 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
 
   const toggleChrome = () => {
     chromeVisible = !chromeVisible;
+    handle.setChromeOpen(chromeVisible);
     emitter.emit('reader:chrometoggle', { visible: chromeVisible });
+  };
+
+  const handle = createChromeHandle({ root, doc, onToggle: toggleChrome });
+  const syncHandle = () => {
+    const g = settings.chromeGesture;
+    handle.setActive(g === 'handle' || g === 'handle+long-press');
+  };
+  const wantsLongPress = () =>
+    settings.chromeGesture === 'long-press' || settings.chromeGesture === 'handle+long-press';
+  const wantsCenterTap = () => settings.chromeGesture === 'tap-center';
+
+  // swipe-to-turn inside the reading iframe (pointer events, so it works on
+  // touch; the browser owns vertical scroll via `touch-action`)
+  let swipe: { x: number; y: number; t: number; id: number } | null = null;
+  let lpTimer: ReturnType<typeof setTimeout> | null = null;
+  const clearLp = () => {
+    if (lpTimer) {
+      clearTimeout(lpTimer);
+      lpTimer = null;
+    }
+  };
+  const onPointerDown = (ev: PointerEvent) => {
+    if (ev.pointerType === 'mouse') {
+      swipe = null;
+      return;
+    }
+    swipe = { x: ev.clientX, y: ev.clientY, t: Date.now(), id: ev.pointerId };
+    handle.wake();
+    clearLp();
+    if (wantsLongPress()) {
+      lpTimer = setTimeout(() => {
+        lpTimer = null;
+        swipe = null;
+        try {
+          navigator.vibrate?.(10);
+        } catch {
+          /* unsupported */
+        }
+        toggleChrome();
+      }, 450);
+    }
+  };
+  const onPointerMoveSwipe = (ev: PointerEvent) => {
+    if (swipe && Math.hypot(ev.clientX - swipe.x, ev.clientY - swipe.y) > 10) clearLp();
+  };
+  let lastSwipeAt = 0;
+  const onPointerUp = (ev: PointerEvent) => {
+    clearLp();
+    if (!swipe || ev.pointerId !== swipe.id) return;
+    const dx = ev.clientX - swipe.x;
+    const dy = ev.clientY - swipe.y;
+    const dt = Date.now() - swipe.t;
+    swipe = null;
+    if (dt > 600 || Math.abs(dx) < 45 || Math.abs(dx) <= Math.abs(dy)) return;
+    const rtl = book?.metadata.direction === 'rtl';
+    // swiping left = forward in LTR, back in RTL
+    const forward = dx < 0 ? !rtl : rtl;
+    lastSwipeAt = Date.now();
+    turn(forward ? 'forward' : 'back');
   };
 
   const onKey = (ev: KeyboardEvent) => {
@@ -1103,13 +1165,14 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
   };
 
   const onClick = (ev: MouseEvent) => {
-    if ((ev.target as Element | null)?.closest?.('a, button')) return;
+    if (Date.now() - lastSwipeAt < 450) return; // the click that trails a swipe
+    if ((ev.target as Element | null)?.closest?.('a, button, [data-pore-chrome-handle]')) return;
     const rect = root.getBoundingClientRect();
     const r = rect.width > 0 ? (ev.clientX - rect.left) / rect.width : 0.5;
     const rtl = book?.metadata.direction === 'rtl';
     if (r < 1 / 3) turn(rtl ? 'forward' : 'back');
     else if (r > 2 / 3) turn(rtl ? 'back' : 'forward');
-    else toggleChrome();
+    else if (wantsCenterTap()) toggleChrome();
   };
 
   /** Wire keyboard/wheel/click on the iframe doc (events don't bubble to the parent). */
@@ -1132,6 +1195,13 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     cdoc.addEventListener('click', onClick);
     cdoc.addEventListener('selectionchange', onSelectionChange);
     cdoc.addEventListener('pointermove', forwardPointerActivity, { passive: true });
+    cdoc.addEventListener('pointerdown', onPointerDown);
+    cdoc.addEventListener('pointermove', onPointerMoveSwipe, { passive: true });
+    cdoc.addEventListener('pointerup', onPointerUp);
+    cdoc.addEventListener('pointercancel', () => {
+      swipe = null;
+      clearLp();
+    });
   };
 
   const item = () => book?.spine[spineIndex];
@@ -1318,6 +1388,7 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     } else {
       reflowKeepingPlace();
     }
+    if (settings.chromeGesture !== prev.chromeGesture) syncHandle();
     emitter.emit('reader:settingschange', { settings });
   }
 
@@ -1334,6 +1405,10 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     root.addEventListener('keydown', onKey);
     root.addEventListener('wheel', onWheel, { passive: false });
     root.addEventListener('click', onClick);
+    root.addEventListener('pointerdown', onPointerDown);
+    root.addEventListener('pointermove', onPointerMoveSwipe, { passive: true });
+    root.addEventListener('pointerup', onPointerUp);
+    syncHandle();
     if (typeof ResizeObserver !== 'undefined') {
       let raf = 0;
       resizeObserver = new ResizeObserver(() => {
@@ -1384,9 +1459,14 @@ export function createTextEngine(options: CreateTextEngineOptions): TextEngine {
     flushSaveHighlights();
     tts.stop();
     destroyed = true;
+    clearLp();
+    handle.destroy();
     root.removeEventListener('keydown', onKey);
     root.removeEventListener('wheel', onWheel);
     root.removeEventListener('click', onClick);
+    root.removeEventListener('pointerdown', onPointerDown);
+    root.removeEventListener('pointermove', onPointerMoveSwipe);
+    root.removeEventListener('pointerup', onPointerUp);
     resizeObserver?.disconnect();
     if (scrollSyncTimer) clearTimeout(scrollSyncTimer);
     if (selectionTimer) clearTimeout(selectionTimer);

@@ -346,6 +346,57 @@ test.describe('Pore.js demo', () => {
     await expect(counter).not.toContainText('1/8');
   });
 
+  test('@mobile touch: chrome handle, double-tap zoom, swipe', async ({ page }) => {
+    // manga: the handle is at the bottom-centre, faint, and toggles chrome
+    await page.goto('/?book=demo-manga');
+    await expect(page.locator('.pore-image__viewport img').first()).toBeVisible();
+    await page.waitForTimeout(600);
+    const handle = page.locator('[data-pore-chrome-handle]');
+    await expect(handle).toBeVisible();
+    const hb = (await handle.boundingBox())!;
+    const vpW = page.viewportSize()!.width;
+    expect(hb.x + hb.width / 2).toBeGreaterThan(vpW / 2 - 40);
+    expect(hb.x + hb.width / 2).toBeLessThan(vpW / 2 + 40);
+
+    // double-tap the centre → zoom to 2×
+    const box = (await page.locator('.pore-image').boundingBox())!;
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    // approximate scale factor from the computed transform matrix
+    const scale = () =>
+      page.locator('.pore-image__viewport').evaluate((e) => {
+        const m = new DOMMatrixReadOnly(getComputedStyle(e).transform);
+        return Math.round(m.a * 10) / 10;
+      });
+    await page.touchscreen.tap(cx, cy);
+    await page.waitForTimeout(120);
+    await page.touchscreen.tap(cx, cy);
+    await expect.poll(scale, { timeout: 4000 }).toBeGreaterThan(1.5);
+    // double-tap again → back to 1×
+    await page.touchscreen.tap(cx, cy);
+    await page.waitForTimeout(120);
+    await page.touchscreen.tap(cx, cy);
+    await expect.poll(scale, { timeout: 4000 }).toBeLessThan(1.2);
+
+    // text: swipe left turns the page forward
+    await page.goto('/?book=demo-book');
+    const frame = page.frameLocator('iframe.pore-text__frame');
+    await frame.locator('h1').waitFor();
+    const flow = frame.locator('#pore-flow');
+    const px = async () => Number((await flow.evaluate((e) => e.style.transform)).match(/-?\d+/)?.[0] ?? 0);
+    // wait for pagination to settle before capturing the baseline transform
+    await expect.poll(() => flow.evaluate((e) => e.style.transform)).toMatch(/translate/);
+    const before = await px();
+    const rb = (await page.locator('.pore-text').boundingBox())!;
+    const y = rb.y + rb.height / 2;
+    const client = await page.context().newCDPSession(page);
+    await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: rb.x + rb.width - 25, y }] });
+    await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: rb.x + rb.width / 2, y }] });
+    await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: rb.x + 25, y }] });
+    await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await expect.poll(px).not.toBe(before);
+  });
+
   test('a page that fails to load shows a retry tile; tapping it recovers', async ({ page }) => {
     let block = true;
     // fail the 2nd manga page (p02.svg) until the retry

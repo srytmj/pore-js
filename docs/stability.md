@@ -22,6 +22,10 @@ The two are released **together on one version number**.
 - **`<Reader>` props** and the `useReader*` hook return shapes.
 - **`<Book>` props** and **`createReaderSource` input shape** — the one-call
   convenience layer over `ReaderSource`.
+- **Engine settings shape** (`ImageEngineSettings` / `TextEngineSettings`) and
+  their exported unions (e.g. `ChromeGesture`) — fields and members are added,
+  never removed or retyped, within `1.x`; `DEFAULT_*_SETTINGS` always carries
+  every field.
 
 Adding an engine event, a new optional `Manifest` / settings field, a new hook,
 or a new headless component is a **minor** bump. Removing or renaming any of the

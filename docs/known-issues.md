@@ -97,6 +97,17 @@ settled transform already; could use a firmer readiness signal. *(M8 H5)*
 
 ## Fixed
 
+### 🟠 Not usable one-handed on a phone — `(M8 H12)`
+
+No swipe on the text engine, no `touch-action` (300 ms tap delay, browser
+fighting the engine for gestures), no double-tap zoom, and the only way to the
+menu was a keyboard or a centre tap you couldn't discover. Fixed at the engine
+level: touch swipe-to-turn (text + image), deliberate `touch-action`, touch-only
+double-tap zoom on images, and a faint bottom-centre chrome handle
+(`[data-pore-chrome-handle]`, `chromeGesture` setting). Double-tap detection is
+gated to `pointerType !== 'mouse'` so a fast double-click still turns two pages;
+the synthetic `dblclick` that trails a touch double-tap is suppressed for 500 ms.
+
 ### 🟠 Manga library integration gaps — `(M8 H11)`
 
 Three things that would have bitten a real per-chapter manga library, addressed

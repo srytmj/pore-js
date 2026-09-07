@@ -52,6 +52,11 @@ publish + deploy milestone (no new reader features). Packages built at
 `meta`), `createReaderSource`, `<Reader onEnd>` + `settingsKey`, broken-page
 retry tile — the on-ramp for wiring the reader into a real library.
 
+**Plus H12 (2026-09-07):** mobile gestures at the engine level — text
+swipe-to-turn, deliberate `touch-action`, touch-only double-tap zoom on images,
+and a faint bottom-centre chrome handle (`chromeGesture` setting, `ChromeGesture`
+exported). No demo redesign.
+
 **All green:** 304 unit · size 4/4 · chromium 47/47 · webkit 46/46 (2 TTS
 skips) · host-app e2e 3/3 · lint · typecheck · `verify-packages`. Firefox on CI
 only (won't launch on the Windows box). Bug log: `docs/known-issues.md`.
@@ -103,6 +108,35 @@ headless; the one core touch is `THEME_COLORS`.
 M5 shipped — `v0.8.0-comfort`. F3b (fixed-layout spreads) still deferred.
 
 ## Log
+
+## 2026-09-07 — M8 H12: mobile gestures + chrome handle
+- **What:** engine-level mobile hardening (scope A — no demo redesign). Text
+  engine gets horizontal swipe-to-turn (pointer events on the iframe doc + root,
+  `pointerType !== 'mouse'` only, so mouse drag stays text selection).
+  `touch-action` set deliberately on both engine roots and the paginated `body`
+  (pan-x / pan-y / manipulation by mode). Image double-tap zoom → toggles fit ↔
+  2× at the tap point, touch-only (`doubleTapZoom` image setting, default on);
+  mouse keeps `onDblClick`, and the synthetic `dblclick` trailing a touch
+  double-tap is suppressed 500 ms. New `createChromeHandle()` in
+  `packages/reader-core/src/chrome-handle.ts` — a faint bottom-centre chevron
+  `button[data-pore-chrome-handle]` (idle-fade 0.28→0.6, `env(safe-area-inset)`)
+  that toggles chrome. `chromeGesture` setting on both engines: `'handle'`
+  (default) · `'tap-center'` · `'long-press'` · `'handle+long-press'` · `'none'`.
+  `ChromeGesture` exported from `porejs`. New `@mobile` Playwright project
+  (Pixel 7) — handle position + double-tap + swipe; desktop projects `grepInvert`
+  it.
+- **Why:** owner: "bikin untuk mobile friendly" — chose engine hardening +
+  (their idea) a bottom-centre fluid up-arrow to open the menu; idle-fade;
+  double-tap-to-tap-point zoom.
+- **State:** committed `<hash>`, pushed. Changeset `mobile-gestures.md` (minor
+  ×2). `docs/m8-plan.md` H12, `stability.md`, `known-issues.md`,
+  `getting-started.md` §Mobile updated.
+- **Notes:** the double-tap zoom fought two things during dev — (1) a stale
+  `.tsbuildinfo` made the e2e webServer's `pnpm build` silently serve an old
+  bundle (delete `**/*.tsbuildinfo` if pagination/turn e2e go weird); (2)
+  `page.mouse.click` ×N in the `turn()` e2e helper was being read as a
+  double-tap until the `pointerType !== 'mouse'` gate. All green: 279 unit ·
+  size 4/4 · chromium+webkit+mobile e2e · lint · typecheck.
 
 ## 2026-09-07 — M8 H11: `<Book>` one-call API + 3 manga-library fixes
 - **What:** owner wants a "one call" on-ramp before integrating with their

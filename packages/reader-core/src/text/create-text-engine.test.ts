@@ -125,6 +125,28 @@ describe('createTextEngine', () => {
     engine.destroy();
   });
 
+  it('swipe turns the page (LTR: left = forward), and renders a chrome handle', async () => {
+    const container = document.createElement('div');
+    const engine = createTextEngine({ container, source: source(), bookId: 'b' });
+    const locs: number[] = [];
+    engine.on('reader:locationchange', (p) => locs.push(p.page));
+    await engine.mount();
+    const el = container.querySelector('.pore-text')!;
+    const swipe = (fromX: number, toX: number, id: number) => {
+      el.dispatchEvent(new PointerEvent('pointerdown', { clientX: fromX, clientY: 200, pointerId: id, bubbles: true }));
+      el.dispatchEvent(new PointerEvent('pointermove', { clientX: (fromX + toX) / 2, clientY: 202, pointerId: id, bubbles: true }));
+      el.dispatchEvent(new PointerEvent('pointerup', { clientX: toX, clientY: 202, pointerId: id, bubbles: true }));
+    };
+    const spineBefore = locs.length;
+    swipe(300, 40, 1); // left → forward → next spine (async in the tiny fixture)
+    await new Promise((r) => setTimeout(r, 120));
+    expect(locs.length).toBeGreaterThan(spineBefore); // a turn happened
+
+    // the chrome handle exists by default
+    expect(container.querySelector('[data-pore-chrome-handle]')).toBeTruthy();
+    engine.destroy();
+  });
+
   it('auto-enables vertical writing mode for a Japanese rtl EPUB', async () => {
     const jpOpf = OPF.replace('<dc:title>Fixture</dc:title>', '<dc:title>縦</dc:title><dc:language>ja</dc:language>')
       .replace('<spine>', '<spine page-progression-direction="rtl">');

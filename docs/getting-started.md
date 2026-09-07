@@ -67,6 +67,30 @@ Add metadata if you have it — it drives the tab title and reading direction:
 Style the reader host with `className` / `style`. `<Book>` renders no chrome —
 add your own toolbar with the hooks (below) if you want one.
 
+### Mobile
+
+The engines are touch-first: horizontal **swipe** turns the page (image and
+text), **pinch** zooms images, **double-tap** an image toggles fit ↔ 2× at the
+tap point, and the browser keeps vertical scroll (`touch-action`). Nothing to
+configure.
+
+For the menu, each engine renders a faint **chrome handle** — a small upward
+chevron pinned bottom-centre (`[data-pore-chrome-handle]`, respects
+`env(safe-area-inset-*)`) that fades while idle and toggles your chrome on tap.
+Change it with the `chromeGesture` setting (`'handle'` default, or
+`'tap-center'`, `'long-press'`, `'handle+long-press'`, `'none'`); disable
+double-tap zoom with `doubleTapZoom: false` (image settings).
+
+Give the host a real height that survives the mobile URL bar and notches:
+
+```tsx
+<Book src={url} meta={meta} style={{ height: '100dvh' }} />
+```
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+```
+
 ## Adding chrome
 
 `porejs-react` ships **no CSS**. The headless components carry `data-pore-*`
